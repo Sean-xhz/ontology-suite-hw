@@ -1,0 +1,129 @@
+{
+  "scenario": "虚构画像：持票人经多手背书取得票据后申请贴现，承兑人信用 A 级——触发 R1 持票核对 + R3 A 级禁止 + R7 背书链衔接的并发推理",
+  "individuals": [
+    {
+      "name": "indBill1",
+      "classes": [
+        "Bill"
+      ],
+      "facts": {
+        "billNumber": "PJ202604010012",
+        "faceAmount": 500000,
+        "issueDate": "2026-04-01",
+        "dueDate": "2026-10-01"
+      }
+    },
+    {
+      "name": "indAcc1",
+      "classes": [
+        "Acceptor"
+      ],
+      "facts": {
+        "creditRating": "A"
+      }
+    },
+    {
+      "name": "indH0",
+      "classes": [
+        "Holder"
+      ]
+    },
+    {
+      "name": "indH1",
+      "classes": [
+        "Holder"
+      ]
+    },
+    {
+      "name": "indH2",
+      "classes": [
+        "Holder"
+      ]
+    },
+    {
+      "name": "indEnd1",
+      "classes": [
+        "EndorsementRecord"
+      ],
+      "facts": {
+        "endorsementSequenceNo": 1,
+        "endorsementDate": "2026-04-10"
+      }
+    },
+    {
+      "name": "indEnd2",
+      "classes": [
+        "EndorsementRecord"
+      ],
+      "facts": {
+        "endorsementSequenceNo": 2,
+        "endorsementDate": "2026-04-20"
+      }
+    },
+    {
+      "name": "indApp1",
+      "classes": [
+        "DiscountApplication"
+      ],
+      "facts": {
+        "applicationNumber": "ZX202604200001",
+        "applicationDate": "2026-04-20",
+        "applicationStatus": "已提交",
+        "expectedDiscountAmount": 495000
+      }
+    }
+  ],
+  "relations": [
+    {
+      "prop": "hasAcceptor",
+      "from": "indBill1",
+      "to": "indAcc1"
+    },
+    {
+      "prop": "currentHolder",
+      "from": "indBill1",
+      "to": "indH2"
+    },
+    {
+      "prop": "hasEndorsementRecord",
+      "from": "indBill1",
+      "to": "indEnd1"
+    },
+    {
+      "prop": "hasEndorsementRecord",
+      "from": "indBill1",
+      "to": "indEnd2"
+    },
+    {
+      "prop": "hasEndorser",
+      "from": "indEnd1",
+      "to": "indH0"
+    },
+    {
+      "prop": "hasEndorsee",
+      "from": "indEnd1",
+      "to": "indH1"
+    },
+    {
+      "prop": "hasEndorser",
+      "from": "indEnd2",
+      "to": "indH1"
+    },
+    {
+      "prop": "hasEndorsee",
+      "from": "indEnd2",
+      "to": "indH2"
+    },
+    {
+      "prop": "initiatedBy",
+      "from": "indApp1",
+      "to": "indH2"
+    },
+    {
+      "prop": "targetsBill",
+      "from": "indApp1",
+      "to": "indBill1"
+    }
+  ],
+  "query": "评估该多手背书票据的贴现资格：申请是否有效？票据是否可贴现？给出触发规则的逐条依据。"
+}

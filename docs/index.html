@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本体能力套件 · Ontology Capability Suite</title>
+<style>
+:root {
+  --bg: #fafafa; --fg: #1a1a2e; --accent: #2563eb; --accent-light: #dbeafe;
+  --card-bg: #fff; --border: #e5e7eb; --muted: #6b7280; --code-bg: #f3f4f6;
+  --success: #059669; --warn: #d97706;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a; --fg: #e2e8f0; --accent: #60a5fa; --accent-light: #1e3a5f;
+    --card-bg: #1e293b; --border: #334155; --muted: #94a3b8; --code-bg: #1e293b;
+    --success: #34d399; --warn: #fbbf24;
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Hero */
+.hero { padding: 80px 0 48px; text-align: center; }
+.hero h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
+.hero .subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 8px; }
+.hero .en { font-size: 0.9rem; color: var(--muted); font-style: italic; }
+.hero .cta { margin-top: 32px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 12px 28px; border-radius: 8px; font-size: 1rem; font-weight: 600; transition: transform .1s; }
+.btn:hover { transform: translateY(-1px); text-decoration: none; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { border: 2px solid var(--border); color: var(--fg); }
+
+/* Pipeline */
+.pipeline { padding: 48px 0; }
+.pipeline h2 { text-align: center; font-size: 1.4rem; margin-bottom: 32px; }
+.stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.stage { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.stage .num { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: var(--accent-light); color: var(--accent); border-radius: 50%; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; }
+.stage h3 { font-size: 1.05rem; margin-bottom: 8px; }
+.stage p { font-size: 0.9rem; color: var(--muted); }
+.stage .tag { display: inline-block; margin-top: 12px; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: var(--code-bg); color: var(--muted); }
+.arrow { text-align: center; color: var(--muted); font-size: 1.5rem; padding: 8px 0; }
+
+/* Features */
+.features { padding: 48px 0; }
+.features h2 { font-size: 1.4rem; margin-bottom: 24px; }
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.feat { padding: 16px; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 0 8px 8px 0; }
+.feat strong { display: block; margin-bottom: 4px; }
+.feat span { font-size: 0.88rem; color: var(--muted); }
+
+/* Quickstart */
+.quickstart { padding: 48px 0; }
+.quickstart h2 { font-size: 1.4rem; margin-bottom: 16px; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; overflow-x: auto; font-size: 0.85rem; line-height: 1.8; }
+code { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; }
+.note { margin-top: 12px; font-size: 0.85rem; color: var(--muted); }
+
+/* Env */
+.env { padding: 32px 0; }
+.env table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.env th, .env td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+.env th { color: var(--muted); font-weight: 600; }
+
+/* Footer */
+footer { padding: 48px 0 32px; text-align: center; font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--border); margin-top: 48px; }
+footer .links { margin-bottom: 12px; }
+footer .links a { margin: 0 12px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <section class="hero">
+    <h1>本体能力套件</h1>
+    <p class="subtitle">自然语言业务知识 → W3C 合规本体 → 专家可视化审阅 → 模拟推演与实证验证</p>
+    <p class="en">Ontology Capability Suite — carrier-neutral, applicable to any industry domain</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="demo.html">打开审阅 Demo</a>
+      <a class="btn btn-secondary" href="https://github.com/Sean-xhz/ontology-suite-hw">GitHub</a>
+    </div>
+  </section>
+
+  <section class="pipeline">
+    <h2>三件套管线</h2>
+    <div class="stages">
+      <div class="stage">
+        <span class="num">1</span>
+        <h3>ontology-model</h3>
+        <p>「7+1」29 句话描述集 → W3C Turtle 本体（RDF/OWL/SKOS/SWRL）。双模型异构质检 + 三级机械校验 + 黄金用例业务验收。</p>
+        <span class="tag">S0-S6 · G1-G3 人工闸门</span>
+      </div>
+      <div class="stage">
+        <span class="num">2</span>
+        <h3>ontology-review</h3>
+        <p>建模产物 → 单文件 HTML 审阅页（类图 + 规则双通道 + 批注 UI）。业务专家零工程背景即可审阅，意见机械回流建模。</p>
+        <span class="tag">浏览器直开 · 零依赖</span>
+      </div>
+      <div class="stage">
+        <span class="num">3</span>
+        <h3>ontology-simulate</h3>
+        <p>专家复核本体 → what-if 物化推演（画像→实例→Pellet 推理→业务解读）。三臂 A/B 实验量化形式化增量。</p>
+        <span class="tag">零臆造闸门 · 零回写沙箱</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2>设计特点</h2>
+    <div class="feat-grid">
+      <div class="feat"><strong>载体中立</strong><span>适用金融、保险、供应链、制造等任何行业域。示例为虚构票据贴现载体。</span></div>
+      <div class="feat"><strong>双模型异构质检</strong><span>生成与审计必须由不同模型承担，禁止同模型自审。平台无关纪律。</span></div>
+      <div class="feat"><strong>人工闸门停等</strong><span>业务语义由人确认（G1-G3 / SG1-SG2 / AG1-AG2），LLM 不代答代签。</span></div>
+      <div class="feat"><strong>开放世界诚实</strong><span>未推出 ≠ 否定。信息不足时输出「未判定」，不伪装为通过或拒绝。</span></div>
+      <div class="feat"><strong>机械可验证</strong><span>T0-T10 统一验收电池，双跑字节确定性，零回写 hash 断言。</span></div>
+      <div class="feat"><strong>自包含方法论</strong><span>28 条建模判据焙入 methodology-core，脱离知识库可独立执行。</span></div>
+    </div>
+  </section>
+
+  <section class="quickstart">
+    <h2>快速开始</h2>
+    <pre><code># 1. 环境引导（检查 python3/pip/Java/node，安装依赖，跑验收）
+bash scripts/bootstrap.sh --run-tests
+
+# 2. 或单独跑验收电池（虚构示例载体为 fixture）
+python3 scripts/run_suite_tests.py              # T0-T10, exit 0 = 全过
+python3 scripts/run_suite_tests.py --skip-java  # 无 Java 环境（T8 登记 SKIP）
+
+# 3. 浏览器打开示例审阅页（离线、零依赖）
+open examples/票据贴现/建模run/审阅页.html</code></pre>
+    <p class="note">Claude Code 中触发：<code>/ontology-model</code> · <code>/ontology-review</code> · <code>/ontology-simulate</code><br>
+    独立部署：三 skill 保持同级（跨 skill 相对 import），<code>ONTOLOGY_RUNS_ROOT</code> 指向 run 目录。</p>
+  </section>
+
+  <section class="env">
+    <h2>环境依赖</h2>
+    <table>
+      <tr><th>组件</th><th>版本</th><th>用途</th></tr>
+      <tr><td>Python</td><td>≥ 3.9</td><td>脚本层（rdflib + owlready2）</td></tr>
+      <tr><td>Java</td><td>≥ 25（Pellet）/ ≥ 17（HermiT）</td><td>L3 一致性 + SWRL 物化（无 Java 降级 L2）</td></tr>
+      <tr><td>Node</td><td>可选</td><td>审阅页 self_test E9 语法检查（无则 skip）</td></tr>
+    </table>
+  </section>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="https://github.com/Sean-xhz/ontology-suite-hw">GitHub</a>
+      <a href="demo.html">审阅 Demo</a>
+      <a href="https://github.com/Sean-xhz/ontology-suite-hw/blob/main/README.md">中文文档</a>
+      <a href="https://github.com/Sean-xhz/ontology-suite-hw/blob/main/README.en.md">English</a>
+    </div>
+    <p>MIT License · 方法论来源：《本体驱动的AI数据管理》编写组（蒸馏重编译，未复制原文）</p>
+    <p>示例载体为完全虚构的票据贴现业务，不含真实业务数据。</p>
+  </div>
+</footer>
+
+</body>
+</html>

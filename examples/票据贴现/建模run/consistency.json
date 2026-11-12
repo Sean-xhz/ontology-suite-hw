@@ -1,0 +1,14 @@
+{
+  "file": "ontology.ttl",
+  "generated_at": "2026-10-26 21:41:20",
+  "layer": "L3",
+  "reasoner_requested": "pellet",
+  "reasoner_used": "pellet",
+  "java_exe": "java",
+  "consistent": true,
+  "inconsistent_classes": [],
+  "swrl_rules": 5,
+  "swrl_verified": "pellet",
+  "notes": [],
+  "exit_code": 0
+}

@@ -1,0 +1,649 @@
+{
+ "source_ttl": "ontology.ttl",
+ "ttl_sha": "ec85ca9598b4",
+ "classes": [
+  {
+   "id": "AcceptableApplication",
+   "label": "可受理申请",
+   "comment": "源 4.1-R2。R2 结论契约类：申请日期早于到期日期 且 到期与申请间隔≥15 天。G1-Q4 裁定（Q4-2）：标准 SWRL（swrlb 核心库）无日期差值 built-in → 降级为 DatatypeProperty 登记+应用层校验——成员由应用层执行 R2 双条件核对后断言（无 swrl:Imp，建模方案§十登记）；同时作为 :ruleR4 前提承载 G1-Q1 优先级（规则组合）。消费：①受理判定。",
+   "superclasses": [
+    "DiscountApplication"
+   ],
+   "hasKey": [],
+   "derived": false
+  },
+  {
+   "id": "Acceptor",
+   "label": "承兑人",
+   "comment": "源 1.1/1.2b/词典。承诺票据到期无条件付款的企业（同义词：付款人；与出票人严格区分，出票人不建模）。消费：①受理判定（R3/R4 评级判定）+③贴现池管理（7.5 组合查询）。",
+   "superclasses": [],
+   "hasKey": [
+    "unifiedSocialCreditCode"
+   ],
+   "derived": false
+  },
+  {
+   "id": "ApplicationUnderReview",
+   "label": "审核中申请",
+   "comment": "源 2.2a/4.1-R6。定义类（等价类公理见文末公理区）：申请状态=审核中。为 R6 受限基数公理（maxQualifiedCardinality 1）提供计数对象（G1-Q4 裁定 Q4-3：owl:Restriction cardinality 分支，DL 完整可表达）。消费：④状态机校验+①受理判定（R6 并发约束）。",
+   "superclasses": [
+    "DiscountApplication"
+   ],
+   "hasKey": [],
+   "derived": false
+  },
+  {
+   "id": "Bill",
+   "label": "票据",
+   "comment": "源 1.1/1.2a/2.1。范围收窄（2.1 建模裁量）：本场景仅商业承兑汇票，不建银行承兑汇票分支类（超范围，8.4 明确不做）。消费：①受理判定/②背书链查询/③贴现池管理/④状态机校验四链路根对象。",
+   "superclasses": [],
+   "hasKey": [
+    "billNumber"
+   ],
+   "derived": false
+  },
+  {
+   "id": "DiscountApplication",
+   "label": "贴现申请",
+   "comment": "源 1.1/1.2d/5.5/词典。持票人针对某张票据发起的一次贴现请求，具编号/日期/期望金额与单向流转状态。状态机（5.5，应用层校验）：已提交→审核中→已通过/已拒绝→已划款，不允许跳跃或回退。消费：①受理判定+④状态机校验。",
+   "superclasses": [],
+   "hasKey": [
+    "applicationNumber"
+   ],
+   "derived": false
+  },
+  {
+   "id": "Discountable",
+   "label": "可贴现票据",
+   "comment": "源 2.2c/4.1-R4。规则结论类（:ruleR4 头）。G1-Q1 裁定：R2 优先——「AAA 可随时贴现」收窄为「免评级限制但仍须过 R2 间隔检查」（见 :ruleR4 规则组合）。与 :NonDiscountable 互斥（2.2c，owl:AllDisjointClasses——规则冲突可检出前提）。消费：①受理判定+③贴现池管理。AA 级 open-world 登记（v1.1，S4 残留风险 2）：评级 AA 票据无 R3/R4 触发（A≠AA、AAA≠AA），开放世界语义下不获本类或 :NonDiscountable 推导——非本体缺陷（未判定≠不满足）；AA 入池候选由 7.5 组合查询独立判定（AAA/AA 直查）。",
+   "superclasses": [
+    "Bill"
+   ],
+   "hasKey": [],
+   "derived": true
+  },
+  {
+   "id": "EndorsementRecord",
+   "label": "背书记录",
+   "comment": "源 1.1/1.2e/1.3c/1.3d/词典「背书」。每次背书转让生成一条记录（背书关系按词典裁定实体化为记录类，边属性背书日期/序号由本类承载——建模方案§三登记）。消费：②背书链查询+①受理判定（R7 背书链核验）。",
+   "superclasses": [],
+   "hasKey": [],
+   "derived": false
+  },
+  {
+   "id": "Holder",
+   "label": "持票人",
+   "comment": "源 1.1/1.2c/词典。当前合法持有票据的企业，通过背书链取得票据权利（同义词：票据持有人·旧系统）。消费：②背书链查询（各手持票方）+①受理判定（R1 发起人核对）。",
+   "superclasses": [],
+   "hasKey": [
+    "unifiedSocialCreditCode"
+   ],
+   "derived": false
+  },
+  {
+   "id": "NonDiscountable",
+   "label": "禁止贴现票据",
+   "comment": "源 2.2c/4.1-R3/R5/R7。规则结论类（:ruleR3、:ruleR5 头；R7 断裂结论由应用层执行）。R5 结论归入本类：2.2c 将 R5 列入可贴现⊥禁止贴现冲突检出前提（S3 裁量登记，处置档差异见建模方案§四）。与 :Discountable 互斥。消费：①受理判定+③贴现池管理（R5 池外排除）。处置差异登记（v1.1，S4 残留风险 1）：本类成员含 R3（评级 A，拦截）与 R5（小额，仅登记）两种处置档——受理判定不得仅凭本类成员身份执行拦截，须按依据链命中规则编号区分处置档（7.6/X2）。",
+   "superclasses": [
+    "Bill"
+   ],
+   "hasKey": [],
+   "derived": true
+  },
+  {
+   "id": "ValidApplication",
+   "label": "有效申请",
+   "comment": "源 4.1-R1。规则结论类（:ruleR1 头）：发起人=票据当前持票人的申请。「非持票人一律拒绝」否定语义由应用层执行（G1-Q4 裁定 Q4-1）。消费：①受理判定。",
+   "superclasses": [
+    "DiscountApplication"
+   ],
+   "hasKey": [],
+   "derived": true
+  }
+ ],
+ "derived_properties": [
+  "isUpstreamOf"
+ ],
+ "object_properties": [
+  {
+   "id": "currentHolder",
+   "label": "当前持票人",
+   "comment": "源 1.3b。票据→持票人，N:1（一张票据同一时刻仅一个当前持票人；一个持票人可持多张票据）。owl:FunctionalProperty。消费：①受理判定（R1 发起人核对）+②背书链查询（链末持有人）。链末一致性登记（v1.1，S4 残留风险 3）：currentHolder=链末背书记录被背书人的一致性由数据管线保证——本体无公理绑定（open-world 下不自动检出漂移）。",
+   "domain": "Bill",
+   "range": "Holder",
+   "domain_union": [],
+   "range_union": [],
+   "functional": true,
+   "transitive": false,
+   "inverseOf": ""
+  },
+  {
+   "id": "hasAcceptor",
+   "label": "票据承兑人",
+   "comment": "源 1.3a/2.4。票据→承兑人，N:1，必填单值（:Bill ⊑ someValuesFrom，公理见文末）。owl:FunctionalProperty。消费：①受理判定（R3/R4）+③贴现池管理。",
+   "domain": "Bill",
+   "range": "Acceptor",
+   "domain_union": [],
+   "range_union": [],
+   "functional": true,
+   "transitive": false,
+   "inverseOf": ""
+  },
+  {
+   "id": "hasDiscountApplication",
+   "label": "票据的贴现申请",
+   "comment": "源 1.3e 逆关系+4.1-R6。owl:inverseOf :targetsBill（v1.2 起双向对称声明——:targetsBill 侧同步补 inverseOf 镜像，消登记冗余型 warning）；为 R6 受限基数公理显式落地（Q4-3 DL 分支：Bill ⊑ maxQualifiedCardinality 1 hasDiscountApplication . ApplicationUnderReview）。消费：④状态机校验+①受理判定。",
+   "domain": "Bill",
+   "range": "DiscountApplication",
+   "domain_union": [],
+   "range_union": [],
+   "functional": false,
+   "transitive": false,
+   "inverseOf": "targetsBill"
+  },
+  {
+   "id": "hasEndorsee",
+   "label": "被背书人",
+   "comment": "源 1.3c。背书记录→持票人（被背书人），×2 之一。owl:FunctionalProperty（v1.1 补，S4 条目③：1.3c 单值语义显式化——一次背书行为仅一个被背书人；建模方案§三 N:1 基数 v1.0 已登记，本版补齐 ttl 特征）。消费：②背书链查询+①受理判定（R7，:ruleR7）。",
+   "domain": "EndorsementRecord",
+   "range": "Holder",
+   "domain_union": [],
+   "range_union": [],
+   "functional": true,
+   "transitive": false,
+   "inverseOf": ""
+  },
+  {
+   "id": "hasEndorsementRecord",
+   "label": "票据背书记录",
+   "comment": "源 1.3d。票据→背书记录，1:N，按背书序号构成有序背书链（序号排序消费见 :endorsementSequenceNo）。消费：②背书链查询（7.2① 按票号返回完整链）+①受理判定（R7）。",
+   "domain": "Bill",
+   "range": "EndorsementRecord",
+   "domain_union": [],
+   "range_union": [],
+   "functional": false,
+   "transitive": false,
+   "inverseOf": ""
+  },
+  {
+   "id": "hasEndorser",
+   "label": "背书人",
+   "comment": "源 1.3c。背书记录→持票人（背书人），×2 之一。owl:FunctionalProperty（v1.1 补，S4 条目③：1.3c 单值语义显式化——一次背书行为仅一个背书人；建模方案§三 N:1 基数 v1.0 已登记，本版补齐 ttl 特征）。消费：②背书链查询（链序回放）+①受理判定（R7 连续性核验：后手背书人=前手被背书人，:ruleR7）。",
+   "domain": "EndorsementRecord",
+   "range": "Holder",
+   "domain_union": [],
+   "range_union": [],
+   "functional": true,
+   "transitive": false,
+   "inverseOf": ""
+  },
+  {
+   "id": "initiatedBy",
+   "label": "申请发起人",
+   "comment": "源 1.3f。贴现申请→持票人，N:1。owl:FunctionalProperty（句式 N:1 单值语义）。消费：①受理判定（R1 发起人=当前持票人核对，:ruleR1）。",
+   "domain": "DiscountApplication",
+   "range": "Holder",
+   "domain_union": [],
+   "range_union": [],
+   "functional": true,
+   "transitive": false,
+   "inverseOf": ""
+  },
+  {
+   "id": "isUpstreamOf",
+   "label": "链上游背书记录",
+   "comment": "源 4.1-R7/词典「背书链」（Transitive 上游关系）。记录级（S3 裁量登记：持有人级传递会跨票据误串链——A→B 在票据甲、B→C 在票据乙 ⇒ 误推 A→C；记录级推导限定同票据内，闭包严格限于票据内）。推导（:ruleR7）：同票据+序号相邻+被背书人=背书人 ⇒ 有效衔接；Transitive 闭包使「首记录→末记录可达 ⟺ 背书链连续」——R7 连续性的机器判定形态（S3 裁量登记，首手核对缺口见文末）。v1.1：:hasEndorser/:hasEndorsee 补 Functional（1.3c 单值）排除记录级多值分支，等价性增强——链形态线性另依赖 L8 链内序号唯一（应用层）。owl:TransitiveProperty。消费：②背书链查询+①受理判定（R7）。数据前提：一条背书记录仅属一张票据（数据管线保证，本体未以公理强制——与 currentHolder 链末一致性同口径，残留风险 3）。",
+   "domain": "EndorsementRecord",
+   "range": "EndorsementRecord",
+   "domain_union": [],
+   "range_union": [],
+   "functional": false,
+   "transitive": true,
+   "inverseOf": ""
+  },
+  {
+   "id": "targetsBill",
+   "label": "针对票据",
+   "comment": "源 1.3e。贴现申请→票据，N:1。owl:FunctionalProperty（句式 N:1 单值语义）。owl:inverseOf :hasDiscountApplication（v1.2 补对称声明——与 :hasDiscountApplication 侧的 inverseOf 声明互为镜像，消登记冗余型 warning，语义不变）。消费：①受理判定（R1/R2/R4 前提）+④状态机校验（R6 经逆属性 :hasDiscountApplication 计数）。",
+   "domain": "DiscountApplication",
+   "range": "Bill",
+   "domain_union": [],
+   "range_union": [],
+   "functional": true,
+   "transitive": false,
+   "inverseOf": "hasDiscountApplication"
+  }
+ ],
+ "data_properties": [
+  {
+   "id": "applicationDate",
+   "label": "申请日期",
+   "comment": "源 1.2d/4.1-R2。xsd:date。消费：①受理判定（R2 双条件核对——应用层执行，Q4-2 降级后 :AcceptableApplication 契约承载结论）。",
+   "domain": "DiscountApplication",
+   "domain_union": [],
+   "range": "date",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "applicationNumber",
+   "label": "申请编号",
+   "comment": "源 1.2d/2.6。格式 ZX+日期+4 位序号（见 :ApplicationNumberFormat；日期段按 8 位 YYYYMMDD 假设——编译缺口-2，v1.1 引用偏移修正）。owl:FunctionalProperty + :DiscountApplication owl:hasKey（一申请一编号、一编号一申请）。消费：④状态机校验（7.3 迁移留痕）+依据链输出（7.6）。",
+   "domain": "DiscountApplication",
+   "domain_union": [],
+   "range": "ApplicationNumberFormat",
+   "oneOf_enum": null,
+   "functional": true
+  },
+  {
+   "id": "applicationStatus",
+   "label": "申请状态",
+   "comment": "源 1.2d/2.2a/5.5。受控枚举五值：已提交/审核中/已通过/已拒绝/已划款——range 内联匿名 oneOf（v1.2 前由具名枚举 datatype 承载，Pellet 值空间判空已删，见文件头变更摘要①；两两互斥仍由 Functional 保证）；「审核中」值被 :ApplicationUnderReview 定义类消费（R6 计数公理）。owl:FunctionalProperty——2.2a 五状态两两互斥（一个申请同一时刻仅一种状态）以「枚举+Functional」表达（S3 裁量登记：与 1.2d 冻结目标构件 DatatypeProperty+枚举一致，免五状态类膨胀——建模方案§十）。状态单向迁移与禁跳跃/回退由④状态机校验（应用层，5.5/6.4）执行。消费：①受理判定+④状态机校验。",
+   "domain": "DiscountApplication",
+   "domain_union": [],
+   "range": "",
+   "oneOf_enum": [
+    "已提交",
+    "审核中",
+    "已通过",
+    "已拒绝",
+    "已划款"
+   ],
+   "functional": true
+  },
+  {
+   "id": "billNumber",
+   "label": "票号",
+   "comment": "源 1.2a/2.6。格式 PJ+12 位数字（xsd:pattern，见 :BillNumberFormat）。owl:FunctionalProperty + :Bill owl:hasKey（一票据一票号、一票号一票据；2.6 的 InverseFunctional 以 hasKey 标准替代——OWL 2 DL 不支持数据属性 InverseFunctional，S3 机械自检发现，建模方案§十登记）。消费：②背书链查询（7.2① 按票号定位）+①受理判定依据链（7.6）。",
+   "domain": "Bill",
+   "domain_union": [],
+   "range": "BillNumberFormat",
+   "oneOf_enum": null,
+   "functional": true
+  },
+  {
+   "id": "creditRating",
+   "label": "信用等级",
+   "comment": "源 1.2b/2.2b/4.1-R3/R4。受控枚举 AAA/AA/A——range 内联匿名 oneOf 三值（v1.2 前由具名枚举 datatype 承载，Pellet 值空间判空已删，见文件头变更摘要①；两两互斥仍由 Functional 保证）。平台内部评级，非外部权威评级。owl:FunctionalProperty（2.2b 互斥：同一承兑人同一时刻仅一档）。消费：①受理判定（R3/R4）+③贴现池管理（7.5 AAA/AA 筛选）。",
+   "domain": "Acceptor",
+   "domain_union": [],
+   "range": "",
+   "oneOf_enum": [
+    "AAA",
+    "AA",
+    "A"
+   ],
+   "functional": true
+  },
+  {
+   "id": "dueDate",
+   "label": "到期日期",
+   "comment": "源 1.2a/2.5/4.1-R2/7.5。xsd:date。消费：①受理判定（R2 间隔核对——应用层，Q4-2）+③贴现池管理（7.5 距到期≥15 天）。",
+   "domain": "Bill",
+   "domain_union": [],
+   "range": "date",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "endorsementDate",
+   "label": "背书日期",
+   "comment": "源 1.2e。xsd:date。消费：②背书链查询（7.2① 各手持票期间起讫）。",
+   "domain": "EndorsementRecord",
+   "domain_union": [],
+   "range": "date",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "endorsementSequenceNo",
+   "label": "背书序号",
+   "comment": "源 1.2e/1.3d/4.1-R7。xsd:integer；同一票据背书链内唯一且递增（「递增」按链内 +1 连续编号读法——S3 裁量登记，跳号兼容性=编译缺口-3，v1.1 引用偏移修正；链内唯一性应用层核对）。消费：②背书链查询（链序排序）+①受理判定（R7 相邻判定：:ruleR7 swrlb:add）。",
+   "domain": "EndorsementRecord",
+   "domain_union": [],
+   "range": "integer",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "enterpriseName",
+   "label": "企业名称",
+   "comment": "源 1.2c。消费：②背书链查询（7.2① 各手持票方名称展示）。承兑人名称属性输入未列（1.2b 无企业名称行），不补造。",
+   "domain": "Holder",
+   "domain_union": [],
+   "range": "string",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "expectedDiscountAmount",
+   "label": "期望贴现金额",
+   "comment": "源 1.2d/2.5。xsd:decimal >0（见 :PositiveAmount）。消费：①受理判定（申请要素核对）。",
+   "domain": "DiscountApplication",
+   "domain_union": [],
+   "range": "PositiveAmount",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "faceAmount",
+   "label": "票面金额",
+   "comment": "源 1.2a/2.5/4.1-R5/7.5。xsd:decimal >0（见 :PositiveAmount）；币种人民币（单一币种场景，未建币种维度——建模方案§十三-8 登记）。消费：①受理判定（R5：<10 万元）+③贴现池管理（7.5：≥10 万且降序排序）。",
+   "domain": "Bill",
+   "domain_union": [],
+   "range": "PositiveAmount",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "issueDate",
+   "label": "出票日期",
+   "comment": "源 1.2a/2.5。xsd:date。消费：①受理判定（2.5 后半「到期>出票」应用层核对——标准 swrlb 核心库不保证 xsd:date 比较（与 Q4-2 同根因），引擎支持 date 比较 built-in 时可编译为 SWRL，否则应用层核对，S3 裁量登记、v1.1 理由精确化）+②背书链查询（持票期间起点参照）。",
+   "domain": "Bill",
+   "domain_union": [],
+   "range": "date",
+   "oneOf_enum": null,
+   "functional": false
+  },
+  {
+   "id": "unifiedSocialCreditCode",
+   "label": "统一社会信用代码",
+   "comment": "源 1.2b/1.2c/2.6。承兑人与持票人共享属性（S3 裁量登记：同一企业标识，domain 取两类联合，非相似度归并）。owl:FunctionalProperty + :Acceptor/:Holder owl:hasKey——类内唯一（hasKey：同类内同 USCC ⇒ 同一个体）；跨角色同一性（Acceptor/Holder 归并）由实例层显式对齐（同 IRI 或 owl:sameAs）——hasKey 不承诺跨类归并（v1.1 条目②修正，原「同 USCC ⇒ 同一企业」为过度承诺）。消费：①受理判定（R1 发起人核对要素）+实例层对齐（建模方案§二-⑦）。",
+   "domain": "",
+   "domain_union": [
+    "Acceptor",
+    "Holder"
+   ],
+   "range": "string",
+   "oneOf_enum": null,
+   "functional": true
+  }
+ ],
+ "rules": [
+  {
+   "id": "ruleR1",
+   "label": "R1 发起人持票核对规则",
+   "body_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "DiscountApplication",
+     "arguments": [
+      "?vR1_a"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "initiatedBy",
+     "arguments": [
+      "?vR1_a",
+      "?vR1_h"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "targetsBill",
+     "arguments": [
+      "?vR1_a",
+      "?vR1_b"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "currentHolder",
+     "arguments": [
+      "?vR1_b",
+      "?vR1_h"
+     ]
+    }
+   ],
+   "head_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "ValidApplication",
+     "arguments": [
+      "?vR1_a"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ruleR3",
+   "label": "R3 A 级禁止贴现规则",
+   "body_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "Bill",
+     "arguments": [
+      "?vR3_b"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "hasAcceptor",
+     "arguments": [
+      "?vR3_b",
+      "?vR3_c"
+     ]
+    },
+    {
+     "atom_type": "DatavaluedPropertyAtom",
+     "predicate": "creditRating",
+     "arguments": [
+      "?vR3_c",
+      "A"
+     ]
+    }
+   ],
+   "head_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "NonDiscountable",
+     "arguments": [
+      "?vR3_b"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ruleR4",
+   "label": "R4 AAA 可贴现规则（G1-Q1 收窄版）",
+   "body_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "AcceptableApplication",
+     "arguments": [
+      "?vR4_a"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "targetsBill",
+     "arguments": [
+      "?vR4_a",
+      "?vR4_b"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "hasAcceptor",
+     "arguments": [
+      "?vR4_b",
+      "?vR4_c"
+     ]
+    },
+    {
+     "atom_type": "DatavaluedPropertyAtom",
+     "predicate": "creditRating",
+     "arguments": [
+      "?vR4_c",
+      "AAA"
+     ]
+    }
+   ],
+   "head_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "Discountable",
+     "arguments": [
+      "?vR4_b"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ruleR5",
+   "label": "R5 小额票据不入贴现池规则",
+   "body_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "Bill",
+     "arguments": [
+      "?vR5_b"
+     ]
+    },
+    {
+     "atom_type": "DatavaluedPropertyAtom",
+     "predicate": "faceAmount",
+     "arguments": [
+      "?vR5_b",
+      "?vR5_m"
+     ]
+    },
+    {
+     "atom_type": "BuiltinAtom",
+     "predicate": "swrlb:lessThan",
+     "arguments": [
+      "?vR5_m",
+      "100000"
+     ]
+    }
+   ],
+   "head_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "NonDiscountable",
+     "arguments": [
+      "?vR5_b"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ruleR7",
+   "label": "R7 背书链有效衔接推导规则",
+   "body_atoms": [
+    {
+     "atom_type": "ClassAtom",
+     "predicate": "Bill",
+     "arguments": [
+      "?vR7_b"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "hasEndorsementRecord",
+     "arguments": [
+      "?vR7_b",
+      "?vR7_r1"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "hasEndorsementRecord",
+     "arguments": [
+      "?vR7_b",
+      "?vR7_r2"
+     ]
+    },
+    {
+     "atom_type": "DatavaluedPropertyAtom",
+     "predicate": "endorsementSequenceNo",
+     "arguments": [
+      "?vR7_r1",
+      "?vR7_n1"
+     ]
+    },
+    {
+     "atom_type": "DatavaluedPropertyAtom",
+     "predicate": "endorsementSequenceNo",
+     "arguments": [
+      "?vR7_r2",
+      "?vR7_n2"
+     ]
+    },
+    {
+     "atom_type": "BuiltinAtom",
+     "predicate": "swrlb:add",
+     "arguments": [
+      "?vR7_n2",
+      "?vR7_n1",
+      "1"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "hasEndorsee",
+     "arguments": [
+      "?vR7_r1",
+      "?vR7_p"
+     ]
+    },
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "hasEndorser",
+     "arguments": [
+      "?vR7_r2",
+      "?vR7_p"
+     ]
+    }
+   ],
+   "head_atoms": [
+    {
+     "atom_type": "IndividualPropertyAtom",
+     "predicate": "isUpstreamOf",
+     "arguments": [
+      "?vR7_r1",
+      "?vR7_r2"
+     ]
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "classes": 10,
+  "object_properties": 9,
+  "data_properties": 13,
+  "swrl_rules": 5,
+  "skos_concepts": 15
+ },
+ "instance_schema": {
+  "说明": "实例 JSON 契约（编译 agent 唯一输出格式；check_instance.py 机械校验）",
+  "fields": {
+   "scenario": "场景一句话描述（虚构画像摘要，供报告溯源）",
+   "individuals": [
+    {
+     "name": "个体标识（camelCase 英文，如 indBill1；映射为 :name）",
+     "classes": [
+      "类 id 列表（必须存在于签名 classes，且不得为 derived）"
+     ],
+     "facts": {
+      "数据属性id": "字面量值（受控属性必须在 oneOf_enum 内取值）"
+     }
+    }
+   ],
+   "relations": [
+    {
+     "prop": "对象属性 id",
+     "from": "个体 name",
+     "to": "个体 name（或受控值属性的目标个体）"
+    }
+   ],
+   "query": "业务诉求一句话（interpreter 报告的应答目标）"
+  },
+  "纪律": [
+   "零臆造：只能引用签名内的类/属性/受控值，编造即被 check_instance 拦截（exit 1）",
+   "derived 类不得出现在 individuals.classes——结论类由推理器物化产出，不进输入",
+   "画像虚构：真实客户数据不进模拟（与黄金用例五项遮盖同构）"
+  ]
+ }
+}

@@ -1,0 +1,41 @@
+{
+  "scenario": "虚构画像：AAA 承兑人票据贴现正路径——申请已经应用层完成 R2 双条件核对（申请日期早于到期日且间隔≥15天）并断言为可受理申请，期望 R4 推导可贴现",
+  "individuals": [
+    {
+      "name": "indBill2",
+      "classes": ["Bill"],
+      "facts": {
+        "billNumber": "PJ2026051500456",
+        "faceAmount": 1200000,
+        "issueDate": "2026-05-15",
+        "dueDate": "2026-11-15"
+      }
+    },
+    {
+      "name": "indAcc2",
+      "classes": ["Acceptor"],
+      "facts": {"creditRating": "AAA"}
+    },
+    {
+      "name": "indH10",
+      "classes": ["Holder"]
+    },
+    {
+      "name": "indApp2",
+      "classes": ["DiscountApplication", "AcceptableApplication"],
+      "facts": {
+        "applicationNumber": "APP202606010002",
+        "applicationDate": "2026-06-01",
+        "applicationStatus": "已提交",
+        "expectedDiscountAmount": 1188000
+      }
+    }
+  ],
+  "relations": [
+    {"prop": "hasAcceptor", "from": "indBill2", "to": "indAcc2"},
+    {"prop": "currentHolder", "from": "indBill2", "to": "indH10"},
+    {"prop": "initiatedBy", "from": "indApp2", "to": "indH10"},
+    {"prop": "targetsBill", "from": "indApp2", "to": "indBill2"}
+  ],
+  "query": "评估该 AAA 承兑人票据的贴现资格：R1 持票核对是否通过？R4 是否推导可贴现？给出逐条规则依据。"
+}

@@ -1,0 +1,36 @@
+# 套件验收 CI（N4/N5）——开源发布后随仓库启用（当前发布暂缓，本文件为工程资产，不本地运行）。
+# 前提：套件根 = 仓库根（checkout 后 requirements.txt / scripts/ / examples/ 在根）。
+# Java 25 = Pellet 硬要求（skills/ontology-model/references/reasoner-limits.md §一）；
+# Pellet/HermiT jar 随 owlready2 pip 包内置，无需单独下载。
+# node 20 = review self_test E9 模板 JS 语法检查（缺失时 E9 降级 skip，不阻塞）。
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  suite-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Suite acceptance (T1-T10 + py_compile)
+        run: python scripts/run_suite_tests.py

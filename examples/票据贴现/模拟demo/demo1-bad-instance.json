@@ -1,0 +1,30 @@
+{
+  "scenario": "臆造拦截负路 fixture：故意编造类/属性/受控值/derived 断言/悬空引用，全链验证 check_instance 的 E01-E09",
+  "individuals": [
+    {
+      "name": "indBillX",
+      "classes": ["FooBar"],
+      "facts": {"fakeAttr": "臆造属性", "faceAmount": "五十万"}
+    },
+    {
+      "name": "indAccX",
+      "classes": ["Acceptor"],
+      "facts": {"creditRating": "B"}
+    },
+    {
+      "name": "indBad1",
+      "classes": ["NonDiscountable"],
+      "facts": {}
+    },
+    {
+      "name": "indBad1",
+      "classes": ["Bill"],
+      "facts": {}
+    }
+  ],
+  "relations": [
+    {"prop": "hasAcceptor", "from": "indBillX", "to": "ghostInd1"},
+    {"prop": "telepathyLink", "from": "indBillX", "to": "indAccX"}
+  ],
+  "query": "负路校验"
+}

@@ -1,0 +1,128 @@
+{
+ "instance": "demo4-instance.json",
+ "scenario": "虚构画像：某小微贸易公司经两手背书持有票面 30 万、承兑人 AAA 级的票据，持票人已完成 R2 间隔核对后拟申请贴现 29.7 万——期望 R1 持票核对通过、R4 推导可贴现、R7 两手背书链衔接连续（R3 评级条件不满足、R5 面额 30 万不触发，均不预期命中）。编译登记：①画像概念「银行承兑汇票」无本体承载——Bill 范围收窄为商业承兑汇票（8.4 明确不建模分支类），票据类型维度未编译，其余票据事实按 Bill 根类承载；②画像概念「票据质押/当前无质押状态」无本体承载，未编译；③「出票收款人」身份无本体承载（出票侧不建模，与 R7 首手核对缺口同源）——甲按链首背书人个体承载；④AcceptableApplication（应用层降级契约类）断言依据：画像明示应用层 R2 双条件核对已完成——申请日 2026-08-10 早于到期日 2026-12-10 且间隔 122 天 ≥ 15 天；⑤applicationStatus 按画像「拟申请」取语义最近枚举值「已提交」；⑥画像未提供申请编号，applicationNumber 为编译生成的格式合规占位（ZX+日期+4 位序号）；⑦持票与申请发起主体按背书链末手映射为该公司个体（财务专员为自然人经办角色，Holder 建模为企业，未单独建模）；⑧画像仅提供虚构代称（甲/乙/某小微贸易公司），enterpriseName/unifiedSocialCreditCode 未编译。",
+ "query": "评估这张 AAA 承兑人票据的贴现资格——持票核对是否通过、可贴现推导是否成立、背书链是否连续。",
+ "ontology": {
+  "ttl": "../建模run/ontology.ttl",
+  "sha": "ec85ca9598b4"
+ },
+ "consistency": "consistent",
+ "inconsistency_detail": null,
+ "materialize": {
+  "tag": "full",
+  "asserted": 581,
+  "after": 584,
+  "diff_inferred": 3,
+  "retracted": 0,
+  "bnode_subject": 0,
+  "inconsistent": null,
+  "t_load": 0.0,
+  "t_sync": 7.5
+ },
+ "inferred": [
+  {
+   "subject": "indApp3",
+   "predicate": "type",
+   "object": "ValidApplication",
+   "raw": "<http://example.org/bill-discount#indApp3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/bill-discount#ValidApplication> .",
+   "instance_level": true,
+   "attribution": [
+    "ruleR1"
+   ]
+  },
+  {
+   "subject": "indBill4",
+   "predicate": "type",
+   "object": "Discountable",
+   "raw": "<http://example.org/bill-discount#indBill4> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/bill-discount#Discountable> .",
+   "instance_level": true,
+   "attribution": [
+    "ruleR4"
+   ]
+  },
+  {
+   "subject": "indEnd20",
+   "predicate": "isUpstreamOf",
+   "object": "indEnd21",
+   "raw": "<http://example.org/bill-discount#indEnd20> <http://example.org/bill-discount#isUpstreamOf> <http://example.org/bill-discount#indEnd21> .",
+   "instance_level": true,
+   "attribution": [
+    "ruleR7"
+   ]
+  }
+ ],
+ "attribution_summary": {
+  "ruleR1": 1,
+  "ruleR4": 1,
+  "ruleR7": 1
+ },
+ "attribution_mode": "rules",
+ "rules_total": 5,
+ "label_map": {
+  "AcceptableApplication": "可受理申请",
+  "Acceptor": "承兑人",
+  "ApplicationUnderReview": "审核中申请",
+  "Bill": "票据",
+  "DiscountApplication": "贴现申请",
+  "Discountable": "可贴现票据",
+  "EndorsementRecord": "背书记录",
+  "Holder": "持票人",
+  "NonDiscountable": "禁止贴现票据",
+  "ValidApplication": "有效申请",
+  "currentHolder": "当前持票人",
+  "hasAcceptor": "票据承兑人",
+  "hasDiscountApplication": "票据的贴现申请",
+  "hasEndorsee": "被背书人",
+  "hasEndorsementRecord": "票据背书记录",
+  "hasEndorser": "背书人",
+  "initiatedBy": "申请发起人",
+  "isUpstreamOf": "链上游背书记录",
+  "targetsBill": "针对票据",
+  "applicationDate": "申请日期",
+  "applicationNumber": "申请编号",
+  "applicationStatus": "申请状态",
+  "billNumber": "票号",
+  "creditRating": "信用等级",
+  "dueDate": "到期日期",
+  "endorsementDate": "背书日期",
+  "endorsementSequenceNo": "背书序号",
+  "enterpriseName": "企业名称",
+  "expectedDiscountAmount": "期望贴现金额",
+  "faceAmount": "票面金额",
+  "issueDate": "出票日期",
+  "unifiedSocialCreditCode": "统一社会信用代码",
+  "ruleR1": "R1 发起人持票核对规则",
+  "ruleR3": "R3 A 级禁止贴现规则",
+  "ruleR4": "R4 AAA 可贴现规则（G1-Q1 收窄版）",
+  "ruleR5": "R5 小额票据不入贴现池规则",
+  "ruleR7": "R7 背书链有效衔接推导规则"
+ },
+ "notes": [
+  {
+   "level": "warning",
+   "code": "W08",
+   "message": "属性 billNumber 为具名 datatype BillNumberFormat（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 'PJ2026071000099' 未验证"
+  },
+  {
+   "level": "warning",
+   "code": "W08",
+   "message": "属性 faceAmount 为具名 datatype PositiveAmount（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 300000 未验证"
+  },
+  {
+   "level": "warning",
+   "code": "W08",
+   "message": "属性 applicationNumber 为具名 datatype ApplicationNumberFormat（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 'ZX202608100001' 未验证"
+  },
+  {
+   "level": "warning",
+   "code": "W08",
+   "message": "属性 expectedDiscountAmount 为具名 datatype PositiveAmount（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 297000 未验证"
+  },
+  "canonicalize 缓存命中（sha=ec85ca9598b4）"
+ ],
+ "cache": {
+  "dir": ".sim-cache",
+  "hit": true,
+  "t_canonical": 0.0
+ }
+}

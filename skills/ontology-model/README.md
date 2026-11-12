@@ -1,0 +1,133 @@
+# ontology-model：自动化本体建模 skill
+
+> 把「7+1」29 句话业务描述集编译为符合 W3C 语义规范（RDF/OWL/SKOS/SWRL）的结构化本体模型（Turtle），全程带主动语义校验与人工闸门。
+> 当前版本见 SKILL.md frontmatter；版本历史与构建档案见 `CHANGELOG.md`。方法论执行依据=`references/methodology-core.md`（自包含内核）；vault 卡簇溯源见 `references/methodology-index.md`（可选附录）。
+> **本文件=人类手册**（三受众拆分：SKILL.md=LLM 执行契约 / README=人类手册 / CHANGELOG=构建档案）。
+
+## 一、解决什么问题
+
+其他业务场景需要快速完成初期本体建模时，不依赖「LLM 即兴发挥」，而是走一条**可复现、可校验、可审计**的管线。两项核心能力：
+
+1. **语义转化**：自然语言业务描述（29 句话框架）→ RDF/OWL/SKOS/SWRL 形式化构件，每个构件可回溯到输入源句
+2. **主动校验**：生成过程中检出规则冲突、关系矛盾、属性特征冲突、datatype 陷阱——机械脚本（形式层）+ 双模型博弈（语义层）+ 推理机（一致性层）三道防线
+
+## 二、架构：三层边界
+
+```
+┌─ 人工争议层 ─ G1 准入 / G2 仲裁 / G3 终审（停等，禁代签）
+├─ LLM 语义层 ─ ontology-generator 生成/辩护 ⇄ ontology-auditor 审计（须不同模型）
+│               四元组缺陷报告；博弈 ≤3 轮；Claude Code 参考实现=opus/sonnet
+└─ 机械形式层 ─ validate_ontology.py（L1/L2 结构）+ check_consistency.py（L3 Pellet/HermiT）
+                + report_topology.py（S5 文本拓扑）；error 直返不占博弈轮次
+```
+
+分工原则：脚本做机械操作，LLM 做语义操作，人只做业务裁量与方法论裁定。技术事实争议（引擎行为/规范语义）由主会话构造**最小实验实测定案**，以证据+结论留 G2 备案，不消耗人工仲裁。
+
+## 三、管线速览（S0-S6 + G1-G3）
+
+| Stage | 内容 | 产物 |
+|---|---|---|
+| S0 | 准入评估：定入口模式 (a)/(b)/(c)，所有裁剪显式登记 | run-manifest.md |
+| S1 | 三维萃取（对象-任务-规则），仅入口 (a)；统一模板结构化输入走 S1' 机械映射档 | 萃取草稿 |
+| S2 | 「7+1」29 句话组装+术语词典 | 29句话描述集.md / 术语词典.md |
+| **G1** | **人工闸门**：四标准（清晰/正确/完备/极简）两段评审，冻结描述集 | G1初审checklist.md |
+| S3 | generator 编译 29 句→Turtle（只读输入契约，编译官不自带正确性保证） | ontology.ttl / 建模方案.md |
+| S4 | 机械脚本先行→auditor 三维度审计（四元组）→generator 辩护/修订，≤3 轮 | 缺陷报告.md |
+| **G2** | **人工闸门**：A/B 争议仲裁（一致时自动通过，备案留痕） | manifest 登记 |
+| S5 | 结构把关：可视化三步 checklist（无 Protégé 降级文本拓扑） | S5拓扑报告.md |
+| S6 | 黄金用例业务验收：专家种子+AI 扩展矩阵→实例级推理→四类失败归因→80%→90% 闭环 | 黄金用例集.md / 测试报告.md |
+| **G3** | **人工闸门**：验收终审（含代拟用例的专家确认） | manifest 收卷 |
+
+**入口模式**：(a) 原始业务资料→全管线；(b) 已有 29 句描述集→跳 S1（含基线迭代变体）；(c) 既有 TTL→只跑 S4 审计起。盲测对照=辅助验证模式（非默认路径，以历史人工方案为对照基准校准能力时启用）。
+
+**交付 8 件套**：ontology.ttl / 建模方案.md / 29句话描述集.md / 术语词典.md / 缺陷报告.md / 黄金用例集.md / 测试报告.md / run-manifest.md；第 9 件（可选）=生产化交接说明（进入生产化消费时必产）。
+
+## 四、如何使用
+
+触发：`/ontology-model` + 场景资料或描述集路径。
+
+**run 根目录（runs_root）解析顺序**：①调用时显式指定 → ②环境变量 `ONTOLOGY_RUNS_ROOT` → ③下方「环境与目录约定」默认。run 目录=`<runs_root>/<场景名>_<YYYYMMDD>/`，按三区结构（交付物/过程/实验）组织。**真实业务敏感场景必须指定受控目录**（不进版本控制/不进入对外分发通道；S0 登记，见 `references/sensitivity-rules.md`）。
+
+### 人的四个输入点（按价值排序）
+
+1. **G1 准入评审**：业务专家对 29 句话描述集做四标准复核+待确认项裁定——输入契约质量决定全管线质量上限
+2. **S6 黄金用例**：**业务专家直接提供用例三元组（场景+核心问题+预期结果）≥5 条为首选路径**；专家缺位时主会话代拟并强制标注「代拟待专家确认」（推导源限定为描述集核心业务问题清单，禁止从本体反推；负向用例由异构 auditor 契约补位），G3 终审时专家确认
+3. **G2 争议仲裁**：仅业务裁量与方法论修订需人工；技术事实走实测定案通道
+4. **G3 验收终审**：测试报告+拓扑报告人工抽核，通过后交付
+
+## 五、语义覆盖矩阵（7 类语义×承接形态）
+
+| 描述集类别 | 承接形态 | 构件/落位 |
+|---|---|---|
+| 1 对象描述类 | **编译进 TTL** | owl:Class / DatatypeProperty / ObjectProperty（domain/range） |
+| 2 分层约束类 | **编译进 TTL** | subClassOf / equivalentClass / AllDisjointClasses / Restriction / cardinality |
+| 3 术语类 | **编译进 TTL** | skos:Concept（prefLabel/altLabel/definition/broader） |
+| 4 控制规则类 | **编译进 TTL** | swrl:Imp + 结论类 disjoint；违反处置动作（4.3）登记于 md 处置档 |
+| 5 流程活动类 | **md 扩展位登记** | BPMN2.0+OWL-S（IOPE）扩展位；四要素表进建模方案 |
+| 6 权限管控类 | **md 扩展位登记** | ODRL 扩展位；角色-动作三档表进建模方案 |
+| 7 CRUD 查询类 | **md 扩展位登记** | SPARQL 扩展位；查询意图表由 S6 黄金用例直接消费 |
+
+- 「+1 目标评估」=消费链路治理登记（md，G1 必填，反博物馆），不产本体构件。
+- 清单参数运算与数值评分=**不承接**（数据层/应用层职责，本体只登记结构位与受控词表）。
+- **扩展位路线图**：BPMN2.0/ODRL/SPARQL 形式化为 MVP 后能力，无排期承诺；启用条件=消费场景提出形式化硬需求且经 G1 范围评审。
+
+## 六、验证体系（L1-L4）
+
+| 层 | 工具 | 覆盖 |
+|---|---|---|
+| L1 | rdflib | Turtle 语法解析+标准前缀 IRI 字节级校验（L1-PREFIX） |
+| L2 | validate_ontology.py | 循环继承/属性特征矛盾/domain-range 悬挂/disjoint∧subClassOf/具名枚举 datatype 陷阱/SWRL 结构 |
+| L3 | check_consistency.py（owlready2+Java） | Pellet/HermiT 一致性推理含 SWRL；三级降级链（Pellet 全量→HermiT→剥离 SWRL），swrl_verified 字段登记档位 |
+| L4 | Protégé/pySHACL | 可选位（当前环境未启用） |
+
+**引擎限制**：限制①-⑭清单、削减实验矩阵、三级降级链与 L2/L3 分工的自包含登记=`references/reasoner-limits.md`（执行与失败归因必读；引擎版本变更须逐项复核）。要点：限制⑨=具名枚举 datatype Pellet 值空间判空→唯一兼容形态=range 内联匿名 oneOf（补 rdf:type rdfs:Datatype 为标准推荐形）；限制⑩=facet 具名 datatype 模式层兼容/实例层假不一致→S6 执行器剥离降级（内联 oneOf 保留，实例层有真强制力）；限制⑭=canonical 确定性档内置+孤立场景失灵由并发压力用例承载验收。
+
+## 七、环境与目录约定
+
+**依赖**：python3（3.9+）+ rdflib + owlready2 + JRE（HermiT 需 Java ≥17；**Pellet 需 Java ≥25**——`find_java()` 自动选本机最高版本，环境变量 `OWL_JAVA_EXE` 可显式覆盖）。node 仅 ontology-review 回归层语法检查项需要。L3 不可用时自动降级 L2 并登记 manifest，不阻塞交付。
+
+**目录约定（按部署环境）**：
+
+| 环境 | runs_root 默认 | 敏感场景受控目录 |
+|---|---|---|
+| 知识库集成环境 | `<知识库根>/runs/`（或 `ONTOLOGY_RUNS_ROOT` 指定） | 版本控制忽略区 |
+| 独立部署/套件 | 建议 `./runs/`（或 `ONTOLOGY_RUNS_ROOT` 指定） | 任何不进版本控制、不进入对外分发通道的目录 |
+
+**回归与验收**：脚本级单测记录见 CHANGELOG；套件级验收（T1-T10）以 `examples/` 虚构示例载体为 fixture——ontology-review `scripts/self_test.py --runs <fixture run>` 为机械回归入口（fixture 显式传入或经环境变量 `ONTOLOGY_SELFTEST_RUNS`）。
+
+## 八、目录结构（skill 根）
+
+```
+ontology-model/
+├── SKILL.md                  # 管线编排主入口（LLM 执行契约）
+├── README.md                 # 本文件（人类手册）
+├── CHANGELOG.md              # 版本历史+构建档案（执行不依赖）
+├── references/               # methodology-core（方法论内核）/ reasoner-limits（引擎限制）
+│                             # / methodology-index（vault 溯源附录）/ fibo-guide（公共层对齐）
+│                             # / structure-patterns（结构骨架，[verified]/[provisional] 标注）
+│                             # / sensitivity-rules（敏感纪律）/ structured-input-mapping（S1' 映射）
+├── assets/                   # 12 模板：29句话/术语词典/生成·审计·辩护 Prompt/缺陷报告
+│                             # /黄金用例/建模方案/可视化 checklist/闸门呈报件/生产化交接/还原率对照
+└── scripts/                  # validate_ontology / check_consistency / report_topology
+                              # / run_golden_cases / closeout_check
+```
+
+配套 agents（Claude Code 形态，部署于 `.claude/agents/`）：ontology-generator（model: opus，生成/辩护，只在 run 目录写）/ ontology-auditor（model: sonnet，只读审计，四元组强制格式，黑盒思维）。**平台中立纪律**：生成/审计两角色须不同模型（铁律 4）；opus/sonnet 为 Claude Code 参考实现别名，其他平台适配见套件 `agents/README.md`。
+
+## 九、铁律（摘自 SKILL.md）
+
+1. 人工闸门必须停等，授权代跑须用户显式给出且范围限定（subagent 报告无用户权威）
+2. 产物永不写入 skill 目录；skill 资产永不写真实业务数据，配例一律虚构中性
+3. 不补造：输入未覆盖的知识不进本体，缺失登记「待确认项」
+4. 双模型异构（平台中立）：生成与审计两角色须由不同模型承担（Claude Code 参考实现 opus/sonnet）
+5. 失败归因先于修改：削减实验定根因，禁盲改本体/用例
+6. 方法论内核是执行权威：内核与源卡片冲突时回报用户裁定，不径改径行
+
+## 十、姊妹 skill
+
+- **ontology-review**：8 件套→业务专家单文件审阅页+意见回流（入口 (c) 或下轮 G1/S2）
+- **ontology-simulate**：专家复核过的本体→what-if 物化推演+A/B 三臂实证
+
+## English Summary
+
+**ontology-model** compiles a "7+1" 29-sentence business description set into a W3C-compliant Turtle ontology (RDF/OWL/SKOS/SWRL) through a reproducible, auditable pipeline: S0-S6 stages with three human gates (G1 admission / G2 arbitration / G3 acceptance), heterogeneous dual-model quality control (the generator and auditor roles MUST run on different models; `opus`/`sonnet` are the Claude Code reference aliases, not a platform binding), three-layer mechanical validation (L1 rdflib syntax / L2 structural checks / L3 Pellet-HermiT consistency including SWRL; Pellet requires Java ≥25), and golden-case business acceptance (≥80% pass rate, converging to 90%). Delivers an 8-piece run package; every construct traces back to an input source sentence. Execution contract: `SKILL.md`; human manual: this file; build archive: `CHANGELOG.md`.

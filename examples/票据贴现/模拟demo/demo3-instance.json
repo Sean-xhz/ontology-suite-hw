@@ -1,0 +1,65 @@
+{
+  "scenario": "虚构画像：小额票据+三手完整背书链——面额 8 万触发 R5 小额不入池（处置档仅登记），三手背书链序号相邻且前手被背书人=后手背书人，期望 R7 推导相邻衔接与传递闭包",
+  "individuals": [
+    {
+      "name": "indBill3",
+      "classes": ["Bill"],
+      "facts": {
+        "billNumber": "PJ2026062000078",
+        "faceAmount": 80000,
+        "issueDate": "2026-06-20",
+        "dueDate": "2026-12-20"
+      }
+    },
+    {
+      "name": "indAcc3",
+      "classes": ["Acceptor"],
+      "facts": {"creditRating": "AA"}
+    },
+    {
+      "name": "indH20",
+      "classes": ["Holder"]
+    },
+    {
+      "name": "indH21",
+      "classes": ["Holder"]
+    },
+    {
+      "name": "indH22",
+      "classes": ["Holder"]
+    },
+    {
+      "name": "indH23",
+      "classes": ["Holder"]
+    },
+    {
+      "name": "indEnd10",
+      "classes": ["EndorsementRecord"],
+      "facts": {"endorsementSequenceNo": 1, "endorsementDate": "2026-07-01"}
+    },
+    {
+      "name": "indEnd11",
+      "classes": ["EndorsementRecord"],
+      "facts": {"endorsementSequenceNo": 2, "endorsementDate": "2026-07-15"}
+    },
+    {
+      "name": "indEnd12",
+      "classes": ["EndorsementRecord"],
+      "facts": {"endorsementSequenceNo": 3, "endorsementDate": "2026-08-01"}
+    }
+  ],
+  "relations": [
+    {"prop": "hasAcceptor", "from": "indBill3", "to": "indAcc3"},
+    {"prop": "currentHolder", "from": "indBill3", "to": "indH23"},
+    {"prop": "hasEndorsementRecord", "from": "indBill3", "to": "indEnd10"},
+    {"prop": "hasEndorsementRecord", "from": "indBill3", "to": "indEnd11"},
+    {"prop": "hasEndorsementRecord", "from": "indBill3", "to": "indEnd12"},
+    {"prop": "hasEndorser", "from": "indEnd10", "to": "indH20"},
+    {"prop": "hasEndorsee", "from": "indEnd10", "to": "indH21"},
+    {"prop": "hasEndorser", "from": "indEnd11", "to": "indH21"},
+    {"prop": "hasEndorsee", "from": "indEnd11", "to": "indH22"},
+    {"prop": "hasEndorser", "from": "indEnd12", "to": "indH22"},
+    {"prop": "hasEndorsee", "from": "indEnd12", "to": "indH23"}
+  ],
+  "query": "评估该三手背书小额票据：背书链是否连续（R7 衔接与传递闭包）？小额面额的处置档结论是什么？AA 级承兑人的开放世界语义如何登记？"
+}

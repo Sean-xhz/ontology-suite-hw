@@ -1,0 +1,14 @@
+{
+  "export_date": "2026-11-04T15:00:00+08:00",
+  "run_dir": "/虚构测试/票据贴现_20261026",
+  "baseline": {"ttl": {"path": "ontology.ttl", "sha": "abc123def456"}},
+  "opinions": [
+    {"target": "rule:ruleR3", "kind": "rule", "id": "ruleR3", "label": "R3 A 级禁止贴现规则",
+     "locate": "规则", "opinion": "A 级票据在我行业务里允许贴现但需线下审批加签，不是一律禁止——规则结论过严。",
+     "suggest": "改为「A 级需人工加签后可贴现」，结论类换成 ConditionalDiscountable。",
+     "severity": "严重", "ts": "2026-11-04T14:50:00+08:00"},
+    {"target": "class:Holder", "kind": "class", "id": "Holder", "label": "持票人",
+     "locate": "类", "opinion": "持票人角色描述未提「委托代收」场景，术语表里应补同义词。",
+     "suggest": "", "severity": "建议", "ts": "2026-11-04T14:52:00+08:00"}
+  ]
+}

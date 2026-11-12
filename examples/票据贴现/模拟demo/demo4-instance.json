@@ -1,0 +1,130 @@
+{
+  "scenario": "虚构画像：某小微贸易公司经两手背书持有票面 30 万、承兑人 AAA 级的票据，持票人已完成 R2 间隔核对后拟申请贴现 29.7 万——期望 R1 持票核对通过、R4 推导可贴现、R7 两手背书链衔接连续（R3 评级条件不满足、R5 面额 30 万不触发，均不预期命中）。编译登记：①画像概念「银行承兑汇票」无本体承载——Bill 范围收窄为商业承兑汇票（8.4 明确不建模分支类），票据类型维度未编译，其余票据事实按 Bill 根类承载；②画像概念「票据质押/当前无质押状态」无本体承载，未编译；③「出票收款人」身份无本体承载（出票侧不建模，与 R7 首手核对缺口同源）——甲按链首背书人个体承载；④AcceptableApplication（应用层降级契约类）断言依据：画像明示应用层 R2 双条件核对已完成——申请日 2026-08-10 早于到期日 2026-12-10 且间隔 122 天 ≥ 15 天；⑤applicationStatus 按画像「拟申请」取语义最近枚举值「已提交」；⑥画像未提供申请编号，applicationNumber 为编译生成的格式合规占位（ZX+日期+4 位序号）；⑦持票与申请发起主体按背书链末手映射为该公司个体（财务专员为自然人经办角色，Holder 建模为企业，未单独建模）；⑧画像仅提供虚构代称（甲/乙/某小微贸易公司），enterpriseName/unifiedSocialCreditCode 未编译。",
+  "individuals": [
+    {
+      "name": "indBill4",
+      "classes": [
+        "Bill"
+      ],
+      "facts": {
+        "billNumber": "PJ2026071000099",
+        "faceAmount": 300000,
+        "issueDate": "2026-07-10",
+        "dueDate": "2026-12-10"
+      }
+    },
+    {
+      "name": "indAcc4",
+      "classes": [
+        "Acceptor"
+      ],
+      "facts": {
+        "creditRating": "AAA"
+      }
+    },
+    {
+      "name": "indH30",
+      "classes": [
+        "Holder"
+      ]
+    },
+    {
+      "name": "indH31",
+      "classes": [
+        "Holder"
+      ]
+    },
+    {
+      "name": "indH32",
+      "classes": [
+        "Holder"
+      ]
+    },
+    {
+      "name": "indEnd20",
+      "classes": [
+        "EndorsementRecord"
+      ],
+      "facts": {
+        "endorsementSequenceNo": 1,
+        "endorsementDate": "2026-07-20"
+      }
+    },
+    {
+      "name": "indEnd21",
+      "classes": [
+        "EndorsementRecord"
+      ],
+      "facts": {
+        "endorsementSequenceNo": 2,
+        "endorsementDate": "2026-08-05"
+      }
+    },
+    {
+      "name": "indApp3",
+      "classes": [
+        "DiscountApplication",
+        "AcceptableApplication"
+      ],
+      "facts": {
+        "applicationNumber": "ZX202608100001",
+        "applicationDate": "2026-08-10",
+        "applicationStatus": "已提交",
+        "expectedDiscountAmount": 297000
+      }
+    }
+  ],
+  "relations": [
+    {
+      "prop": "hasAcceptor",
+      "from": "indBill4",
+      "to": "indAcc4"
+    },
+    {
+      "prop": "currentHolder",
+      "from": "indBill4",
+      "to": "indH32"
+    },
+    {
+      "prop": "hasEndorsementRecord",
+      "from": "indBill4",
+      "to": "indEnd20"
+    },
+    {
+      "prop": "hasEndorsementRecord",
+      "from": "indBill4",
+      "to": "indEnd21"
+    },
+    {
+      "prop": "hasEndorser",
+      "from": "indEnd20",
+      "to": "indH30"
+    },
+    {
+      "prop": "hasEndorsee",
+      "from": "indEnd20",
+      "to": "indH31"
+    },
+    {
+      "prop": "hasEndorser",
+      "from": "indEnd21",
+      "to": "indH31"
+    },
+    {
+      "prop": "hasEndorsee",
+      "from": "indEnd21",
+      "to": "indH32"
+    },
+    {
+      "prop": "initiatedBy",
+      "from": "indApp3",
+      "to": "indH32"
+    },
+    {
+      "prop": "targetsBill",
+      "from": "indApp3",
+      "to": "indBill4"
+    }
+  ],
+  "query": "评估这张 AAA 承兑人票据的贴现资格——持票核对是否通过、可贴现推导是否成立、背书链是否连续。"
+}

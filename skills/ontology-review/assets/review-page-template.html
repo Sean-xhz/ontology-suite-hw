@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本体审阅页 · __RUN_NAME__</title>
+<style>
+:root{
+  --bg:#f7f8fa; --panel:#fff; --ink:#1c2733; --muted:#66788a;
+  --line:#dfe5ec; --accent:#2563eb; --accent-soft:#e8effd;
+  --sev-high:#c62828; --sev-mid:#b45309; --sev-low:#15803d;
+  --chip:#eef1f5;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+header{background:var(--panel);border-bottom:1px solid var(--line);
+  padding:14px 22px;position:sticky;top:0;z-index:50}
+header h1{margin:0;font-size:18px}
+header .sub{color:var(--muted);font-size:12px;margin-top:2px}
+.badges{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+.badge{background:var(--chip);border-radius:10px;padding:1px 10px;font-size:12px;color:var(--muted)}
+.badge b{color:var(--ink)}
+nav{display:flex;gap:2px;flex-wrap:wrap;padding:0 22px;background:var(--panel);
+  border-bottom:1px solid var(--line);position:sticky;top:76px;z-index:49}
+nav a{padding:8px 14px;text-decoration:none;color:var(--muted);font-size:13px;
+  border-bottom:2px solid transparent}
+nav a:hover,nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+main{max-width:1080px;margin:0 auto;padding:18px 22px 60px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:18px 20px;margin-bottom:18px}
+section>h2{margin:0 0 4px;font-size:16px;border-left:4px solid var(--accent);
+  padding-left:10px}
+section .hint{color:var(--muted);font-size:12px;margin:0 0 12px;padding-left:14px}
+#cy{width:100%;height:520px;border:1px solid var(--line);border-radius:8px;
+  background:#fff}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:600;white-space:nowrap}
+tr:hover td{background:#f2f6ff}
+/* 宽表横向滚动容器：公理/关系表列多且内容长，窄屏下不撑破页面 */
+.tbl-wrap{overflow-x:auto;margin:8px 0;border-radius:6px}
+.tbl-wrap table{margin:0;min-width:720px}
+/* 批注列 sticky 右置（AG1 第二轮问题③：无需横向拖到最右即可点批注） */
+.tbl-wrap th.stick,.tbl-wrap td.stick{position:sticky;right:0;z-index:2;
+  box-shadow:-6px 0 6px -6px rgba(20,30,40,.18)}
+.tbl-wrap th.stick{background:#dce7fb}
+.tbl-wrap td.stick{background:var(--panel)}
+.tbl-wrap tr:hover td.stick{background:#f2f6ff}
+/* 紧凑单元格：长文本 3 行截断 + title 悬停全文（问题③表格比例）。
+   截断必须挂内层 div：line-clamp 依赖 display:-webkit-box，若直接加在 td 上
+   会覆盖 display:table-cell 破坏表格网格布局（AG1 二轮反馈③异常：内容纵叠、
+   表头错位——注入自测只查数量不查布局的盲区） */
+.tbl-wrap .clip{max-width:230px;overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-all}
+/* 长表折叠：默认前 N 行，展开按钮切换（问题③——评估后选折叠而非分页：
+   审阅常需上下行对照，分页切断对照；折叠不丢信息且可打印全量） */
+.tbl-wrap tr.folded{display:none}
+.tbl-fold{margin:4px 0 10px}
+/* 类分组：按继承根分组，组内按层级缩进（父类→子类）——AG1 第二轮问题②
+   缩进加大到 30px/层 + 左侧层级色条 + 标题树杈符号，层级一眼可辨 */
+.cgroup{margin:18px 0 6px;padding:8px 12px;background:var(--accent-soft);
+  border-radius:8px;font-weight:600;font-size:14px;display:flex;gap:8px;align-items:baseline}
+.cgroup small{color:var(--muted);font-weight:400;font-size:12px}
+/* 选择器带 .rulecard 提权（0,2,0）：否则被后方 .rulecard{margin:10px 0}
+   同特异性覆盖——旧版 18px 缩进即因此从未生效（AG1 二轮注入自测捕获） */
+.rulecard.depth-1{margin-left:30px;border-left:3px solid #93b4f5}
+.rulecard.depth-2{margin-left:60px;border-left:3px solid #b9cdf9}
+.rulecard.depth-3{margin-left:90px;border-left:3px solid #d5e0fb}
+.rulecard.depth-4{margin-left:120px;border-left:3px solid #e6ecfd}
+.rulecard .depth-hint{font-size:11px;color:var(--muted)}
+.rulecard .tw{color:var(--accent);font-weight:700;margin-right:2px}
+/* 已批注构件：按钮变绿并显示条数（问题⑦反显） */
+button.annot.has-op{background:#dcfce7;color:#15803d;font-weight:600}
+.def-missing{color:var(--sev-mid);font-size:12px}
+.variant{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
+.variant .vhead{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:baseline}
+.variant .vhead b{color:var(--ink)}
+/* 规则通俗逻辑层（AG1 第二轮问题④：业务专家默认只看这层，SWRL 折叠） */
+.plain{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
+  padding:10px 12px;margin:8px 0;font-size:13.5px}
+.plain .pl-head{font-weight:600;color:#15803d;font-size:12.5px;margin-bottom:4px}
+.plain ol{margin:4px 0;padding-left:22px}
+.plain li{margin:2px 0}
+.plain .concl{margin-top:6px;padding-top:6px;border-top:1px dashed #bbf7d0;
+  font-weight:600;color:#166534}
+.plain .vars{margin-top:6px;font-size:12px;color:var(--muted)}
+.plain .vars b{color:#333;font-family:ui-monospace,Menlo,monospace}
+.nl-src{font-size:11.5px;color:var(--muted);margin-left:6px}
+details.swrl-det{margin:6px 0}
+details.swrl-det summary{cursor:pointer;font-size:12.5px;color:var(--muted);
+  padding:4px 0;user-select:none}
+details.swrl-det summary:hover{color:var(--accent)}
+/* modal 内既有批注列表（AG1 第二轮问题①：同一构件支持多条批注） */
+#m-existing{margin:6px 0 4px}
+.m-ex-item{border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:6px;padding:6px 10px;margin:6px 0;font-size:12.5px;background:#fafbfd}
+.m-ex-item .ex-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  margin-bottom:2px}
+.m-ex-item .ex-op{color:#333;white-space:pre-wrap}
+.m-ex-item .ex-sug{color:var(--muted);white-space:pre-wrap}
+.m-ex-item button{padding:2px 8px;font-size:11.5px}
+.m-editing{background:#fef3c7;border-radius:6px;padding:4px 10px;font-size:12px;
+  color:#b45309;margin:6px 0;display:none}
+.fam{margin:14px 0 6px;font-weight:600;font-size:14px}
+.fam small{color:var(--muted);font-weight:400}
+.empty{color:var(--muted);font-style:italic;padding:6px 2px}
+.rulecard{border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  margin:10px 0;background:#fcfdff}
+.rulecard .rtitle{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.rulecard .rtitle .tag{font-size:11px;background:var(--accent-soft);
+  color:var(--accent);border-radius:8px;padding:0 8px}
+.rulecard .nl{margin:6px 0;color:#333}
+.swrl{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#f4f6f9;
+  border:1px dashed var(--line);border-radius:6px;padding:8px 10px;margin:6px 0;
+  overflow-x:auto;white-space:pre}
+.swrl .kw{color:var(--accent);font-weight:600}
+.swrl .sep{color:var(--muted)}
+.kv{display:grid;grid-template-columns:84px 1fr;gap:2px 10px;font-size:12.5px;margin:4px 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.side{position:fixed;top:0;right:-420px;width:400px;height:100%;
+  background:var(--panel);border-left:1px solid var(--line);z-index:100;
+  transition:right .18s ease;overflow-y:auto;padding:16px 18px;box-shadow:-4px 0 14px rgba(0,0,0,.06)}
+.side.open{right:0}
+.side h3{margin:0 0 8px;font-size:15px}
+.side .close{position:absolute;top:10px;right:12px;border:0;background:none;
+  font-size:18px;color:var(--muted);cursor:pointer}
+button.annot,button.primary{background:var(--accent);border:0;color:#fff;
+  border-radius:6px;padding:4px 12px;font-size:12.5px;cursor:pointer}
+button.annot{background:var(--chip);color:var(--accent)}
+button.annot:hover,button.primary:hover{filter:brightness(1.06)}
+.modal-mask{position:fixed;inset:0;background:rgba(20,30,40,.35);z-index:200;
+  display:none;align-items:center;justify-content:center}
+.modal-mask.open{display:flex}
+.modal{background:var(--panel);border-radius:10px;width:520px;max-width:92vw;
+  padding:18px 20px;max-height:86vh;overflow-y:auto}
+.modal h3{margin:0 0 10px;font-size:15px}
+.modal textarea{width:100%;min-height:88px;border:1px solid var(--line);
+  border-radius:6px;padding:8px;font-family:inherit;font-size:13px}
+.modal label{display:block;font-size:12.5px;color:var(--muted);margin:8px 0 3px}
+.sev{display:flex;gap:8px}
+.sev label{margin:0;display:flex;align-items:center;gap:4px;color:var(--ink);font-size:13px}
+.op-item{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
+.op-item .target{color:var(--accent);font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.op-item .sevchip{border-radius:8px;padding:0 8px;font-size:11.5px;color:#fff}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
+.derived{opacity:.92}
+.cy-note{font-size:12px;color:var(--muted);margin-top:8px}
+@media print{nav,.side,#cy{display:none}}
+</style>
+<script>__CYTOSCAPE_JS__</script>
+<script>__DAGRE_JS__</script>
+<script>__CYTOSCAPE_DAGRE_JS__</script>
+</head>
+<body>
+<header>
+  <h1>本体审阅页 · __RUN_NAME__</h1>
+  <div class="sub" id="meta"></div>
+  <div class="badges" id="badges"></div>
+</header>
+<nav id="nav">
+  <a href="#sec-graph">① 类图</a>
+  <a href="#sec-classes">② 类与属性</a>
+  <a href="#sec-relations">③ 关系</a>
+  <a href="#sec-axioms">④ 公理</a>
+  <a href="#sec-rules">⑤ 规则</a>
+  <a href="#sec-skos">⑥ 术语</a>
+  <a href="#sec-opinions">⑦ 审阅意见（<span id="op-count">0</span>）</a>
+</nav>
+<main>
+  <section id="sec-graph">
+    <h2>① 类图（点击节点看详情）</h2>
+    <p class="hint">实线=继承（子类→父类）；带标签蓝线=对象属性（域→值域）；虚框=规则结论类（衍生）。</p>
+    <div id="cy"></div>
+    <p class="cy-note" id="cy-note"></p>
+  </section>
+
+  <section id="sec-classes">
+    <h2>② 类与属性</h2>
+    <p class="hint">TTL 结构（权威）+ 建模方案表（专家语言）。衍生类=规则/公理承载，无独立实体表。</p>
+    <div id="classes"></div>
+  </section>
+
+  <section id="sec-relations">
+    <h2>③ 关系（对象属性）</h2>
+    <div id="relations"></div>
+  </section>
+
+  <section id="sec-axioms">
+    <h2>④ 公理（七族）</h2>
+    <p class="hint">约束的行为语义：违反处置列=业务专家核心审阅点。</p>
+    <div id="axioms"></div>
+  </section>
+
+  <section id="sec-rules">
+    <h2>⑤ 推导规则（三层呈现）</h2>
+    <p class="hint">业务审阅只看前两层：①业务陈述（建模方案原文）→ ②通俗逻辑（SWRL 自动翻译：「如果…⇒ 那么…」+ 变量图例）；③技术细节（SWRL 结构）默认折叠，供工程师核对。</p>
+    <div id="rules"></div>
+  </section>
+
+  <section id="sec-skos">
+    <h2>⑥ 术语（SKOS）</h2>
+    <div id="skos"></div>
+  </section>
+
+  <section id="sec-opinions">
+    <h2>⑦ 审阅意见汇总</h2>
+    <p class="hint">点任意构件的「批注」记录意见；同一构件可提交多条（弹窗顶部列既有批注，逐条可编辑/删除）；时间均为北京时间。完成后「导出意见 JSON」交回工程师（回流入口 (c) 或下轮 G1/S2）。</p>
+    <button class="primary" id="export">导出意见 JSON</button>
+    <div id="opinions"></div>
+  </section>
+</main>
+
+<aside class="side" id="side">
+  <button class="close" onclick="closeSide()">✕</button>
+  <div id="side-body"></div>
+</aside>
+
+<div class="modal-mask" id="mask">
+  <div class="modal">
+    <h3 id="m-title">批注</h3>
+    <div class="kv" id="m-target"></div>
+    <div id="m-existing"></div>
+    <div class="m-editing" id="m-editing">正在编辑上方选中的批注——保存将覆盖该条
+      <button class="annot" style="margin-left:8px" onclick="cancelEdit()">回到新增</button></div>
+    <label>意见原文（必填）<span id="m-form-mode" style="color:var(--muted);font-weight:400"></span></label>
+    <textarea id="m-opinion" placeholder="这条构件的业务问题/疑问……"></textarea>
+    <label>建议修改（选填）</label>
+    <textarea id="m-suggest" placeholder="应改为……" style="min-height:56px"></textarea>
+    <label>严重级</label>
+    <div class="sev">
+      <label><input type="radio" name="sev" value="严重" checked>严重（业务错误）</label>
+      <label><input type="radio" name="sev" value="重要">重要（语义偏差）</label>
+      <label><input type="radio" name="sev" value="建议">建议（优化）</label>
+    </div>
+    <div style="margin-top:14px;text-align:right">
+      <button class="annot" onclick="closeModal()">取消</button>
+      <button class="primary" onclick="saveOpinion()" id="m-save">保存为新批注</button>
+    </div>
+  </div>
+</div>
+
+<footer>ontology-review · 单文件审阅页（离线可用） · 意见存于浏览器 localStorage</footer>
+
+<script>
+const DATA = __DATA_JSON__;
+const STORE_KEY = "onto-review-opinions-" + (DATA.meta.run_dir || "").replace(/[^a-z0-9]/gi,"");
+
+// ---------- 渲染头部 ----------
+(function(){
+  const m = DATA.meta, c = DATA.counts;
+  document.getElementById("meta").textContent =
+    (m.sources && m.sources.ttl ? m.sources.ttl.path : "ontology.ttl") +
+    " · 提取 " + new Date().toLocaleString("sv-SE",{timeZone:"Asia/Shanghai"}).slice(0,10);
+  const b = document.getElementById("badges");
+  const items = [["类", c.classes], ["对象属性", c.object_properties],
+    ["数据属性", c.data_properties], ["SWRL 规则", c.swrl_rules],
+    ["SKOS 概念", c.skos_concepts],
+    ["md 解析", m.md_parse_ok ? "✓" : "⚠"]];
+  b.innerHTML = items.map(([k,v]) => `<span class="badge">${k} <b>${v}</b></span>`).join("");
+})();
+
+// ---------- 工具 ----------
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,
+  ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+let opinions = [];
+try { opinions = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e) {}
+
+// 北京时间（AG1 第二轮问题①：原 toISOString 为 UTC，专家读不懂）——
+// ts 仍存 ISO（机器消费），新增 ts_local 北京时间字符串（人读）；
+// sv-SE locale 输出 "YYYY-MM-DD HH:mm:ss" 形态。旧数据无 ts_local 用 fmtBJ 现算。
+function fmtBJ(iso){
+  if(!iso) return "";
+  try { return new Date(iso).toLocaleString("sv-SE", {timeZone:"Asia/Shanghai"}); }
+  catch(e){ return String(iso).slice(0,19).replace("T"," "); }
+}
+function nowStamps(){
+  const d = new Date();
+  let loc;
+  try { loc = d.toLocaleString("sv-SE", {timeZone:"Asia/Shanghai"}); }
+  catch(e){ loc = d.toISOString().slice(0,19).replace("T"," "); }
+  return {ts: d.toISOString(), ts_local: loc};
+}
+
+function refreshOpCount(){
+  document.getElementById("op-count").textContent = opinions.length;
+  renderOpinions();
+  markAnnotated();
+}
+function targetKey(kind, id, extra){ return kind + ":" + id + (extra?":"+extra:""); }
+
+// 多条批注（AG1 第二轮问题①：原实现每构件单条「编辑覆盖」，同一构件无法
+// 提交多条意见）——modal 顶部列该构件全部既有批注（逐条可编辑/删除），
+// 下方表单默认新增态；editingIndex 指向被编辑条，null=新增
+let editingIndex = null;
+function ctxTarget(){ const c = window._m_ctx; return targetKey(c.kind, c.id, c.sub); }
+function renderExisting(){
+  const box = document.getElementById("m-existing");
+  if(!window._m_ctx){ box.innerHTML = ""; return; }
+  const tk = ctxTarget();
+  const mine = opinions.map((o,i)=>[o,i]).filter(([o])=>o.target===tk);
+  if(!mine.length){ box.innerHTML = ""; return; }
+  box.innerHTML = `<div style="font-size:12.5px;color:var(--muted);margin-top:8px">
+    该构件已有 <b>${mine.length}</b> 条批注（逐条可编辑/删除）；下方表单为<b>新增一条</b>：</div>` +
+    mine.map(([o,i])=>`
+    <div class="m-ex-item" style="${editingIndex===i?"border-left-color:#b45309;background:#fffbeb":""}">
+      <div class="ex-head">
+        <span style="background:${sevColor(o.severity)};color:#fff;border-radius:8px;padding:0 8px;font-size:11px">${esc(o.severity)}</span>
+        <small style="color:var(--muted)">${esc(o.ts_local || fmtBJ(o.ts))}</small>
+        <span style="flex:1"></span>
+        <button class="annot" onclick="editInModal(${i})">编辑</button>
+        <button class="annot" onclick="delOpinion(${i},true)">删除</button>
+      </div>
+      <div class="ex-op">${esc(o.opinion)}</div>
+      ${o.suggest?`<div class="ex-sug">建议：${esc(o.suggest)}</div>`:""}
+    </div>`).join("");
+}
+function setFormMode(){
+  const ed = editingIndex !== null;
+  document.getElementById("m-editing").style.display = ed ? "block" : "none";
+  document.getElementById("m-save").textContent = ed ? "保存（覆盖该条）" : "保存为新批注";
+  document.getElementById("m-form-mode").textContent = ed ? "——正在编辑既有批注" : "";
+  document.getElementById("m-title").textContent =
+    (ed ? "编辑批注 · " : "批注 · ") + window._m_ctx.label;
+}
+function clearForm(){
+  document.getElementById("m-opinion").value = "";
+  document.getElementById("m-suggest").value = "";
+  document.querySelectorAll('input[name=sev]').forEach((r,i)=>{ r.checked = (i===0); });
+}
+function openModal(kind, id, label, sub){
+  window._m_ctx = {kind, id, label, sub};
+  editingIndex = null;
+  document.getElementById("m-target").innerHTML =
+    `<dt>构件</dt><dd>${esc(label)}</dd>` +
+    (sub ? `<dt>定位</dt><dd>${esc(sub)}</dd>` : "");
+  clearForm();
+  renderExisting();
+  setFormMode();
+  document.getElementById("mask").classList.add("open");
+  document.getElementById("m-opinion").focus();
+}
+function editInModal(i){
+  const o = opinions[i];
+  if(!o) return;
+  editingIndex = i;
+  document.getElementById("m-opinion").value = o.opinion || "";
+  document.getElementById("m-suggest").value = o.suggest || "";
+  const sev = o.severity || "严重";
+  document.querySelectorAll('input[name=sev]').forEach(r=>{ r.checked = (r.value===sev); });
+  renderExisting(); setFormMode();
+  document.getElementById("m-opinion").focus();
+}
+function cancelEdit(){ editingIndex = null; clearForm(); renderExisting(); setFormMode(); }
+function closeModal(){ document.getElementById("mask").classList.remove("open"); editingIndex = null; }
+function saveOpinion(){
+  const txt = document.getElementById("m-opinion").value.trim();
+  if(!txt){ alert("请填写意见原文"); return; }
+  const sev = document.querySelector('input[name=sev]:checked').value;
+  const c = window._m_ctx;
+  const rec = Object.assign({
+    target: targetKey(c.kind, c.id, c.sub),
+    kind: c.kind, id: c.id, label: c.label, locate: c.sub || "",
+    opinion: txt, suggest: document.getElementById("m-suggest").value.trim(),
+    severity: sev,
+  }, nowStamps());
+  const old = (editingIndex !== null && editingIndex < opinions.length
+               && opinions[editingIndex].target === rec.target)
+              ? opinions[editingIndex] : null;
+  if(old){
+    rec.created_ts = old.created_ts || old.ts;
+    rec.created_local = old.created_local || old.ts_local || fmtBJ(rec.created_ts);
+    opinions[editingIndex] = rec;
+  } else {
+    rec.created_ts = rec.ts;
+    rec.created_local = rec.ts_local;
+    opinions.push(rec);
+  }
+  localStorage.setItem(STORE_KEY, JSON.stringify(opinions));
+  closeModal(); refreshOpCount();
+}
+function delOpinion(i, fromModal){
+  opinions.splice(i,1);
+  localStorage.setItem(STORE_KEY, JSON.stringify(opinions));
+  if(fromModal && document.getElementById("mask").classList.contains("open")){
+    if(editingIndex === i) editingIndex = null;
+    else if(editingIndex !== null && editingIndex > i) editingIndex--;
+    renderExisting(); setFormMode();
+  }
+  refreshOpCount();
+}
+// 已批注构件标绿 + 显示条数（多条批注的视觉线索）
+function markAnnotated(){
+  document.querySelectorAll("[data-annot]").forEach(b=>{
+    if(b.dataset.nomark) return;
+    const n = opinions.filter(o => o.target === targetKey(
+      b.dataset.kind, b.dataset.id, b.dataset.sub||"")).length;
+    b.classList.toggle("has-op", n>0);
+    b.textContent = n>0 ? ("已批注 "+n) : "批注";
+  });
+}
+function jumpTo(anchor){
+  const el = document.getElementById(anchor);
+  if(!el) return;
+  el.scrollIntoView({behavior:"smooth", block:"center"});
+  el.style.transition = "box-shadow .3s";
+  el.style.boxShadow = "0 0 0 3px var(--accent)";
+  setTimeout(()=>{ el.style.boxShadow = ""; }, 1600);
+}
+// 事件委托：所有批注按钮统一走 data-* 属性（避免内联 onclick 的引号转义风险）
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-annot]");
+  if(!b) return;
+  openModal(b.dataset.kind, b.dataset.id, b.dataset.label, b.dataset.sub || "");
+});
+function sevColor(s){
+  return s==="严重" ? "var(--sev-high)" : s==="重要" ? "var(--sev-mid)" : "var(--sev-low)";
+}
+
+// ---------- 通用宽表构建器（AG1 第二轮问题③） ----------
+// 三项体验修复：
+//  1. 批注列 sticky 右置——无需横向拖到最右即可点「批注」
+//  2. 长文本列 3 行截断（CSS clip）+ title 悬停全文——表格比例紧凑
+//  3. 超过 foldN 行默认折叠 + 展开按钮——评估后选折叠而非分页：
+//     审阅常需上下行对照，分页切断对照；折叠不丢信息、可打印全量
+// cols: 表头字符串数组；rows: 每行 = cell 数组（字符串或 {h:html, t:title全文}）
+let tblSeq = 0;
+function wrapTable(cols, rows, opts){
+  opts = opts || {};
+  const foldN = opts.fold || 0;
+  const id = "tbl" + (++tblSeq);
+  const n = cols.length;
+  const head = cols.map((h,i)=>
+    `<th${(opts.stickLast && i===n-1)?' class="stick"':""}>${h}</th>`).join("");
+  const body = rows.map((cells,ri)=>{
+    const folded = (foldN && ri>=foldN) ? ' class="folded"' : "";
+    const tds = cells.map((c,ci)=>{
+      const isStick = opts.stickLast && ci===n-1;
+      const cell = (c && typeof c === "object") ? c : {h: String(c==null?"":c)};
+      // 截断挂内层 div（.clip 的 -webkit-box 不能加在 td 上，见 CSS 注释）
+      const inner = (!isStick && opts.clip!==false && ci>0)
+        ? `<div class="clip">${cell.h}</div>` : cell.h;
+      return `<td${isStick?' class="stick"':""}${
+        cell.t?` title="${esc(cell.t)}"`:""}>${inner}</td>`;
+    }).join("");
+    return `<tr${folded}>${tds}</tr>`;
+  }).join("");
+  const more = (foldN && rows.length>foldN)
+    ? `<div class="tbl-fold"><button class="annot" onclick="toggleFold('${id}',${rows.length},${foldN},this)">共 ${rows.length} 行，展开全部 ▾</button></div>`
+    : "";
+  return `<div class="tbl-wrap"><table id="${id}"><tr>${head}</tr>${body}</table></div>${more}`;
+}
+function toggleFold(id, total, foldN, btn){
+  const t = document.getElementById(id);
+  t.classList.toggle("expanded");
+  const exp = t.classList.contains("expanded");
+  t.querySelectorAll("tr.folded").forEach(tr=>{ tr.style.display = exp ? "" : "none"; });
+  btn.textContent = exp ? `收起（只显示前 ${foldN} 行）▴` : `共 ${total} 行，展开全部 ▾`;
+}
+// ⑦ 区列表的「编辑」：打开该构件 modal 并直接进入该条编辑态
+function editFromList(i){
+  const o = opinions[i];
+  if(!o) return;
+  openModal(o.kind, o.id, o.label || o.id, o.locate || "");
+  editInModal(i);
+}
+function renderOpinions(){
+  const box = document.getElementById("opinions");
+  if(!opinions.length){
+    box.innerHTML = '<p class="empty">暂无意见——在各区点「批注」按钮记录。</p>';
+    return;
+  }
+  box.innerHTML = opinions.map((o,i)=>{
+    const anchor = o.kind==="class" ? "cls-"+(o.id||"")
+      : o.kind==="rule" ? "rule-"+(o.id||"") : "";
+    return `
+    <div class="op-item">
+      <span class="target">${esc(o.kind)} / ${esc(o.id)}${o.locate? " · "+esc(o.locate):""}</span>
+      <span class="sevchip" style="background:${sevColor(o.severity)}">${esc(o.severity)}</span>
+      <small style="color:var(--muted)">${esc(o.ts_local || fmtBJ(o.ts))}（北京时间）</small>
+      <div>${esc(o.opinion)}</div>
+      ${o.suggest? `<div style="color:var(--muted)">建议：${esc(o.suggest)}</div>`:""}
+      <div style="margin-top:4px">
+        ${anchor? `<button class="annot" onclick="jumpTo('${anchor}')">定位</button>`:""}
+        <button class="annot" onclick="editFromList(${i})">编辑</button>
+        <button class="annot" onclick="delOpinion(${i})">删除</button>
+      </div>
+    </div>`;}).join("");
+}
+document.getElementById("export").onclick = function(){
+  const st = nowStamps();
+  const blob = new Blob([JSON.stringify({
+    export_date: st.ts, export_date_local: st.ts_local + "（北京时间）",
+    run_dir: DATA.meta.run_dir, opinions: opinions,
+    baseline: DATA.meta.sources,
+  }, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "审阅意见.json";
+  a.click();
+};
+
+// ---------- ① 类图 ----------
+(function(){
+  const nodes = [], edges = [];
+  DATA.classes.forEach(c=>{
+    nodes.push({data:{id:"c:"+c.ttl.id, label:c.ttl.label||c.ttl.id,
+      kind:"class", derived:!!c.derived}});
+    c.ttl.superclasses.forEach(s=>{
+      if(DATA.classes.some(x=>x.ttl.id===s))
+        edges.push({data:{id:"e-sub-"+c.ttl.id+"-"+s, source:"c:"+c.ttl.id,
+          target:"c:"+s, label:"⊑", kind:"sub"}});
+    });
+  });
+  DATA.object_properties.forEach(p=>{
+    const t=p.ttl;
+    if(!t.domain||!t.range) return;
+    if(!DATA.classes.some(x=>x.ttl.id===t.domain)) return;
+    if(!DATA.classes.some(x=>x.ttl.id===t.range)) return;
+    edges.push({data:{id:"e-op-"+t.id, source:"c:"+t.domain, target:"c:"+t.range,
+      label:(t.label||t.id)+(t.functional?"（N:1）":""), kind:"prop"}});
+  });
+  const cy = cytoscape({
+    container: document.getElementById("cy"),
+    elements: nodes.concat(edges),
+    style: [
+      {selector:"node", style:{label:"data(label)", "text-valign":"bottom",
+        "background-color":"#2563eb", color:"#1c2733",
+        "font-size":11, width:34, height:34,
+        "border-width":1.5, "border-color":"#1d4ed8"}},
+      {selector:"node[derived = true]", style:{"border-style":"dashed",
+        "background-color":"#93b4f5", "border-color":"#6d8bd9"}},
+      {selector:"edge[kind = 'sub']", style:{width:1.6, "line-color":"#8899a8",
+        "target-arrow-color":"#8899a8", "target-arrow-shape":"triangle",
+        "curve-style":"bezier", label:"data(label)", "font-size":9,
+        color:"#66788a", "text-rotation":"autorotate"}},
+      {selector:"edge[kind = 'prop']", style:{width:2, "line-color":"#2563eb",
+        "target-arrow-color":"#2563eb", "target-arrow-shape":"triangle",
+        "curve-style":"bezier", label:"data(label)", "font-size":9.5,
+        color:"#2563eb", "text-rotation":"autorotate"}},
+    ],
+    layout:{name:"dagre", rankDir:"TB", nodeSep:56, rankSep:64},
+  });
+  cy.on("tap","node", function(ev){
+    const id = ev.target.id().replace(/^c:/,"");
+    showClassDetail(id);
+  });
+  document.getElementById("cy-note").textContent =
+    nodes.length + " 节点 / " + edges.length + " 边 · dagre 布局";
+})();
+
+function showClassDetail(cid){
+  const c = DATA.classes.find(x=>x.ttl.id===cid);
+  if(!c) return;
+  const t = c.ttl;
+  let html = `<h3>${esc(t.label||cid)} <small style="color:var(--muted)">:${esc(cid)}</small></h3>`;
+  if(t.comment) html += `<p style="font-size:12.5px;color:#334">${esc(t.comment)}</p>`;
+  html += `<dl class="kv">
+    <dt>父类</dt><dd>${esc(t.superclasses.join("、")||"—")}</dd>
+    <dt>hasKey</dt><dd>${esc(t.hasKey.join("、")||"—")}</dd>
+    ${c.derived?'<dt>性质</dt><dd>规则结论类（衍生，公理/规则承载）</dd>':""}
+  </dl>`;
+  if(c.md_props && c.md_props.length){
+    html += '<div class="tbl-wrap"><table><tr><th>属性</th><th>类型/取值</th><th>约束要点（专家语言）</th></tr>';
+    c.md_props.forEach(mp=>{
+      html += `<tr><td>${esc(mp.prop_cn || mp.prop)}</td><td>${esc(mp.type)}</td><td>${esc(mp.constraint)}</td></tr>`;
+    });
+    html += "</table></div>";
+  } else if(!c.derived){
+    html += '<p class="empty">建模方案无该实体表（md 层缺失）</p>';
+  }
+  const dprops = DATA.data_properties.filter(p=>p.owner===cid);
+  if(dprops.length){
+    html += '<div class="tbl-wrap"><table><tr><th>数据属性</th><th>值域</th><th>枚举</th></tr>';
+    dprops.forEach(p=>{
+      html += `<tr><td>${esc(p.ttl.label||p.ttl.id)}</td><td>${esc(p.ttl.range)}</td>
+        <td>${p.ttl.oneOf_enum? esc(p.ttl.oneOf_enum.join(" / ")) : "—"}</td></tr>`;
+    });
+    html += "</table></div>";
+  }
+  html += `<div style="margin-top:10px">
+    <button class="primary" data-annot data-kind="class" data-id="${esc(cid)}" data-label="${esc(t.label||cid)}" data-sub="类">批注此构件</button>
+  </div>`;
+  const side = document.getElementById("side");
+  document.getElementById("side-body").innerHTML = html;
+  side.classList.add("open");
+}
+function closeSide(){ document.getElementById("side").classList.remove("open"); }
+
+// ---------- ② 类与属性 ----------
+// 按继承根分组、组内先序（父类在前、子类紧随）并缩进——原实现平铺 52 张卡
+// 无层次（问题②）。class_groups 由 review_extract.class_hierarchy 计算。
+// AG1 第二轮问题②：缩进加大 30px/层 + 左层级色条 + 标题 ↳ 前缀 + 父类中文名。
+const CLS_LABEL = {};
+DATA.classes.forEach(c=>{ CLS_LABEL[c.ttl.id] = c.ttl.label || c.ttl.id; });
+function clsLabel(id){ return CLS_LABEL[id] || id || "—"; }
+function renderClassCard(c){
+  const t=c.ttl;
+  const depth = Math.min(c.depth||0, 4);
+  const extras = [];
+  (c.md_props||[]).forEach(mp=>{
+    ((mp.extras)||[]).forEach(([k,v])=>{
+      if(!extras.includes(k)) extras.push(k);
+    });
+  });
+  const heads = ["属性","类型/取值","约束要点","消费级"].concat(extras);
+  const rows = (c.md_props||[]).map(mp=>{
+    const ex = {};
+    ((mp.extras)||[]).forEach(([k,v])=>{ ex[k]=v; });
+    return `<tr><td>${esc(mp.prop_cn || mp.prop)}</td><td>${esc(mp.type)}</td>
+      <td>${esc(mp.constraint)}</td><td>${esc(mp.level)}</td>` +
+      extras.map(k=>`<td>${esc(ex[k]||"—")}</td>`).join("") + "</tr>";
+  }).join("");
+  return `<div class="rulecard depth-${depth}" id="cls-${esc(t.id)}">
+    <div class="rtitle">${depth>0?`<span class="tw">↳</span>`:""}${esc(t.label||t.id)}
+      <span class="tag">:${esc(t.id)}</span>
+      ${depth>0?`<span class="depth-hint">第 ${depth+1} 层 · 上级「${esc(clsLabel(t.superclasses[0]))}」</span>`:""}
+      ${c.derived?'<span class="tag" style="background:#f3e8ff;color:#7c3aed">衍生</span>':""}
+      <button class="annot" data-annot data-kind="class" data-id="${esc(t.id)}"
+        data-label="${esc(t.label||t.id)}" data-sub="类">批注</button>
+    </div>
+    ${t.comment?`<div class="nl" style="font-size:12.5px">${esc(t.comment)}</div>`:""}
+    <dl class="kv"><dt>父类</dt><dd>${esc(t.superclasses.join("、")||"—")}</dd>
+    <dt>hasKey</dt><dd>${esc(t.hasKey.join("、")||"—")}</dd></dl>
+    ${rows? `<div class="tbl-wrap"><table><tr>${heads.map(h=>`<th>${h}</th>`).join("")}</tr>${rows}</table></div>`
+      : (c.derived? `<p class="empty">衍生类（规则/公理承载，无独立实体表）</p>`
+                  : `<p class="empty">建模方案无该实体表（md 层缺失）</p>`)}
+  </div>`;
+}
+(function(){
+  const box = document.getElementById("classes");
+  const byId = {};
+  DATA.classes.forEach(c=>{ byId[c.ttl.id]=c; });
+  const groups = DATA.class_groups || [];
+  if(!groups.length){   // 兜底：无分组数据时退回平铺
+    box.innerHTML = DATA.classes.map(renderClassCard).join("");
+    return;
+  }
+  box.innerHTML = groups.map(g=>{
+    const cards = g.ids.map(id=>byId[id]).filter(Boolean).map(renderClassCard).join("");
+    return `<div class="cgroup">${esc(g.root_label)}
+        <small>${esc(g.root)} · ${g.ids.length} 类</small></div>${cards}`;
+  }).join("");
+})();
+
+// ---------- ③ 关系 ----------
+// 列不写死：md 表头跨 run 漂移（各 run 列数不同），按实际行键动态出列。
+// wrapTable：批注列 sticky + 长文本截断 + 超 12 行折叠（问题③）。
+(function(){
+  const box = document.getElementById("relations");
+  const cols = [];
+  DATA.object_properties.forEach(p=>{
+    Object.keys(p.md||{}).forEach(k=>{ if(!cols.includes(k)) cols.push(k); });
+  });
+  if(!cols.length) cols.push("关系");
+  const rows = DATA.object_properties.map(p=>{
+    const md = p.md||{};
+    const cells = cols.map((c,i)=>{
+      const v = md[c]||"—";
+      return i===0
+        ? {h: `${esc(v)}<br><small style="color:var(--muted)">:${esc(p.ttl.id)}</small>`, t: v}
+        : {h: esc(v), t: v};
+    });
+    cells.push({h: `<button class="annot" data-annot data-kind="object_property"
+      data-id="${esc(p.ttl.id)}" data-label="${esc(p.ttl.label||p.ttl.id)}" data-sub="关系">批注</button>`});
+    return cells;
+  });
+  box.innerHTML = wrapTable(cols.map(esc).concat(["批注"]), rows,
+                            {stickLast:true, fold:12});
+})();
+
+// ---------- ④ 公理七族 ----------
+// wrapTable：批注列 sticky + 长文本截断 + 每族超 8 行折叠（问题③④）
+(function(){
+  const box = document.getElementById("axioms");
+  const famNames = {F:"格式族", L:"逻辑族", C:"治理族", P:"完整性族",
+    X:"行动族", S:"敏感族"};
+  const cols = ["编号","名称","自然语言陈述","形式化表达","判定依据","违反处置","约束等级"];
+  let html = "";
+  ["F","L","C","P","X","S"].forEach(fam=>{
+    const axs = (DATA.axioms||[]).filter(a=>a.family===fam);
+    html += `<div class="fam">${famNames[fam]} <small>（${axs.length} 条）</small></div>`;
+    if(!axs.length){ html += '<p class="empty">空族（设计空置或未启用）</p>'; return; }
+    const rows = axs.map(a=>{
+      const r = a.md||{};
+      const rid = r["编号"]||fam;
+      const cells = cols.map(c=>{
+        const v = r[c]||"—";
+        return c==="形式化表达" ? {h: `<code style="font-size:11.5px">${esc(v)}</code>`, t: v}
+                                : {h: esc(v), t: v};
+      });
+      cells.push({h: `<button class="annot" data-annot data-kind="axiom" data-id="${esc(rid)}"
+        data-label="${esc(r["名称"]||rid)}" data-sub="公理 ${fam} 族">批注</button>`});
+      return cells;
+    });
+    html += wrapTable(cols.concat(["批注"]), rows, {stickLast:true, fold:8});
+  });
+  box.innerHTML = html;
+})();
+
+// ---------- ⑤ 规则三层呈现（AG1 第二轮问题④） ----------
+// 业务专家视角：SWRL 结构看不懂、TTL 注释有门槛 → 三层：
+//  第 1 层「业务陈述」= 建模方案 md 自然语言（专家原文，有则置顶）
+//  第 2 层「通俗逻辑」= plain 字段（review_extract.plain_swrl 从 SWRL 原子
+//          确定性模板翻译：如果①②③ ⇒ 那么…，变量重命名 ?1/?2 + 图例）
+//  第 3 层「技术细节」= SWRL 结构原文，<details> 默认折叠（工程师核对用）
+function renderAtom(a){
+  const pred = a.predicate||"?";
+  const args = (a.arguments||[]).join(", ");
+  return pred + "(" + args + ")";
+}
+// 同一业务规则的多个编译变体（引用通道 ruleR1 与字面量展开通道 ruleR1c，
+// 以及拆分变体 ruleR15a/b…）共享 md 行，原实现逐 TTL imp 出卡 → 多张同名卡片（问题⑤）。
+// 按 md_key 分组成一张卡，变体在卡内逐条列出并标通道。
+function swrlOf(t){
+  const body=(t.body_atoms||[]).map(renderAtom).join("  ∧  ");
+  const head=(t.head_atoms||[]).map(renderAtom).join("  ∧  ");
+  if(!t.body_atoms.length && !t.head_atoms.length)
+    return '<span class="empty">（无 swrl:Imp——应用层承载，如 R2）</span>';
+  return body + "\n    <span class='sep'>⇒</span>  " + head;
+}
+// plain 渲染：条件有序列表 + 结论 + 变量图例
+function plainOf(p){
+  if(!p) return "";
+  const vars = Object.entries(p.vars||{}).map(([k,v])=>
+    `<b>${esc(k)}</b>=${esc(v)}`).join("　");
+  return `<div class="plain">
+    <div class="pl-head">通俗逻辑（由 SWRL 结构自动翻译，供业务审阅）</div>
+    <div>如果同时满足：</div>
+    <ol>${(p.body||[]).map(b=>`<li>${esc(b)}</li>`).join("")}</ol>
+    <div class="concl">⇒ 那么：${(p.head||[]).map(h=>esc(h)).join("，且 ")}</div>
+    ${vars?`<div class="vars">图例：${vars}</div>`:""}
+  </div>`;
+}
+(function(){
+  const box = document.getElementById("rules");
+  const order = [], byKey = {};
+  DATA.rules.forEach(r=>{
+    const k = r.md_key || r.ttl.id;
+    if(!byKey[k]){ byKey[k]=[]; order.push(k); }
+    byKey[k].push(r);
+  });
+  box.innerHTML = order.map(k=>{
+    const vs = byKey[k];
+    // 主变体 = 引用通道优先（字面量展开变体条件更长，语义等价）
+    const main = vs.find(r=>r.channel==="reference") || vs[0];
+    const md = main.md || {};
+    const name = md["名称"] || main.ttl.label || main.ttl.id;
+    const showVariants = vs.length > 1;
+    const techBody = showVariants
+      ? vs.map(r=>`<div class="variant">
+          <div class="vhead"><b>${esc(r.ttl.id)}</b>
+            <span class="tag">${r.channel==="literal"?"字面量展开通道（枚举值内联，语义与引用通道等价）":"引用通道"}</span>
+            ${r.ttl.label && r.ttl.label!==name ? esc(r.ttl.label) : ""}</div>
+          <div class="swrl">${swrlOf(r.ttl)}</div>
+        </div>`).join("")
+      : `<div class="swrl">${swrlOf(main.ttl)}</div>`;
+    const nl = md["自然语言陈述（源 4.1）"];
+    return `<div class="rulecard" id="rule-${esc(k)}">
+      <div class="rtitle">
+        ${esc(name)}
+        <span class="tag">${esc(k)}</span>
+        ${md["约束等级"]?`<span class="tag">${esc(md["约束等级"])}</span>`:""}
+        ${showVariants?`<span class="tag" style="background:#fef3c7;color:#b45309">${vs.length} 个编译变体</span>`:""}
+        <button class="annot" data-annot data-kind="rule" data-id="${esc(k)}"
+          data-label="${esc(name)}" data-sub="规则">批注</button>
+      </div>
+      ${nl?`<div class="nl">${esc(nl)}<span class="nl-src">（建模方案 §4 原文）</span></div>`:""}
+      ${plainOf(main.plain)}
+      <details class="swrl-det"><summary>技术细节：SWRL 结构（工程师核对用，业务审阅可跳过）</summary>
+        ${techBody}</details>
+      <dl class="kv">
+        ${md["违反处置（4.3）"]?`<dt>违反处置</dt><dd>${esc(md["违反处置（4.3）"])}</dd>`:""}
+        ${md["判定依据"]?`<dt>判定依据</dt><dd>${esc(md["判定依据"])}</dd>`:""}
+        ${main.ttl.comment?`<dt>TTL 注释</dt><dd>${esc(main.ttl.comment)}</dd>`:""}
+      </dl>
+    </div>`;
+  }).join("") || '<p class="empty">无 SWRL 规则</p>';
+})();
+
+// ---------- ⑥ SKOS 术语 ----------
+// 定义三源：TTL skos:definition → 术语词典回填 → 都没有则显式标注
+// 「词典未定义」（问题⑥：原实现静默显示「—」，专家无法区分「漏解析」与「真缺」）
+(function(){
+  const box = document.getElementById("skos");
+  if(!DATA.skos.length){ box.innerHTML = '<p class="empty">无 SKOS 概念</p>'; return; }
+  const miss = DATA.skos.filter(c=>c.definition_missing).length;
+  const fill = DATA.skos.filter(c=>c.definition_source==="term_dict").length;
+  const note = `<p class="hint">共 ${DATA.skos.length} 个概念` +
+    (fill? `，其中 ${fill} 个定义由术语词典回填`: "") +
+    (miss? `，<b style="color:var(--sev-mid)">${miss} 个词典未定义</b>（结构节点——仅作上位/下位词列值出现，建议批注补充定义）`: "") +
+    `。</p>`;
+  // wrapTable：批注列 sticky + 定义截断 + 超 20 行折叠（115 术语全展开过长）
+  const rows = DATA.skos.map(c=>{
+    let def;
+    if(c.definition){
+      def = {h: esc(c.definition) + (c.definition_source==="term_dict"
+        ? '<br><small style="color:var(--muted)">源：术语词典</small>' : ""),
+        t: c.definition};
+    } else {
+      def = {h: '<span class="def-missing">⚠ 词典未定义</span>' +
+        (c.comment? `<br><small style="color:var(--muted)">${esc(c.comment)}</small>` : ""),
+        t: c.comment || ""};
+    }
+    return [
+      {h: `${esc(c.prefLabel||c.id)}<br><small style="color:var(--muted)">${esc(c.id)}</small>`},
+      def,
+      {h: esc(c.broader||"—"), t: c.broader||""},
+      {h: `<button class="annot" data-annot data-kind="skos" data-id="${esc(c.id)}"
+        data-label="${esc(c.prefLabel||c.id)}" data-sub="术语">批注</button>`},
+    ];
+  });
+  box.innerHTML = note + wrapTable(["术语","定义","上位","批注"], rows,
+                                   {stickLast:true, fold:20});
+})();
+
+// ---------- nav 高亮 ----------
+document.querySelectorAll("#nav a").forEach(a=>{
+  a.addEventListener("click", ()=>{
+    document.querySelectorAll("#nav a").forEach(x=>x.classList.remove("active"));
+    a.classList.add("active");
+  });
+});
+refreshOpCount();
+</script>
+</body>
+</html>

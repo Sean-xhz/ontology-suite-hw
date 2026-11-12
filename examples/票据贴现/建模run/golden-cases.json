@@ -1,0 +1,307 @@
+{
+  "meta": {
+    "schema_version": "1.0",
+    "scenario": "票据贴现（虚构试跑）",
+    "ontology_baseline": "ontology.ttl v1.2.1（G3 终审终版基线）",
+    "source": "专家种子 6（主会话代拟→G3 专家确认通过 2026-10-27）+ AI 扩展 9（边缘 2/异常 7）+ 压力豁免 1",
+    "created_date": "2026-10-26",
+    "externalized_date": "2026-10-27",
+    "notes": "S6 执行器泛化（2026-10-27）：自 workspace/golden-case-runner/run_cases.py 内嵌 CASES 零转录外置（import dump，无人工转写）。用例 ttl 片段复用本体文件 prefix 声明；expect 断言类型枚举见 scripts/run_golden_cases.py --check 校验。"
+  },
+  "cases": [
+    {
+      "id": "G1",
+      "kind": "expert_seed",
+      "seed": "7.2-② 受理判定/R1 正向",
+      "gen": null,
+      "desc": "发起人为当前持票人的申请 → 推出 ValidApplication（R1 身份核对，Q4-1 正向路径）",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n\n:IndBillA a :Bill ; :billNumber \"PJ260100000001\" ; :faceAmount 500000.0 ;\n    :issueDate \"2026-01-05\"^^xsd:date ; :dueDate \"2026-06-30\"^^xsd:date ;\n    :currentHolder :IndHolder1 .\n:IndApp1 a :DiscountApplication ; :applicationNumber \"ZX260301000001\" ;\n    :applicationDate \"2026-03-01\"^^xsd:date ; :applicationStatus \"已提交\" ;\n    :expectedDiscountAmount 480000.0 ;\n    :initiatedBy :IndHolder1 ; :targetsBill :IndBillA .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "in_class",
+          "IndApp1",
+          "ValidApplication"
+        ]
+      ]
+    },
+    {
+      "id": "G2",
+      "kind": "expert_seed",
+      "seed": "7.2-③ 禁贴判定/R3 正向",
+      "gen": null,
+      "desc": "承兑人评级 A 的票据 → 推出 NonDiscountable（R3）",
+      "ttl": "\n:IndAcc2 a :Acceptor ; :enterpriseName \"虚构乙公司\" ; :creditRating \"A\" .\n:IndBillB a :Bill ; :billNumber \"PJ260100000002\" ; :faceAmount 300000.0 ;\n    :issueDate \"2026-01-10\"^^xsd:date ; :dueDate \"2026-07-10\"^^xsd:date ;\n    :hasAcceptor :IndAcc2 .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "in_class",
+          "IndBillB",
+          "NonDiscountable"
+        ]
+      ]
+    },
+    {
+      "id": "G3",
+      "kind": "expert_seed",
+      "seed": "7.2-① 背书链查询/R7 正向+闭包",
+      "gen": null,
+      "desc": "3 次有效衔接背书 → isUpstreamOf 相邻推出且 Transitive 闭包首→末可达",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n:IndHolder2 a :Holder ; :enterpriseName \"虚构乙公司\" .\n:IndHolder3 a :Holder ; :enterpriseName \"虚构丙公司\" .\n:IndHolder4 a :Holder ; :enterpriseName \"虚构丁公司\" .\n\n:IndBillC a :Bill ; :billNumber \"PJ260100000003\" ; :faceAmount 800000.0 ;\n    :issueDate \"2026-01-08\"^^xsd:date ; :dueDate \"2026-08-08\"^^xsd:date ;\n    :currentHolder :IndHolder4 ;\n    :hasEndorsementRecord :IndR1, :IndR2, :IndR3 .\n:IndR1 a :EndorsementRecord ; :endorsementSequenceNo 1 ;\n    :endorsementDate \"2026-02-01\"^^xsd:date ;\n    :hasEndorser :IndHolder1 ; :hasEndorsee :IndHolder2 .\n:IndR2 a :EndorsementRecord ; :endorsementSequenceNo 2 ;\n    :endorsementDate \"2026-02-15\"^^xsd:date ;\n    :hasEndorser :IndHolder2 ; :hasEndorsee :IndHolder3 .\n:IndR3 a :EndorsementRecord ; :endorsementSequenceNo 3 ;\n    :endorsementDate \"2026-03-01\"^^xsd:date ;\n    :hasEndorser :IndHolder3 ; :hasEndorsee :IndHolder4 .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "prop_value",
+          "IndR1",
+          "isUpstreamOf",
+          "IndR2"
+        ],
+        [
+          "prop_value",
+          "IndR2",
+          "isUpstreamOf",
+          "IndR3"
+        ],
+        [
+          "prop_value",
+          "IndR1",
+          "isUpstreamOf",
+          "IndR3"
+        ]
+      ]
+    },
+    {
+      "id": "G4",
+      "kind": "expert_seed",
+      "seed": "R4 正向（G1-Q1 收窄组合路径）",
+      "gen": null,
+      "desc": "AAA 承兑人 + 已过 R2 核对的申请（AcceptableApplication 契约断言）→ 票据推出 Discountable",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n\n:IndAcc3 a :Acceptor ; :enterpriseName \"虚构丙公司\" ; :creditRating \"AAA\" .\n:IndBillD a :Bill ; :billNumber \"PJ260100000004\" ; :faceAmount 600000.0 ;\n    :issueDate \"2026-01-15\"^^xsd:date ; :dueDate \"2026-09-15\"^^xsd:date ;\n    :hasAcceptor :IndAcc3 ; :currentHolder :IndHolder1 .\n:IndApp2 a :AcceptableApplication ; :applicationNumber \"ZX260302000001\" ;\n    :applicationDate \"2026-03-02\"^^xsd:date ; :applicationStatus \"已提交\" ;\n    :expectedDiscountAmount 580000.0 ;\n    :initiatedBy :IndHolder1 ; :targetsBill :IndBillD .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "in_class",
+          "IndBillD",
+          "Discountable"
+        ],
+        [
+          "in_class",
+          "IndApp2",
+          "ValidApplication"
+        ]
+      ]
+    },
+    {
+      "id": "G5",
+      "kind": "expert_seed",
+      "seed": "R5 正向（处置档：仅登记）",
+      "gen": null,
+      "desc": "票面金额 8 万（<10 万）→ 推出 NonDiscountable（不进入贴现池，登记留痕档）",
+      "ttl": "\n:IndBillE a :Bill ; :billNumber \"PJ260100000005\" ; :faceAmount 80000.0 ;\n    :issueDate \"2026-01-20\"^^xsd:date ; :dueDate \"2026-07-20\"^^xsd:date .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "in_class",
+          "IndBillE",
+          "NonDiscountable"
+        ]
+      ]
+    },
+    {
+      "id": "G6",
+      "kind": "expert_seed",
+      "seed": "7.2-② 全链路 + R6 正向（一笔审核中不违反基数）",
+      "gen": null,
+      "desc": "AAA 票据一笔「审核中」申请（契约断言+发起人为持票人）→ Discountable+ValidApplication+ApplicationUnderReview 定义类推出，R6 maxQualifiedCardinality 1 不违反",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n\n:IndAcc4 a :Acceptor ; :enterpriseName \"虚构丁公司\" ; :creditRating \"AAA\" .\n:IndBillF a :Bill ; :billNumber \"PJ260100000006\" ; :faceAmount 500000.0 ;\n    :issueDate \"2026-02-01\"^^xsd:date ; :dueDate \"2026-10-01\"^^xsd:date ;\n    :hasAcceptor :IndAcc4 ; :currentHolder :IndHolder1 .\n:IndApp3 a :AcceptableApplication ; :applicationNumber \"ZX260305000001\" ;\n    :applicationDate \"2026-03-05\"^^xsd:date ; :applicationStatus \"审核中\" ;\n    :expectedDiscountAmount 490000.0 ;\n    :initiatedBy :IndHolder1 ; :targetsBill :IndBillF .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "in_class",
+          "IndBillF",
+          "Discountable"
+        ],
+        [
+          "in_class",
+          "IndApp3",
+          "ValidApplication"
+        ],
+        [
+          "in_class",
+          "IndApp3",
+          "ApplicationUnderReview"
+        ]
+      ]
+    },
+    {
+      "id": "E2",
+      "kind": "ai_edge",
+      "seed": "G5",
+      "gen": "阈值±0 变异",
+      "desc": "票面金额恰 10 万（边界）→ R5 lessThan 不含边界，不推出 NonDiscountable",
+      "ttl": "\n:IndBillJ a :Bill ; :billNumber \"PJ260100000010\" ; :faceAmount 100000.0 ;\n    :issueDate \"2026-02-10\"^^xsd:date ; :dueDate \"2026-08-10\"^^xsd:date .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "not_in_class",
+          "IndBillJ",
+          "NonDiscountable"
+        ]
+      ]
+    },
+    {
+      "id": "E4",
+      "kind": "ai_edge",
+      "seed": "G4",
+      "gen": "枚举边界变异",
+      "desc": "评级 AA + 契约申请 → R3/R4 均不触发（open-world 未判定≠不满足，残留风险 2 登记）",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n\n:IndAcc5 a :Acceptor ; :enterpriseName \"虚构戊公司\" ; :creditRating \"AA\" .\n:IndBillK a :Bill ; :billNumber \"PJ260100000011\" ; :faceAmount 400000.0 ;\n    :issueDate \"2026-02-12\"^^xsd:date ; :dueDate \"2026-09-12\"^^xsd:date ;\n    :hasAcceptor :IndAcc5 ; :currentHolder :IndHolder1 .\n:IndApp4 a :AcceptableApplication ; :applicationNumber \"ZX260306000001\" ;\n    :applicationDate \"2026-03-06\"^^xsd:date ; :applicationStatus \"已提交\" ;\n    :expectedDiscountAmount 390000.0 ;\n    :initiatedBy :IndHolder1 ; :targetsBill :IndBillK .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "not_in_class",
+          "IndBillK",
+          "Discountable"
+        ],
+        [
+          "not_in_class",
+          "IndBillK",
+          "NonDiscountable"
+        ]
+      ]
+    },
+    {
+      "id": "X1",
+      "kind": "ai_negative",
+      "seed": "G6",
+      "gen": "受控值外注入（auditor 第 2 轮契约）",
+      "desc": "applicationStatus「作废」（受控值外）→ 期望 range 违反检出不一致；若 Pellet 忽略内联 oneOf（auditor 2.5 预警）则登记机械盲区→应用层校验契约",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n\n:IndApp5 a :DiscountApplication ; :applicationNumber \"ZX260307000001\" ;\n    :applicationDate \"2026-03-07\"^^xsd:date ; :applicationStatus \"作废\" ;\n    :expectedDiscountAmount 100000.0 ;\n    :initiatedBy :IndHolder1 ; :targetsBill :IndBillA2 .\n:IndBillA2 a :Bill ; :billNumber \"PJ260100000012\" ; :faceAmount 200000.0 ;\n    :issueDate \"2026-02-20\"^^xsd:date ; :dueDate \"2026-09-20\"^^xsd:date ;\n    :currentHolder :IndHolder1 .\n",
+      "expect": [
+        [
+          "inconsistent"
+        ]
+      ]
+    },
+    {
+      "id": "X2",
+      "kind": "ai_negative",
+      "seed": "G2",
+      "gen": "受控值外注入（auditor 第 2 轮契约）",
+      "desc": "creditRating「BBB」（受控值外）→ 期望 range 违反检出不一致；同 X1 双档判定",
+      "ttl": "\n:IndAcc6 a :Acceptor ; :enterpriseName \"虚构己公司\" ; :creditRating \"BBB\" .\n:IndBillL a :Bill ; :billNumber \"PJ260100000013\" ; :faceAmount 300000.0 ;\n    :issueDate \"2026-02-22\"^^xsd:date ; :dueDate \"2026-09-22\"^^xsd:date ;\n    :hasAcceptor :IndAcc6 .\n",
+      "expect": [
+        [
+          "inconsistent"
+        ]
+      ]
+    },
+    {
+      "id": "X3",
+      "kind": "ai_negative",
+      "seed": "G6",
+      "gen": "基数冲突注入（auditor 第 2 轮契约：R6 负向）",
+      "desc": "同一票据两笔「审核中」申请 → R6 maxQualifiedCardinality 1 违反 → 检出不一致",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n\n:IndBillM a :Bill ; :billNumber \"PJ260100000014\" ; :faceAmount 700000.0 ;\n    :issueDate \"2026-02-25\"^^xsd:date ; :dueDate \"2026-10-25\"^^xsd:date ;\n    :currentHolder :IndHolder1 ;\n    :hasDiscountApplication :IndApp6, :IndApp7 .\n:IndApp6 a :DiscountApplication ; :applicationNumber \"ZX260308000001\" ;\n    :applicationDate \"2026-03-08\"^^xsd:date ; :applicationStatus \"审核中\" ;\n    :expectedDiscountAmount 690000.0 ;\n    :initiatedBy :IndHolder1 ; :targetsBill :IndBillM .\n:IndApp7 a :DiscountApplication ; :applicationNumber \"ZX260309000001\" ;\n    :applicationDate \"2026-03-09\"^^xsd:date ; :applicationStatus \"审核中\" ;\n    :expectedDiscountAmount 680000.0 ;\n    :initiatedBy :IndHolder1 ; :targetsBill :IndBillM .\n",
+      "expect": [
+        [
+          "inconsistent"
+        ]
+      ]
+    },
+    {
+      "id": "X4",
+      "kind": "ai_negative",
+      "seed": "G4",
+      "gen": "disjoint 冲突注入",
+      "desc": "同一票据同时断言 Discountable 与 NonDiscountable → AllDisjointClasses 检出不一致",
+      "ttl": "\n:IndBillN a :Bill, :Discountable, :NonDiscountable ;\n    :billNumber \"PJ260100000015\" ; :faceAmount 300000.0 ;\n    :issueDate \"2026-03-01\"^^xsd:date ; :dueDate \"2026-11-01\"^^xsd:date .\n",
+      "expect": [
+        [
+          "inconsistent"
+        ]
+      ]
+    },
+    {
+      "id": "X5",
+      "kind": "ai_negative",
+      "seed": "G4",
+      "gen": "前提缺失变异（auditor 第 1 轮契约：R4 防假阳性）",
+      "desc": "AAA 票据但无任何 AcceptableApplication 断言 → R4 不触发，不得凭空推出 Discountable",
+      "ttl": "\n:IndAcc7 a :Acceptor ; :enterpriseName \"虚构庚公司\" ; :creditRating \"AAA\" .\n:IndBillP a :Bill ; :billNumber \"PJ260100000016\" ; :faceAmount 900000.0 ;\n    :issueDate \"2026-03-02\"^^xsd:date ; :dueDate \"2026-12-02\"^^xsd:date ;\n    :hasAcceptor :IndAcc7 .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "not_in_class",
+          "IndBillP",
+          "Discountable"
+        ]
+      ]
+    },
+    {
+      "id": "X6",
+      "kind": "ai_negative",
+      "seed": "G3",
+      "gen": "前提破坏变异（R7 负向：链断裂）",
+      "desc": "相邻记录中转人不匹配（r1 被背书人≠r2 背书人）→ isUpstreamOf 不推出",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n:IndHolder2 a :Holder ; :enterpriseName \"虚构乙公司\" .\n:IndHolder9 a :Holder ; :enterpriseName \"虚构壬公司\" .\n\n:IndBillQ a :Bill ; :billNumber \"PJ260100000017\" ; :faceAmount 400000.0 ;\n    :issueDate \"2026-03-05\"^^xsd:date ; :dueDate \"2026-11-05\"^^xsd:date ;\n    :hasEndorsementRecord :IndR1b, :IndR2b .\n:IndR1b a :EndorsementRecord ; :endorsementSequenceNo 1 ;\n    :endorsementDate \"2026-04-01\"^^xsd:date ;\n    :hasEndorser :IndHolder1 ; :hasEndorsee :IndHolder2 .\n:IndR2b a :EndorsementRecord ; :endorsementSequenceNo 2 ;\n    :endorsementDate \"2026-04-10\"^^xsd:date ;\n    :hasEndorser :IndHolder9 ; :hasEndorsee :IndHolder1 .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "no_prop_value",
+          "IndR1b",
+          "isUpstreamOf",
+          "IndR2b"
+        ]
+      ]
+    },
+    {
+      "id": "X7",
+      "kind": "ai_negative",
+      "seed": "G1",
+      "gen": "前提破坏变异（R1 负向：非持票人发起）",
+      "desc": "发起人≠当前持票人 → ValidApplication 不推出（否定语义应用层拦截，Q4-1）",
+      "ttl": ":IndHolder1 a :Holder ; :enterpriseName \"虚构甲公司\" .\n:IndHolder2 a :Holder ; :enterpriseName \"虚构乙公司\" .\n\n:IndBillR a :Bill ; :billNumber \"PJ260100000018\" ; :faceAmount 200000.0 ;\n    :issueDate \"2026-03-06\"^^xsd:date ; :dueDate \"2026-11-06\"^^xsd:date ;\n    :currentHolder :IndHolder1 .\n:IndApp8 a :DiscountApplication ; :applicationNumber \"ZX260310000001\" ;\n    :applicationDate \"2026-03-10\"^^xsd:date ; :applicationStatus \"已提交\" ;\n    :expectedDiscountAmount 190000.0 ;\n    :initiatedBy :IndHolder2 ; :targetsBill :IndBillR .\n",
+      "expect": [
+        [
+          "consistent"
+        ],
+        [
+          "not_in_class",
+          "IndApp8",
+          "ValidApplication"
+        ]
+      ]
+    },
+    {
+      "id": "Q3-STRESS",
+      "kind": "ai_stress",
+      "exempt": true,
+      "seed": "G1-Q3 裁定豁免",
+      "gen": null,
+      "desc": "压力用例：G1 授权代跑裁定「无性能要求」豁免——登记不执行（黄金用例集 §2 压力豁免行）",
+      "ttl": "",
+      "expect": []
+    }
+  ]
+}

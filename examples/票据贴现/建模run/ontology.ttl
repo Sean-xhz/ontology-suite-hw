@@ -1,0 +1,696 @@
+# ============================================================================
+# 票据贴现场景领域本体（虚构试跑）—— S3 编译产物
+# v1.2.1（2026-10-26，S4 轮外轻量返修——第 2 轮审计通过后的定向修正，非修订轮）变更摘要：
+#   内联 oneOf 补 rdf:type rdfs:Datatype=OWL 2 DataOneOf 标准映射（m1d 实测 Pellet 兼容，
+#   S4 第 2 轮审计缺陷 1 消解）；isUpstreamOf comment 补背书记录数据前提；其余零改动，
+#   SWRL 区不动。
+# v1.2（2026-10-26，S4 机械层返修·error 直返通道，不占审计轮次）变更摘要：
+#   ①（阻断）受控枚举 range 改内联：:applicationStatus/:creditRating 的 range 由具名枚举
+#     rdfs:Datatype（仅 oneOf 定义、无 onDatatype 的具名枚举 datatype 实体）改为内联匿名
+#     oneOf datatype 表达式。根因（主会话三变体最小重现实测裁定，workspace/swrl-variant-test
+#     m1a/m1b/m1c——模板未覆盖的引擎限制，非建模语义错误）：具名枚举 datatype 在 Pellet 下
+#     值空间判空 ⇒ owl:hasValue "审核中" ∉ range 值空间 ⇒ :ApplicationUnderReview ≡
+#     DiscountApplication ⊓ ∃applicationStatus.{"审核中"} = ⊥（v1.1 L3 全量 Pellet 检出不可
+#     满足——swrl_verified="pellet" 达成后暴露）。补 owl:onDatatype xsd:string 不可行（Pellet
+#     拒 onDatatype+oneOf 组合，报 "Trying to use a literal as an individual"）；唯一 Pellet
+#     兼容形态=range 内联匿名 oneOf（m1b 实测 exit 0）。facet 类具名 datatype
+#     （:BillNumberFormat/:ApplicationNumberFormat/:PositiveAmount，onDatatype+withRestrictions）
+#     Pellet 兼容，不动。
+#   ②（配套）删除两个具名枚举 datatype 实体（:creditRating/:applicationStatus 的原受控值
+#     承载——保留即无独立消费点构件）；受控值表改由属性 range 内联承载，comment 与建模方案
+#     引用同步改为值表内联；受控数据类型统计 5→3。
+#   ③（建议）:targetsBill 补 owl:inverseOf :hasDiscountApplication 对称声明——消 v1.1
+#     validate 遗留的登记冗余型 warning（inverseOf 单向声明；补对称后 L2 零 warning，
+#     语义不变）。
+#   SWRL 具名变量形态（v1.1 条目①，双引擎实测定案）不动。
+# v1.1（2026-10-26，S4 第 1 轮辩护/修订）变更摘要：
+#   ①（阻断）SWRL 5 条规则按硬规范 v2 全量重写为具名 swrl:Variable 个体（每规则独立
+#     变量前缀防串扰，argument 直接引用变量 IRI 跨 atom 共享，head 变量均在 body 绑定）；
+#     顺带删 ruleR4 body 冗余 DiscountApplication 原子（:AcceptableApplication ⊑
+#     :DiscountApplication 子类公理蕴含，语义等价，body 5→4 原子）。
+#   ②（重要）USCC hasKey 语义修正为「类内唯一」；跨角色同一性改由实例层显式对齐登记
+#     （同 IRI 或 owl:sameAs），不加 SWRL sameAs 规则（超输入）。
+#   ③（建议）:hasEndorser/:hasEndorsee 补 owl:FunctionalProperty（1.3c 单值语义显式化）。
+#   ④（建议）编译缺口内联引用偏移修正（5 处，按文末清单编号统一）。
+#   ⑤（建议）6 个 skos:Concept 补 rdfs:comment（源句+消费点）。
+#   ⑦（建议）L5 降级理由精确化：标准 swrlb 核心库不保证 xsd:date 比较（与 Q4-2 同根因）。
+#   残留风险 1-4 补 comment 登记（NonDiscountable 处置差异 / Discountable AA 级
+#   open-world 未判定 / currentHolder 链末一致性 / 规则判定快照语义）。
+# 源输入（冻结基线）：29句话描述集.md（G1 已裁定版 2026-10-26，含 Q1-Q4 裁定）+ 术语词典.md（11 条）
+# 命名空间：http://example.org/bill-discount#（虚构）
+# 三层架构：公共层 = FIBO 轻量对齐（仅登记于建模方案.md §七，未 owl:imports，不入本文件）
+#   领域层 = 本文件 schema；实例层 = 建模方案.md §二 各实体示例 YAML（本文件不含个体，schema 与实例分离）
+# 消费链路（描述集 8.2 四条）：①受理判定 ②背书链查询 ③贴现池管理 ④状态机校验
+#   ——每个类/属性/规则的 rdfs:comment 均登记源句编号与消费点（反博物馆：无消费点构件不建）
+# 编译缺口登记见文末注释块（与建模方案.md §十三一致）
+# ============================================================================
+
+@prefix : <http://example.org/bill-discount#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix swrl: <http://www.w3.org/2003/11/swrl#> .
+@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://example.org/bill-discount> a owl:Ontology ;
+    rdfs:label "票据贴现场景领域本体（虚构试跑）"@zh ;
+    rdfs:comment "S3 生成产物，v1.2.1=S4 第 2 轮审计建议级返修（两处内联 oneOf 补 rdf:type rdfs:Datatype=OWL 2 DataOneOf 标准映射，m1d 实测 Pellet 兼容；变更摘要见文件头注释块）。v1.2=S4 机械层返修·error 直返通道（L3 全量 Pellet 检出 :ApplicationUnderReview ≡ ⊥——具名枚举 datatype 值空间判空；返修：受控枚举 range 改内联匿名 oneOf+删两个具名枚举 datatype 实体+:targetsBill 补 inverseOf 对称声明；变更摘要见文件头注释块）。v1.1=S4 第 1 轮辩护/修订（逐条映射缺陷报告 §2 条目①-⑦与残留风险 1-4）。源：29句话描述集.md（G1 冻结版，待确认项汇总已裁定：Q1=R2 优先 / Q2 仅状态停用 / Q3 无性能要求 / Q4 授权 S3 裁量）+ 术语词典.md。全虚构试跑：无真实机构/人名/商务参数。四条消费链路见描述集 8.2。" ;
+    owl:versionInfo "1.2.1" .
+
+# ———————————————— 一、类（10 = 核心 5 + 规则结论 4 + 定义类 1） ————————————————
+# 层级 2 层（≤2.7 上限）：核心类为第 1 层（2.1 裁量：票据不建商业承兑汇票分支，实际 1 层）；
+# 规则结论类/定义类挂核心类下为第 2 层。核心类间不声明互斥：承兑人/持票人为角色类，同一企业可兼具
+#（类内 USCC 键唯一设计；跨角色对齐=实例层显式，见 :unifiedSocialCreditCode，v1.1 条目②）。
+
+:Bill a owl:Class ;
+    rdfs:label "票据"@zh ;
+    rdfs:comment "源 1.1/1.2a/2.1。范围收窄（2.1 建模裁量）：本场景仅商业承兑汇票，不建银行承兑汇票分支类（超范围，8.4 明确不做）。消费：①受理判定/②背书链查询/③贴现池管理/④状态机校验四链路根对象。" .
+
+:Holder a owl:Class ;
+    rdfs:label "持票人"@zh ;
+    rdfs:comment "源 1.1/1.2c/词典。当前合法持有票据的企业，通过背书链取得票据权利（同义词：票据持有人·旧系统）。消费：②背书链查询（各手持票方）+①受理判定（R1 发起人核对）。" .
+
+:Acceptor a owl:Class ;
+    rdfs:label "承兑人"@zh ;
+    rdfs:comment "源 1.1/1.2b/词典。承诺票据到期无条件付款的企业（同义词：付款人；与出票人严格区分，出票人不建模）。消费：①受理判定（R3/R4 评级判定）+③贴现池管理（7.5 组合查询）。" .
+
+:DiscountApplication a owl:Class ;
+    rdfs:label "贴现申请"@zh ;
+    rdfs:comment "源 1.1/1.2d/5.5/词典。持票人针对某张票据发起的一次贴现请求，具编号/日期/期望金额与单向流转状态。状态机（5.5，应用层校验）：已提交→审核中→已通过/已拒绝→已划款，不允许跳跃或回退。消费：①受理判定+④状态机校验。" .
+
+:EndorsementRecord a owl:Class ;
+    rdfs:label "背书记录"@zh ;
+    rdfs:comment "源 1.1/1.2e/1.3c/1.3d/词典「背书」。每次背书转让生成一条记录（背书关系按词典裁定实体化为记录类，边属性背书日期/序号由本类承载——建模方案§三登记）。消费：②背书链查询+①受理判定（R7 背书链核验）。" .
+
+:Discountable a owl:Class ;
+    rdfs:label "可贴现票据"@zh ;
+    rdfs:comment "源 2.2c/4.1-R4。规则结论类（:ruleR4 头）。G1-Q1 裁定：R2 优先——「AAA 可随时贴现」收窄为「免评级限制但仍须过 R2 间隔检查」（见 :ruleR4 规则组合）。与 :NonDiscountable 互斥（2.2c，owl:AllDisjointClasses——规则冲突可检出前提）。消费：①受理判定+③贴现池管理。AA 级 open-world 登记（v1.1，S4 残留风险 2）：评级 AA 票据无 R3/R4 触发（A≠AA、AAA≠AA），开放世界语义下不获本类或 :NonDiscountable 推导——非本体缺陷（未判定≠不满足）；AA 入池候选由 7.5 组合查询独立判定（AAA/AA 直查）。" ;
+    rdfs:subClassOf :Bill .
+
+:NonDiscountable a owl:Class ;
+    rdfs:label "禁止贴现票据"@zh ;
+    rdfs:comment "源 2.2c/4.1-R3/R5/R7。规则结论类（:ruleR3、:ruleR5 头；R7 断裂结论由应用层执行）。R5 结论归入本类：2.2c 将 R5 列入可贴现⊥禁止贴现冲突检出前提（S3 裁量登记，处置档差异见建模方案§四）。与 :Discountable 互斥。消费：①受理判定+③贴现池管理（R5 池外排除）。处置差异登记（v1.1，S4 残留风险 1）：本类成员含 R3（评级 A，拦截）与 R5（小额，仅登记）两种处置档——受理判定不得仅凭本类成员身份执行拦截，须按依据链命中规则编号区分处置档（7.6/X2）。" ;
+    rdfs:subClassOf :Bill .
+
+:ValidApplication a owl:Class ;
+    rdfs:label "有效申请"@zh ;
+    rdfs:comment "源 4.1-R1。规则结论类（:ruleR1 头）：发起人=票据当前持票人的申请。「非持票人一律拒绝」否定语义由应用层执行（G1-Q4 裁定 Q4-1）。消费：①受理判定。" ;
+    rdfs:subClassOf :DiscountApplication .
+
+:AcceptableApplication a owl:Class ;
+    rdfs:label "可受理申请"@zh ;
+    rdfs:comment "源 4.1-R2。R2 结论契约类：申请日期早于到期日期 且 到期与申请间隔≥15 天。G1-Q4 裁定（Q4-2）：标准 SWRL（swrlb 核心库）无日期差值 built-in → 降级为 DatatypeProperty 登记+应用层校验——成员由应用层执行 R2 双条件核对后断言（无 swrl:Imp，建模方案§十登记）；同时作为 :ruleR4 前提承载 G1-Q1 优先级（规则组合）。消费：①受理判定。" ;
+    rdfs:subClassOf :DiscountApplication .
+
+:ApplicationUnderReview a owl:Class ;
+    rdfs:label "审核中申请"@zh ;
+    rdfs:comment "源 2.2a/4.1-R6。定义类（等价类公理见文末公理区）：申请状态=审核中。为 R6 受限基数公理（maxQualifiedCardinality 1）提供计数对象（G1-Q4 裁定 Q4-3：owl:Restriction cardinality 分支，DL 完整可表达）。消费：④状态机校验+①受理判定（R6 并发约束）。" ;
+    rdfs:subClassOf :DiscountApplication .
+
+# ———————————————— 二、对象属性（9；四种属性特征：Functional/Transitive/Inverse 齐备，
+#   InverseFunctional 见文末 hasKey 公理——OWL 2 DL 不支持数据属性 InverseFunctional，标准替代登记于建模方案§十） ————————————————
+
+:hasAcceptor a owl:ObjectProperty ;
+    rdfs:label "票据承兑人"@zh ;
+    rdfs:comment "源 1.3a/2.4。票据→承兑人，N:1，必填单值（:Bill ⊑ someValuesFrom，公理见文末）。owl:FunctionalProperty。消费：①受理判定（R3/R4）+③贴现池管理。" ;
+    rdfs:domain :Bill ;
+    rdfs:range :Acceptor ;
+    a owl:FunctionalProperty .
+
+:currentHolder a owl:ObjectProperty ;
+    rdfs:label "当前持票人"@zh ;
+    rdfs:comment "源 1.3b。票据→持票人，N:1（一张票据同一时刻仅一个当前持票人；一个持票人可持多张票据）。owl:FunctionalProperty。消费：①受理判定（R1 发起人核对）+②背书链查询（链末持有人）。链末一致性登记（v1.1，S4 残留风险 3）：currentHolder=链末背书记录被背书人的一致性由数据管线保证——本体无公理绑定（open-world 下不自动检出漂移）。" ;
+    rdfs:domain :Bill ;
+    rdfs:range :Holder ;
+    a owl:FunctionalProperty .
+
+:hasEndorser a owl:ObjectProperty ;
+    rdfs:label "背书人"@zh ;
+    rdfs:comment "源 1.3c。背书记录→持票人（背书人），×2 之一。owl:FunctionalProperty（v1.1 补，S4 条目③：1.3c 单值语义显式化——一次背书行为仅一个背书人；建模方案§三 N:1 基数 v1.0 已登记，本版补齐 ttl 特征）。消费：②背书链查询（链序回放）+①受理判定（R7 连续性核验：后手背书人=前手被背书人，:ruleR7）。" ;
+    rdfs:domain :EndorsementRecord ;
+    rdfs:range :Holder ;
+    a owl:FunctionalProperty .
+
+:hasEndorsee a owl:ObjectProperty ;
+    rdfs:label "被背书人"@zh ;
+    rdfs:comment "源 1.3c。背书记录→持票人（被背书人），×2 之一。owl:FunctionalProperty（v1.1 补，S4 条目③：1.3c 单值语义显式化——一次背书行为仅一个被背书人；建模方案§三 N:1 基数 v1.0 已登记，本版补齐 ttl 特征）。消费：②背书链查询+①受理判定（R7，:ruleR7）。" ;
+    rdfs:domain :EndorsementRecord ;
+    rdfs:range :Holder ;
+    a owl:FunctionalProperty .
+
+:hasEndorsementRecord a owl:ObjectProperty ;
+    rdfs:label "票据背书记录"@zh ;
+    rdfs:comment "源 1.3d。票据→背书记录，1:N，按背书序号构成有序背书链（序号排序消费见 :endorsementSequenceNo）。消费：②背书链查询（7.2① 按票号返回完整链）+①受理判定（R7）。" ;
+    rdfs:domain :Bill ;
+    rdfs:range :EndorsementRecord .
+
+:targetsBill a owl:ObjectProperty ;
+    rdfs:label "针对票据"@zh ;
+    rdfs:comment "源 1.3e。贴现申请→票据，N:1。owl:FunctionalProperty（句式 N:1 单值语义）。owl:inverseOf :hasDiscountApplication（v1.2 补对称声明——与 :hasDiscountApplication 侧的 inverseOf 声明互为镜像，消登记冗余型 warning，语义不变）。消费：①受理判定（R1/R2/R4 前提）+④状态机校验（R6 经逆属性 :hasDiscountApplication 计数）。" ;
+    rdfs:domain :DiscountApplication ;
+    rdfs:range :Bill ;
+    owl:inverseOf :hasDiscountApplication ;
+    a owl:FunctionalProperty .
+
+:initiatedBy a owl:ObjectProperty ;
+    rdfs:label "申请发起人"@zh ;
+    rdfs:comment "源 1.3f。贴现申请→持票人，N:1。owl:FunctionalProperty（句式 N:1 单值语义）。消费：①受理判定（R1 发起人=当前持票人核对，:ruleR1）。" ;
+    rdfs:domain :DiscountApplication ;
+    rdfs:range :Holder ;
+    a owl:FunctionalProperty .
+
+:hasDiscountApplication a owl:ObjectProperty ;
+    rdfs:label "票据的贴现申请"@zh ;
+    rdfs:comment "源 1.3e 逆关系+4.1-R6。owl:inverseOf :targetsBill（v1.2 起双向对称声明——:targetsBill 侧同步补 inverseOf 镜像，消登记冗余型 warning）；为 R6 受限基数公理显式落地（Q4-3 DL 分支：Bill ⊑ maxQualifiedCardinality 1 hasDiscountApplication . ApplicationUnderReview）。消费：④状态机校验+①受理判定。" ;
+    owl:inverseOf :targetsBill ;
+    rdfs:domain :Bill ;
+    rdfs:range :DiscountApplication .
+
+:isUpstreamOf a owl:ObjectProperty ;
+    rdfs:label "链上游背书记录"@zh ;
+    rdfs:comment "源 4.1-R7/词典「背书链」（Transitive 上游关系）。记录级（S3 裁量登记：持有人级传递会跨票据误串链——A→B 在票据甲、B→C 在票据乙 ⇒ 误推 A→C；记录级推导限定同票据内，闭包严格限于票据内）。推导（:ruleR7）：同票据+序号相邻+被背书人=背书人 ⇒ 有效衔接；Transitive 闭包使「首记录→末记录可达 ⟺ 背书链连续」——R7 连续性的机器判定形态（S3 裁量登记，首手核对缺口见文末）。v1.1：:hasEndorser/:hasEndorsee 补 Functional（1.3c 单值）排除记录级多值分支，等价性增强——链形态线性另依赖 L8 链内序号唯一（应用层）。owl:TransitiveProperty。消费：②背书链查询+①受理判定（R7）。数据前提：一条背书记录仅属一张票据（数据管线保证，本体未以公理强制——与 currentHolder 链末一致性同口径，残留风险 3）。" ;
+    rdfs:domain :EndorsementRecord ;
+    rdfs:range :EndorsementRecord ;
+    a owl:TransitiveProperty .
+
+# ———————————————— 三、数据属性（13） ————————————————
+
+:billNumber a owl:DatatypeProperty ;
+    rdfs:label "票号"@zh ;
+    rdfs:comment "源 1.2a/2.6。格式 PJ+12 位数字（xsd:pattern，见 :BillNumberFormat）。owl:FunctionalProperty + :Bill owl:hasKey（一票据一票号、一票号一票据；2.6 的 InverseFunctional 以 hasKey 标准替代——OWL 2 DL 不支持数据属性 InverseFunctional，S3 机械自检发现，建模方案§十登记）。消费：②背书链查询（7.2① 按票号定位）+①受理判定依据链（7.6）。" ;
+    rdfs:domain :Bill ;
+    rdfs:range :BillNumberFormat ;
+    a owl:FunctionalProperty .
+
+:faceAmount a owl:DatatypeProperty ;
+    rdfs:label "票面金额"@zh ;
+    rdfs:comment "源 1.2a/2.5/4.1-R5/7.5。xsd:decimal >0（见 :PositiveAmount）；币种人民币（单一币种场景，未建币种维度——建模方案§十三-8 登记）。消费：①受理判定（R5：<10 万元）+③贴现池管理（7.5：≥10 万且降序排序）。" ;
+    rdfs:domain :Bill ;
+    rdfs:range :PositiveAmount .
+
+:issueDate a owl:DatatypeProperty ;
+    rdfs:label "出票日期"@zh ;
+    rdfs:comment "源 1.2a/2.5。xsd:date。消费：①受理判定（2.5 后半「到期>出票」应用层核对——标准 swrlb 核心库不保证 xsd:date 比较（与 Q4-2 同根因），引擎支持 date 比较 built-in 时可编译为 SWRL，否则应用层核对，S3 裁量登记、v1.1 理由精确化）+②背书链查询（持票期间起点参照）。" ;
+    rdfs:domain :Bill ;
+    rdfs:range xsd:date .
+
+:dueDate a owl:DatatypeProperty ;
+    rdfs:label "到期日期"@zh ;
+    rdfs:comment "源 1.2a/2.5/4.1-R2/7.5。xsd:date。消费：①受理判定（R2 间隔核对——应用层，Q4-2）+③贴现池管理（7.5 距到期≥15 天）。" ;
+    rdfs:domain :Bill ;
+    rdfs:range xsd:date .
+
+:creditRating a owl:DatatypeProperty ;
+    rdfs:label "信用等级"@zh ;
+    rdfs:comment "源 1.2b/2.2b/4.1-R3/R4。受控枚举 AAA/AA/A——range 内联匿名 oneOf 三值（v1.2 前由具名枚举 datatype 承载，Pellet 值空间判空已删，见文件头变更摘要①；两两互斥仍由 Functional 保证）。平台内部评级，非外部权威评级。owl:FunctionalProperty（2.2b 互斥：同一承兑人同一时刻仅一档）。消费：①受理判定（R3/R4）+③贴现池管理（7.5 AAA/AA 筛选）。" ;
+    rdfs:domain :Acceptor ;
+    rdfs:range [ rdf:type rdfs:Datatype ; owl:oneOf ( "AAA" "AA" "A" ) ] ;
+    a owl:FunctionalProperty .
+
+:unifiedSocialCreditCode a owl:DatatypeProperty ;
+    rdfs:label "统一社会信用代码"@zh ;
+    rdfs:comment "源 1.2b/1.2c/2.6。承兑人与持票人共享属性（S3 裁量登记：同一企业标识，domain 取两类联合，非相似度归并）。owl:FunctionalProperty + :Acceptor/:Holder owl:hasKey——类内唯一（hasKey：同类内同 USCC ⇒ 同一个体）；跨角色同一性（Acceptor/Holder 归并）由实例层显式对齐（同 IRI 或 owl:sameAs）——hasKey 不承诺跨类归并（v1.1 条目②修正，原「同 USCC ⇒ 同一企业」为过度承诺）。消费：①受理判定（R1 发起人核对要素）+实例层对齐（建模方案§二-⑦）。" ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( :Acceptor :Holder ) ] ;
+    rdfs:range xsd:string ;
+    a owl:FunctionalProperty .
+
+:enterpriseName a owl:DatatypeProperty ;
+    rdfs:label "企业名称"@zh ;
+    rdfs:comment "源 1.2c。消费：②背书链查询（7.2① 各手持票方名称展示）。承兑人名称属性输入未列（1.2b 无企业名称行），不补造。" ;
+    rdfs:domain :Holder ;
+    rdfs:range xsd:string .
+
+:applicationNumber a owl:DatatypeProperty ;
+    rdfs:label "申请编号"@zh ;
+    rdfs:comment "源 1.2d/2.6。格式 ZX+日期+4 位序号（见 :ApplicationNumberFormat；日期段按 8 位 YYYYMMDD 假设——编译缺口-2，v1.1 引用偏移修正）。owl:FunctionalProperty + :DiscountApplication owl:hasKey（一申请一编号、一编号一申请）。消费：④状态机校验（7.3 迁移留痕）+依据链输出（7.6）。" ;
+    rdfs:domain :DiscountApplication ;
+    rdfs:range :ApplicationNumberFormat ;
+    a owl:FunctionalProperty .
+
+:applicationDate a owl:DatatypeProperty ;
+    rdfs:label "申请日期"@zh ;
+    rdfs:comment "源 1.2d/4.1-R2。xsd:date。消费：①受理判定（R2 双条件核对——应用层执行，Q4-2 降级后 :AcceptableApplication 契约承载结论）。" ;
+    rdfs:domain :DiscountApplication ;
+    rdfs:range xsd:date .
+
+:expectedDiscountAmount a owl:DatatypeProperty ;
+    rdfs:label "期望贴现金额"@zh ;
+    rdfs:comment "源 1.2d/2.5。xsd:decimal >0（见 :PositiveAmount）。消费：①受理判定（申请要素核对）。" ;
+    rdfs:domain :DiscountApplication ;
+    rdfs:range :PositiveAmount .
+
+:applicationStatus a owl:DatatypeProperty ;
+    rdfs:label "申请状态"@zh ;
+    rdfs:comment "源 1.2d/2.2a/5.5。受控枚举五值：已提交/审核中/已通过/已拒绝/已划款——range 内联匿名 oneOf（v1.2 前由具名枚举 datatype 承载，Pellet 值空间判空已删，见文件头变更摘要①；两两互斥仍由 Functional 保证）；「审核中」值被 :ApplicationUnderReview 定义类消费（R6 计数公理）。owl:FunctionalProperty——2.2a 五状态两两互斥（一个申请同一时刻仅一种状态）以「枚举+Functional」表达（S3 裁量登记：与 1.2d 冻结目标构件 DatatypeProperty+枚举一致，免五状态类膨胀——建模方案§十）。状态单向迁移与禁跳跃/回退由④状态机校验（应用层，5.5/6.4）执行。消费：①受理判定+④状态机校验。" ;
+    rdfs:domain :DiscountApplication ;
+    rdfs:range [ rdf:type rdfs:Datatype ; owl:oneOf ( "已提交" "审核中" "已通过" "已拒绝" "已划款" ) ] ;
+    a owl:FunctionalProperty .
+
+:endorsementDate a owl:DatatypeProperty ;
+    rdfs:label "背书日期"@zh ;
+    rdfs:comment "源 1.2e。xsd:date。消费：②背书链查询（7.2① 各手持票期间起讫）。" ;
+    rdfs:domain :EndorsementRecord ;
+    rdfs:range xsd:date .
+
+:endorsementSequenceNo a owl:DatatypeProperty ;
+    rdfs:label "背书序号"@zh ;
+    rdfs:comment "源 1.2e/1.3d/4.1-R7。xsd:integer；同一票据背书链内唯一且递增（「递增」按链内 +1 连续编号读法——S3 裁量登记，跳号兼容性=编译缺口-3，v1.1 引用偏移修正；链内唯一性应用层核对）。消费：②背书链查询（链序排序）+①受理判定（R7 相邻判定：:ruleR7 swrlb:add）。" ;
+    rdfs:domain :EndorsementRecord ;
+    rdfs:range xsd:integer .
+
+# ———————————————— 四、受控数据类型（3，OWL 2 datatype 定义；v1.2：枚举型受控值改属性 range 内联 oneOf 承载） ————————————————
+
+:BillNumberFormat a rdfs:Datatype ;
+    rdfs:label "票号格式（PJ+12 位数字）"@zh ;
+    rdfs:comment "源 1.2a。xsd:pattern 受限。消费：数据管线归一+质检（F1 格式族，建模方案§四）。" ;
+    owl:onDatatype xsd:string ;
+    owl:withRestrictions ( [ xsd:pattern "PJ[0-9]{12}" ] ) .
+
+:ApplicationNumberFormat a rdfs:Datatype ;
+    rdfs:label "申请编号格式（ZX+日期+4 位序号）"@zh ;
+    rdfs:comment "源 1.2d。日期段按 8 位 YYYYMMDD、序号 4 位假设（合计 12 位数字）——资料未显式给定位数，编译缺口-2（v1.1 引用偏移修正）待 G2 确认。消费：质检（F2）。" ;
+    owl:onDatatype xsd:string ;
+    owl:withRestrictions ( [ xsd:pattern "ZX[0-9]{12}" ] ) .
+
+:PositiveAmount a rdfs:Datatype ;
+    rdfs:label "正金额（>0）"@zh ;
+    rdfs:comment "源 2.5（票面金额/期望贴现金额 >0）。minExclusive facet 可表达，未降级（S3 裁量登记：2.5 facet 分支成立）。消费：质检+受理判定（F5）。" ;
+    owl:onDatatype xsd:decimal ;
+    owl:withRestrictions ( [ xsd:minExclusive "0"^^xsd:decimal ] ) .
+
+# （v1.2 删除条目）原两个具名枚举 datatype 实体（信用等级三档受控值/申请状态五值受控值，
+#   仅 oneOf 定义、无 onDatatype）已删——Pellet 下值空间判空致 :ApplicationUnderReview ≡ ⊥
+#   （L3 全量检出，三变体最小重现实测定案，见文件头变更摘要①）。受控值表与两两互斥语义
+#   （Functional 保证）整体迁移至 :creditRating/:applicationStatus 的 range 内联 oneOf；
+#   F3/F4 质检消费位（拦截入库）不变，登记于建模方案§四。
+
+# ———————————————— 五、公理（约束/键/互斥） ————————————————
+
+# 源 2.4：每张票据必须存在唯一承兑人（必要条件：无承兑人的票据不完整）
+# someValuesFrom（至少一个）+ :hasAcceptor Functional（至多一个）⇒ 恰好一个。消费：①受理判定（P1 完整性族）。
+:Bill rdfs:subClassOf [ a owl:Restriction ;
+        owl:onProperty :hasAcceptor ;
+        owl:someValuesFrom :Acceptor ] .
+
+# 源 4.1-R6（G1-Q4 裁定 Q4-3：owl:Restriction cardinality 分支，DL 完整可表达，非降级）：
+# 一张票据已存在「审核中」申请时，同一时间该票据最多一笔审核中（快照语义：本体无时间轴，
+# 「同一时间」=同一快照内）。违反处置：不得进入审核（拦截，4.3）。消费：④状态机校验+①受理判定。
+:Bill rdfs:subClassOf [ a owl:Restriction ;
+        owl:onProperty :hasDiscountApplication ;
+        owl:maxQualifiedCardinality 1 ;
+        owl:onClass :ApplicationUnderReview ] .
+
+# 源 2.2a/4.1-R6：定义类「审核中申请」= 贴现申请 ∧ 申请状态="审核中"。
+:ApplicationUnderReview owl:equivalentClass [ a owl:Class ;
+        owl:intersectionOf ( :DiscountApplication
+            [ a owl:Restriction ;
+              owl:onProperty :applicationStatus ;
+              owl:hasValue "审核中" ] ) ] .
+
+# 源 2.6：标识唯一性（一实体一标识、一标识一实体）。
+# 注：OWL 2 DL 不支持数据属性 InverseFunctionalProperty，故以 owl:hasKey 标准替代
+#（语义等价：同键值实例 ⇒ 同一个体）——S3 机械自检发现并登记（建模方案§十-6）。
+# hasKey 语义为类内（同键值同类实例 ⇒ 同一个体）；USCC 跨 Acceptor/Holder 角色归并不由
+# hasKey 承诺，由实例层显式对齐（同 IRI 或 owl:sameAs）——v1.1 条目②修正。
+:Bill owl:hasKey ( :billNumber ) .
+:DiscountApplication owl:hasKey ( :applicationNumber ) .
+:Acceptor owl:hasKey ( :unifiedSocialCreditCode ) .
+:Holder owl:hasKey ( :unifiedSocialCreditCode ) .
+
+# 源 2.2c（+4.2a/4.2b）：规则结论类互斥——可贴现 ⊥ 禁止贴现。
+# R3（评级 A）与 R4（评级 AAA）前提互斥（:creditRating Functional+受控枚举），无组合同真；
+# R4∧R5（AAA 且 <10 万）组合触发不一致检出 → 人工裁定（处置档「双保留+裁决单」，无自动消解）。
+# 消费：①受理判定冲突检出（L3 逻辑族）。
+[] a owl:AllDisjointClasses ;
+    owl:members ( :Discountable :NonDiscountable ) .
+
+# ———————————————— 六、SWRL 规则（5 条 swrl:Imp；R2/R6 的编译形态见各注释） ————————————————
+# SWRL 硬规范 v2（2026-10-26 双引擎实测裁定，S4 条目①）：所有变量为具名 swrl:Variable 个体
+#   （每规则独立变量前缀防串扰），body/head 各 atom 的 argument 直接引用同一变量 IRI 实现
+#   跨 atom 共享；head 中变量均已在 body 绑定（安全性）。v1.0 的「bnode 包装层」写法经
+#   Pellet 实测报 "is not a URI node"（变量同一性失效，HermiT 容忍为非标准形态），已废止
+#   并全量重写。
+# 快照语义登记（v1.1，S4 残留风险 4）：全部规则判定均为受理时快照语义——本体无时间轴，
+#   规则对当前断言集求值；状态/持有人变动后的重判由应用层触发重新推理（与 R6 同口径）。
+# 未编译为 swrl:Imp 的控制规则：R2（Q4-2 日期差降级应用层，结论类 :AcceptableApplication 承载）
+# 与 R6（Q4-3 采用 OWL 受限基数公理）——登记于各构件 comment 与建模方案§十。
+
+# R1（源 4.1-R1；G1-Q4 裁定 Q4-1：正向核对）：若贴现申请的发起人是该申请所针对票据的
+# 当前持票人，则该申请为有效申请。「非持票人发起一律拒绝」否定语义由应用层执行（拒绝·拦截，4.3）。
+# 消费：①受理判定。
+# 变量（具名 swrl:Variable 个体，前缀 vR1_ 防跨规则串扰；head 变量 :vR1_a 已在 body 绑定）：
+:vR1_a a swrl:Variable .
+:vR1_b a swrl:Variable .
+:vR1_h a swrl:Variable .
+
+:ruleR1 a swrl:Imp ;
+    rdfs:label "R1 发起人持票核对规则"@zh ;
+    rdfs:comment "源：4.1-R1。Q4-1 正向核对：initiatedBy 与 currentHolder 共享变量 :vR1_h（同一持票人）实现身份核对。否定方向应用层执行。v1.1（S4 条目①）：变量改具名声明，argument 直接引用变量 IRI。消费链路：①受理判定。" ;
+    swrl:body (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :DiscountApplication ;
+          swrl:argument1 :vR1_a ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :initiatedBy ;
+          swrl:argument1 :vR1_a ;
+          swrl:argument2 :vR1_h ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :targetsBill ;
+          swrl:argument1 :vR1_a ;
+          swrl:argument2 :vR1_b ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :currentHolder ;
+          swrl:argument1 :vR1_b ;
+          swrl:argument2 :vR1_h ]
+    ) ;
+    swrl:head (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :ValidApplication ;
+          swrl:argument1 :vR1_a ]
+    ) .
+
+# R3（源 4.1-R3）：若票据的承兑人信用等级为 A 级，则该票据禁止贴现。
+# 与 :ruleR4 前提互斥（评级 Functional 受控枚举——4.2a：非真冲突）。
+# 违反处置：禁止贴现（拦截，4.3）。消费：①受理判定+③贴现池管理。
+# 变量（前缀 vR3_；head 变量 :vR3_b 已在 body 绑定）：
+:vR3_b a swrl:Variable .
+:vR3_c a swrl:Variable .
+
+:ruleR3 a swrl:Imp ;
+    rdfs:label "R3 A 级禁止贴现规则"@zh ;
+    rdfs:comment "源：4.1-R3。承兑人信用等级=\"A\" ⇒ :NonDiscountable。4.2a：与 R4 前提互斥（信用等级枚举互斥），无组合同真。v1.1（S4 条目①）：变量改具名声明。消费链路：①受理判定+③贴现池管理。" ;
+    swrl:body (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :Bill ;
+          swrl:argument1 :vR3_b ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :hasAcceptor ;
+          swrl:argument1 :vR3_b ;
+          swrl:argument2 :vR3_c ]
+        [ a swrl:DatavaluedPropertyAtom ;
+          swrl:propertyPredicate :creditRating ;
+          swrl:argument1 :vR3_c ;
+          swrl:argument2 "A" ]
+    ) ;
+    swrl:head (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :NonDiscountable ;
+          swrl:argument1 :vR3_b ]
+    ) .
+
+# R4（源 4.1-R4；G1-Q1 裁定：R2 优先——15 天间隔为硬风控线，「AAA 可随时贴现」收窄为
+# 「免评级限制但仍须过 R2 间隔检查」，4.2b 冲突消解）。实现方式=S3 裁量「规则组合」：
+# 前提合取 R2 结论契约类 :AcceptableApplication（其成员由应用层执行 R2 双条件核对后断言，Q4-2）
+# ——AAA 级不再单独推出可贴现。消费：①受理判定+③贴现池管理。
+# v1.1（S4 条目①）：变量改具名声明；删 body 冗余 DiscountApplication 原子
+#   （:AcceptableApplication ⊑ :DiscountApplication 子类公理蕴含——语义等价，body 5→4 原子）。
+# 变量（前缀 vR4_；head 变量 :vR4_b 已在 body 绑定）：
+:vR4_a a swrl:Variable .
+:vR4_b a swrl:Variable .
+:vR4_c a swrl:Variable .
+
+:ruleR4 a swrl:Imp ;
+    rdfs:label "R4 AAA 可贴现规则（G1-Q1 收窄版）"@zh ;
+    rdfs:comment "源：4.1-R4+G1 待确认项 Q1。Q1 裁定：R2 优先。实现=规则组合（S3 裁量登记，建模方案§十-1）：ruleR4 前提合取 :AcceptableApplication（R2 结论），替代原文「随时」语义；前提合取原始日期原子因 Q4-2（日期 built-in 不可靠）不可行。v1.1（S4 条目①）：变量改具名声明；删 body 冗余 DiscountApplication 原子（子类公理蕴含，语义等价，body 4 原子：AcceptableApplication+targetsBill+hasAcceptor+creditRating）。副作用登记：可贴现推导依赖存在一笔过 R2 核对的申请；无申请的 AAA 票据不获推导（贴现池候选由 7.5 组合查询独立判定，不受影响）。消费链路：①受理判定+③贴现池管理。" ;
+    swrl:body (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :AcceptableApplication ;
+          swrl:argument1 :vR4_a ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :targetsBill ;
+          swrl:argument1 :vR4_a ;
+          swrl:argument2 :vR4_b ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :hasAcceptor ;
+          swrl:argument1 :vR4_b ;
+          swrl:argument2 :vR4_c ]
+        [ a swrl:DatavaluedPropertyAtom ;
+          swrl:propertyPredicate :creditRating ;
+          swrl:argument1 :vR4_c ;
+          swrl:argument2 "AAA" ]
+    ) ;
+    swrl:head (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :Discountable ;
+          swrl:argument1 :vR4_b ]
+    ) .
+
+# R5（源 4.1-R5）：若票据票面金额 <10 万元（=100000，币种人民币，源 1.2a），则该票据
+# 不进入贴现池（不受理，但登记留痕）。结论归入 :NonDiscountable（2.2c 将 R5 列入
+# 可贴现⊥禁止贴现冲突检出前提——S3 裁量登记）；处置档=「仅登记」（不进消费位+留痕，
+# 非拦截数据入库）。消费：③贴现池管理+①受理判定。
+# 变量（前缀 vR5_；head 变量 :vR5_b 已在 body 绑定；built-in 参数列表直接引用变量 IRI）：
+:vR5_b a swrl:Variable .
+:vR5_m a swrl:Variable .
+
+:ruleR5 a swrl:Imp ;
+    rdfs:label "R5 小额票据不入贴现池规则"@zh ;
+    rdfs:comment "源：4.1-R5。面额 <100000（10 万元，人民币）⇒ :NonDiscountable。处置档「仅登记」：不拦截入库、不进贴现池消费位、留痕（4.3）。R4∧R5 组合（AAA 且 <10 万）触发 2.2c disjoint 不一致检出 → 人工裁定（无自动消解，G1 未裁定该组合——待确认项）。v1.1（S4 条目①）：变量改具名声明。消费链路：③贴现池管理+①受理判定。" ;
+    swrl:body (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :Bill ;
+          swrl:argument1 :vR5_b ]
+        [ a swrl:DatavaluedPropertyAtom ;
+          swrl:propertyPredicate :faceAmount ;
+          swrl:argument1 :vR5_b ;
+          swrl:argument2 :vR5_m ]
+        [ a swrl:BuiltinAtom ;
+          swrl:builtin swrlb:lessThan ;
+          swrl:arguments ( :vR5_m 100000 ) ]
+    ) ;
+    swrl:head (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :NonDiscountable ;
+          swrl:argument1 :vR5_b ]
+    ) .
+
+# R7（源 4.1-R7）：背书链连续性的形式化（S3 裁量登记）。推导规则（正向可机检部分）：
+# 同一票据内序号相邻（n2 = n1+1——「递增」按链内连续编号读法，跳号兼容性=编译缺口-3，
+# v1.1 引用偏移修正）
+# 且前手被背书人 = 后手背书人（:vR7_p 共享变量）⇒ 有效衔接（:isUpstreamOf）。
+# :isUpstreamOf 为 Transitive ⇒ 传递闭包使「首记录→末记录可达 ⟺ 全链每一相邻对均有效衔接」
+# ——R7 连续性判定的机器形态。降级部分（登记）：背书链断裂 ⇒ 不得贴现的拦截处置由应用层执行
+#（4.3）；首手=出票时收款人核对的数据位未建模（编译缺口-1，v1.1 引用偏移修正；出票人不建模裁定）。
+# 消费：②背书链查询+①受理判定（R7）。
+# 变量（前缀 vR7_；head 变量 :vR7_r1/:vR7_r2 均已在 body 绑定；built-in 参数列表直接引用变量 IRI）：
+:vR7_b a swrl:Variable .
+:vR7_r1 a swrl:Variable .
+:vR7_r2 a swrl:Variable .
+:vR7_n1 a swrl:Variable .
+:vR7_n2 a swrl:Variable .
+:vR7_p a swrl:Variable .
+
+:ruleR7 a swrl:Imp ;
+    rdfs:label "R7 背书链有效衔接推导规则"@zh ;
+    rdfs:comment "源：4.1-R7。相邻序号（swrlb:add: n2=n1+1）+被背书人=背书人 ⇒ :isUpstreamOf（有效衔接）；Transitive 闭包使首→末可达 ⟺ 链连续（R7 机器判定形态——S3 裁量登记）。断裂拦截与首手核对=应用层（处置档 4.3+编译缺口-1）。v1.1（S4 条目①）：变量改具名声明。消费链路：②背书链查询+①受理判定。" ;
+    swrl:body (
+        [ a swrl:ClassAtom ;
+          swrl:classPredicate :Bill ;
+          swrl:argument1 :vR7_b ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :hasEndorsementRecord ;
+          swrl:argument1 :vR7_b ;
+          swrl:argument2 :vR7_r1 ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :hasEndorsementRecord ;
+          swrl:argument1 :vR7_b ;
+          swrl:argument2 :vR7_r2 ]
+        [ a swrl:DatavaluedPropertyAtom ;
+          swrl:propertyPredicate :endorsementSequenceNo ;
+          swrl:argument1 :vR7_r1 ;
+          swrl:argument2 :vR7_n1 ]
+        [ a swrl:DatavaluedPropertyAtom ;
+          swrl:propertyPredicate :endorsementSequenceNo ;
+          swrl:argument1 :vR7_r2 ;
+          swrl:argument2 :vR7_n2 ]
+        [ a swrl:BuiltinAtom ;
+          swrl:builtin swrlb:add ;
+          swrl:arguments ( :vR7_n2 :vR7_n1 1 ) ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :hasEndorsee ;
+          swrl:argument1 :vR7_r1 ;
+          swrl:argument2 :vR7_p ]
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :hasEndorser ;
+          swrl:argument1 :vR7_r2 ;
+          swrl:argument2 :vR7_p ]
+    ) ;
+    swrl:head (
+        [ a swrl:IndividualPropertyAtom ;
+          swrl:propertyPredicate :isUpstreamOf ;
+          swrl:argument1 :vR7_r1 ;
+          swrl:argument2 :vR7_r2 ]
+    ) .
+
+# ———————————————— 七、SKOS 概念（15 = 词典 11 行 + 结构上位节点 4） ————————————————
+# 结构上位节点（票据行为/金融工具/企业/业务申请）：仅 skos:prefLabel，无定义——词典无对应行，
+# 不补造定义（源 3.3 与词典 broader 列引用而立，登记为编译缺口-7 同族裁量，见文末注释块）。
+
+:TermScheme a skos:ConceptScheme ;
+    rdfs:label "票据贴现场景术语集（虚构试跑）"@zh ;
+    rdfs:comment "源：术语词典.md（G1 冻结，11 条全量映射为 skos:Concept）；同义词/上下位关系源 3.2/3.3。消费：术语治理+②背书链查询/①受理判定的口径对齐。" .
+
+:conceptBill a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :Bill ;
+    rdfs:label "票据（概念）"@zh ;
+    skos:prefLabel "票据"@zh ;
+    skos:altLabel "汇票（口语泛指）"@zh ;
+    skos:definition "由出票人签发的、承诺到期无条件支付确定金额的有价证券。本场景仅指商业承兑汇票（描述集 2.1 范围收窄）。"@zh ;
+    rdfs:comment "源：描述集 3.1/词典第 1 行（票据）。消费：术语治理（口径对齐：本场景收窄为商业承兑汇票，3.2「汇票」口语泛指收敛）。" ;
+    skos:broader :conceptFinancialInstrument ;
+    skos:narrower :conceptCommercialAcceptanceBill .
+
+:conceptCommercialAcceptanceBill a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :Bill ;
+    rdfs:label "商业承兑汇票（概念）"@zh ;
+    skos:prefLabel "商业承兑汇票"@zh ;
+    skos:definition "由银行以外的付款人（承兑人）承兑的商业汇票。范围收窄登记于票据类 comment（不单设类，描述集 2.1 裁量：最小化原则）。"@zh ;
+    rdfs:comment "源：描述集 3.1/词典第 2 行（商业承兑汇票）。消费：术语治理（与 :Bill 单类收窄口径互查，2.1 裁量）。" ;
+    skos:broader :conceptBill .
+
+:conceptHolder a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :Holder ;
+    rdfs:label "持票人（概念）"@zh ;
+    skos:prefLabel "持票人"@zh ;
+    skos:altLabel "票据持有人（旧系统）"@zh ;
+    skos:definition "当前合法持有票据的企业，通过背书链取得票据权利。"@zh ;
+    rdfs:comment "源：描述集 3.1/词典第 3 行（持票人）。消费：术语治理（同义词「票据持有人（旧系统）」口径对齐，3.2）。" ;
+    skos:broader :conceptEnterprise .
+
+:conceptAcceptor a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :Acceptor ;
+    rdfs:label "承兑人（概念）"@zh ;
+    skos:prefLabel "承兑人"@zh ;
+    skos:altLabel "付款人"@zh ;
+    skos:definition "承诺票据到期无条件付款的企业。与「出票人」严格区分。"@zh ;
+    rdfs:comment "源：描述集 3.1/词典第 4 行（承兑人）。消费：术语治理（付款人=承兑人≠出票人口径对齐，3.2）。" ;
+    skos:broader :conceptEnterprise .
+
+:conceptDrawer a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:label "出票人（概念）"@zh ;
+    skos:prefLabel "出票人"@zh ;
+    skos:definition "签发票据的企业。"@zh ;
+    rdfs:comment "仅术语登记，不建模（本场景无消费点，描述集 3.2/词典裁定——反博物馆）。消费：术语口径区分（承兑人≠出票人）。" ;
+    skos:broader :conceptEnterprise .
+
+:conceptDiscount a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:label "贴现（概念）"@zh ;
+    skos:prefLabel "贴现"@zh ;
+    skos:altLabel "票据融资"@zh ;
+    skos:definition "持票人在票据到期前将票据权利转让给资金方以获取扣除利息后资金的行为。"@zh ;
+    rdfs:comment "词典「对应本体构件」列记 owl:Class 与描述集 1.1（共 5 类）冲突——以 1.1 冻结权威为准：贴现属流程活动类（描述集 5.1-5.7 扩展位，md 结构化描述不建类），仅 skos 登记（编译缺口-7）。消费：①受理判定语义口径。" ;
+    skos:broader :conceptBillAction .
+
+:conceptEndorsement a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :EndorsementRecord ;
+    rdfs:label "背书（概念）"@zh ;
+    skos:prefLabel "背书"@zh ;
+    skos:altLabel "背书转让"@zh ;
+    skos:definition "持票人在票据上签章并将票据权利转让给他人的行为；每次转让生成一条背书记录。"@zh ;
+    rdfs:comment "对应构件：背书记录类（:EndorsementRecord）+ 背书人/被背书人关系（:hasEndorser/:hasEndorsee，词典「背书关系」）。" ;
+    skos:broader :conceptBillAction .
+
+:conceptEndorsementChain a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :isUpstreamOf ;
+    rdfs:label "背书链（概念）"@zh ;
+    skos:prefLabel "背书链"@zh ;
+    skos:definition "一张票据自出票收款人起历次背书构成的有序转让序列；连续性=每次背书的背书人为上次的被背书人。"@zh ;
+    rdfs:comment "R7 判定对象（描述集 4.1-R7）；对应构件：:isUpstreamOf（Transitive 上游关系）+ 记录链（1.3d 序号有序）。" .
+
+:conceptDiscountApplication a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :DiscountApplication ;
+    rdfs:label "贴现申请（概念）"@zh ;
+    skos:prefLabel "贴现申请"@zh ;
+    skos:definition "持票人针对某张票据发起的一次贴现请求，具有编号、日期、期望金额与单向流转状态。"@zh ;
+    rdfs:comment "源：描述集 3.1/词典第 9 行（贴现申请）。消费：术语治理（口径对齐；状态机语义见描述集 5.5）。" ;
+    skos:broader :conceptBusinessRequest .
+
+:conceptCreditRating a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:seeAlso :creditRating ;
+    rdfs:label "信用等级（概念）"@zh ;
+    skos:prefLabel "信用等级"@zh ;
+    skos:altLabel "承兑人评级"@zh ;
+    skos:definition "平台对承兑人的内部评级，三档：AAA/AA/A，仅用于贴现资格判断。非外部权威评级。"@zh ;
+    rdfs:comment "源：描述集 3.1/词典第 10 行（信用等级）。消费：术语治理（口径对齐：平台内部评级，非外部权威）。" .
+
+:conceptDiscountPool a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:label "贴现池（概念）"@zh ;
+    skos:prefLabel "贴现池"@zh ;
+    skos:definition "满足平台受理条件（票面金额 ≥10 万等）的票据集合。"@zh ;
+    rdfs:comment "查询视图（描述集 7.5 组合查询），不建类（词典裁定）；R5 消费位。消费：③贴现池管理。" .
+
+# —— 结构上位节点（4 个：仅 prefLabel，无定义行不补造） ——
+
+:conceptBillAction a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:label "票据行为（结构节点）"@zh ;
+    skos:prefLabel "票据行为"@zh ;
+    rdfs:comment "结构节点：描述集 3.3 引用（票据行为{背书、贴现}），术语词典无对应行——不补造定义（编译缺口-7）。" ;
+    skos:narrower :conceptEndorsement , :conceptDiscount .
+
+:conceptFinancialInstrument a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:label "金融工具（结构节点）"@zh ;
+    skos:prefLabel "金融工具"@zh ;
+    rdfs:comment "结构节点：词典「票据」行 broader 列引用，无定义行——不补造（编译缺口-7）。FIBO 对齐候选见建模方案§七。" .
+
+:conceptEnterprise a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:label "企业（结构节点）"@zh ;
+    skos:prefLabel "企业"@zh ;
+    rdfs:comment "结构节点：词典「持票人/承兑人/出票人」行 broader 列引用，无定义行——不补造（编译缺口-7）。" .
+
+:conceptBusinessRequest a skos:Concept ;
+    skos:inScheme :TermScheme ;
+    rdfs:label "业务申请（结构节点）"@zh ;
+    skos:prefLabel "业务申请"@zh ;
+    rdfs:comment "结构节点：词典「贴现申请」行 broader 列引用，无定义行——不补造（编译缺口-7）。" .
+
+# ============================================================================
+# 编译缺口登记（与建模方案.md §十三一致；「裁量」= G1-Q4 已授权的 S3 编译方式选择，
+#   「缺口/待确认」= 须 G2/S4 处理项，不补造）
+#
+# 【Q4 裁量执行结果（G1 已授权，登记备 G2 复核）】
+#  Q1（R4 优先级）：规则组合——ruleR4 前提合取 R2 结论契约类 :AcceptableApplication；
+#    AAA 不再单独推出可贴现。副作用：可贴现推导依赖存在一笔过 R2 核对的申请。
+#  Q4-1（R1 否定语义）：正向核对 ruleR1 → :ValidApplication；「非持票人一律拒绝」应用层执行。
+#  Q4-2（R2 日期差）：标准 swrlb 无日期比较/差值 built-in（temporal 库为未采纳提案）→ 降级：
+#    DatatypeProperty（:applicationDate/:dueDate）登记+应用层双条件核对→断言
+#    :AcceptableApplication。不产 R2 swrl:Imp。
+#  Q4-3（R6 计数）：owl:Restriction 分支（maxQualifiedCardinality 1，DL 完整可表达，非降级）。
+#
+# 【编译缺口/待确认项（呈 G2，S4 重点核验）】
+#  1. 首手背书核验需「出票时收款人」数据位——输入未建模（出票人不建模裁定，无收款人字段）；
+#     R7 首手核对降级应用层；数据位是否增补待 G2。
+#  2. 申请编号格式中「日期」段位数资料未显式给定——按 8 位 YYYYMMDD 假设编译
+#     （:ApplicationNumberFormat pattern），待 G2 确认。
+#  3. 背书序号「唯一且递增」按链内 +1 连续编号读法（ruleR7 相邻判定依赖）——若业务允许跳号，
+#     相邻判定降级应用层排序（路径已在建模方案§十给出），待 G2 确认。
+#  4. R4∧R5 组合（AAA 且 <10 万）触发 2.2c disjoint 不一致检出——G1 未裁定该组合的消解
+#     优先级，按「双保留+裁决单」人工裁定，处置路径待业务登记。
+#  5. 2.5 后半「到期日期 > 出票日期」：标准 swrlb 核心库不保证 xsd:date 比较（与 Q4-2 同根因，
+#     v1.1 理由精确化）——引擎支持 date 比较 built-in 时可编译为 SWRL，否则应用层核对（当前按
+#     应用层执行）。
+#  6. 2.6 目标构件 owl:InverseFunctionalProperty 不可用于数据属性（OWL 2 DL 限制）→
+#     以 owl:hasKey 标准替代（同键值 ⇒ 同一个体，类内语义——v1.1 条目②），语义等价。
+#  7. 词典行「对应本体构件」列（贴现=owl:Class）与描述集 1.1（共 5 类）冲突——以 1.1 冻结
+#     权威为准；4 个结构上位概念节点（票据行为/金融工具/企业/业务申请）仅 prefLabel 不补造定义。
+#  8. 币种维度未建模（单一人民币场景，源 1.2a；登记于 :faceAmount comment）。
+#  9. FIBO 对齐仅登记于建模方案.md §七（IRI 未联网核验，不入本文件，无 owl:imports）。
+#
+# 【敏感纪律】全虚构试跑：示例个体仅在建模方案.md §二以虚构 YAML 呈现，本文件不含个体，
+#   无真实机构/人名/商务参数。
+# ============================================================================

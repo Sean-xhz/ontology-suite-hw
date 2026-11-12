@@ -1,0 +1,21 @@
+{
+  "file": "ontology.ttl",
+  "generated_at": "2026-10-26 21:42:16",
+  "parse_ok": true,
+  "exit_code": 0,
+  "summary": {
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  },
+  "findings": [],
+  "stats": {
+    "classes": 10,
+    "object_properties": 9,
+    "datatype_properties": 13,
+    "individuals": 0,
+    "swrl_rules": 5,
+    "imports": 0,
+    "axioms_triples": 566
+  }
+}

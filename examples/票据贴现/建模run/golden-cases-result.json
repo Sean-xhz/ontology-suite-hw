@@ -1,0 +1,452 @@
+{
+  "summary": {
+    "total": 15,
+    "pass": 15,
+    "fail": 0,
+    "pass_rate": 100.0
+  },
+  "results": [
+    {
+      "id": "G1",
+      "desc": "发起人为当前持票人的申请 → 推出 ValidApplication（R1 身份核对，Q4-1 正向路径）",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndApp1",
+            "ValidApplication"
+          ],
+          "ok": true,
+          "detail": "IndApp1.is_a 含 ValidApplication = True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "G2",
+      "desc": "承兑人评级 A 的票据 → 推出 NonDiscountable（R3）",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndBillB",
+            "NonDiscountable"
+          ],
+          "ok": true,
+          "detail": "IndBillB.is_a 含 NonDiscountable = True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "G3",
+      "desc": "3 次有效衔接背书 → isUpstreamOf 相邻推出且 Transitive 闭包首→末可达",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "prop_value",
+            "IndR1",
+            "isUpstreamOf",
+            "IndR2"
+          ],
+          "ok": true,
+          "detail": "IndR1.isUpstreamOf 含 IndR2 = True（值=['IndR3', 'IndR2']）"
+        },
+        {
+          "expect": [
+            "prop_value",
+            "IndR2",
+            "isUpstreamOf",
+            "IndR3"
+          ],
+          "ok": true,
+          "detail": "IndR2.isUpstreamOf 含 IndR3 = True（值=['IndR3']）"
+        },
+        {
+          "expect": [
+            "prop_value",
+            "IndR1",
+            "isUpstreamOf",
+            "IndR3"
+          ],
+          "ok": true,
+          "detail": "IndR1.isUpstreamOf 含 IndR3 = True（值=['IndR3', 'IndR2']）"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "G4",
+      "desc": "AAA 承兑人 + 已过 R2 核对的申请（AcceptableApplication 契约断言）→ 票据推出 Discountable",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndBillD",
+            "Discountable"
+          ],
+          "ok": true,
+          "detail": "IndBillD.is_a 含 Discountable = True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndApp2",
+            "ValidApplication"
+          ],
+          "ok": true,
+          "detail": "IndApp2.is_a 含 ValidApplication = True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "G5",
+      "desc": "票面金额 8 万（<10 万）→ 推出 NonDiscountable（不进入贴现池，登记留痕档）",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndBillE",
+            "NonDiscountable"
+          ],
+          "ok": true,
+          "detail": "IndBillE.is_a 含 NonDiscountable = True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "G6",
+      "desc": "AAA 票据一笔「审核中」申请（契约断言+发起人为持票人）→ Discountable+ValidApplication+ApplicationUnderReview 定义类推出，R6 maxQualifiedCardinality 1 不违反",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndBillF",
+            "Discountable"
+          ],
+          "ok": true,
+          "detail": "IndBillF.is_a 含 Discountable = True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndApp3",
+            "ValidApplication"
+          ],
+          "ok": true,
+          "detail": "IndApp3.is_a 含 ValidApplication = True"
+        },
+        {
+          "expect": [
+            "in_class",
+            "IndApp3",
+            "ApplicationUnderReview"
+          ],
+          "ok": true,
+          "detail": "IndApp3.is_a 含 ApplicationUnderReview = True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "E2",
+      "desc": "票面金额恰 10 万（边界）→ R5 lessThan 不含边界，不推出 NonDiscountable",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "not_in_class",
+            "IndBillJ",
+            "NonDiscountable"
+          ],
+          "ok": true,
+          "detail": "IndBillJ.is_a 含 NonDiscountable = False"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "E4",
+      "desc": "评级 AA + 契约申请 → R3/R4 均不触发（open-world 未判定≠不满足，残留风险 2 登记）",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "not_in_class",
+            "IndBillK",
+            "Discountable"
+          ],
+          "ok": true,
+          "detail": "IndBillK.is_a 含 Discountable = False"
+        },
+        {
+          "expect": [
+            "not_in_class",
+            "IndBillK",
+            "NonDiscountable"
+          ],
+          "ok": true,
+          "detail": "IndBillK.is_a 含 NonDiscountable = False"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "X1",
+      "desc": "applicationStatus「作废」（受控值外）→ 期望 range 违反检出不一致；若 Pellet 忽略内联 oneOf（auditor 2.5 预警）则登记机械盲区→应用层校验契约",
+      "asserts": [
+        {
+          "expect": [
+            "inconsistent"
+          ],
+          "ok": true,
+          "detail": "检出=True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": true
+    },
+    {
+      "id": "X2",
+      "desc": "creditRating「BBB」（受控值外）→ 期望 range 违反检出不一致；同 X1 双档判定",
+      "asserts": [
+        {
+          "expect": [
+            "inconsistent"
+          ],
+          "ok": true,
+          "detail": "检出=True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": true
+    },
+    {
+      "id": "X3",
+      "desc": "同一票据两笔「审核中」申请 → R6 maxQualifiedCardinality 1 违反 → 检出不一致",
+      "asserts": [
+        {
+          "expect": [
+            "inconsistent"
+          ],
+          "ok": true,
+          "detail": "检出=True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": true
+    },
+    {
+      "id": "X4",
+      "desc": "同一票据同时断言 Discountable 与 NonDiscountable → AllDisjointClasses 检出不一致",
+      "asserts": [
+        {
+          "expect": [
+            "inconsistent"
+          ],
+          "ok": true,
+          "detail": "检出=True"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": true
+    },
+    {
+      "id": "X5",
+      "desc": "AAA 票据但无任何 AcceptableApplication 断言 → R4 不触发，不得凭空推出 Discountable",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "not_in_class",
+            "IndBillP",
+            "Discountable"
+          ],
+          "ok": true,
+          "detail": "IndBillP.is_a 含 Discountable = False"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "X6",
+      "desc": "相邻记录中转人不匹配（r1 被背书人≠r2 背书人）→ isUpstreamOf 不推出",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "no_prop_value",
+            "IndR1b",
+            "isUpstreamOf",
+            "IndR2b"
+          ],
+          "ok": true,
+          "detail": "IndR1b.isUpstreamOf 含 IndR2b = False（值=[]）"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    },
+    {
+      "id": "X7",
+      "desc": "发起人≠当前持票人 → ValidApplication 不推出（否定语义应用层拦截，Q4-1）",
+      "asserts": [
+        {
+          "expect": [
+            "consistent"
+          ],
+          "ok": true,
+          "detail": "consistent=True"
+        },
+        {
+          "expect": [
+            "not_in_class",
+            "IndApp8",
+            "ValidApplication"
+          ],
+          "ok": true,
+          "detail": "IndApp8.is_a 含 ValidApplication = False"
+        }
+      ],
+      "error": null,
+      "notes": [
+        "剥离具名 datatype 三元组 19 条（限制⑩降级）"
+      ],
+      "pass": true,
+      "inconsistent_detected": false
+    }
+  ]
+}

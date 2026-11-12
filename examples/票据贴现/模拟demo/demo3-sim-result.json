@@ -1,0 +1,127 @@
+{
+ "instance": "demo3-instance.json",
+ "scenario": "虚构画像：小额票据+三手完整背书链——面额 8 万触发 R5 小额不入池（处置档仅登记），三手背书链序号相邻且前手被背书人=后手背书人，期望 R7 推导相邻衔接与传递闭包",
+ "query": "评估该三手背书小额票据：背书链是否连续（R7 衔接与传递闭包）？小额面额的处置档结论是什么？AA 级承兑人的开放世界语义如何登记？",
+ "ontology": {
+  "ttl": "../建模run/ontology.ttl",
+  "sha": "ec85ca9598b4"
+ },
+ "consistency": "consistent",
+ "inconsistency_detail": null,
+ "materialize": {
+  "tag": "full",
+  "asserted": 579,
+  "after": 583,
+  "diff_inferred": 4,
+  "retracted": 0,
+  "bnode_subject": 0,
+  "inconsistent": null,
+  "t_load": 0.0,
+  "t_sync": 9.0
+ },
+ "inferred": [
+  {
+   "subject": "indBill3",
+   "predicate": "type",
+   "object": "NonDiscountable",
+   "raw": "<http://example.org/bill-discount#indBill3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/bill-discount#NonDiscountable> .",
+   "instance_level": true,
+   "attribution": [
+    "ruleR5"
+   ]
+  },
+  {
+   "subject": "indEnd10",
+   "predicate": "isUpstreamOf",
+   "object": "indEnd11",
+   "raw": "<http://example.org/bill-discount#indEnd10> <http://example.org/bill-discount#isUpstreamOf> <http://example.org/bill-discount#indEnd11> .",
+   "instance_level": true,
+   "attribution": [
+    "ruleR7"
+   ]
+  },
+  {
+   "subject": "indEnd10",
+   "predicate": "isUpstreamOf",
+   "object": "indEnd12",
+   "raw": "<http://example.org/bill-discount#indEnd10> <http://example.org/bill-discount#isUpstreamOf> <http://example.org/bill-discount#indEnd12> .",
+   "instance_level": true,
+   "attribution": [
+    "ruleR7"
+   ]
+  },
+  {
+   "subject": "indEnd11",
+   "predicate": "isUpstreamOf",
+   "object": "indEnd12",
+   "raw": "<http://example.org/bill-discount#indEnd11> <http://example.org/bill-discount#isUpstreamOf> <http://example.org/bill-discount#indEnd12> .",
+   "instance_level": true,
+   "attribution": [
+    "ruleR7"
+   ]
+  }
+ ],
+ "attribution_summary": {
+  "ruleR5": 1,
+  "ruleR7": 3
+ },
+ "attribution_mode": "rules",
+ "rules_total": 5,
+ "label_map": {
+  "AcceptableApplication": "可受理申请",
+  "Acceptor": "承兑人",
+  "ApplicationUnderReview": "审核中申请",
+  "Bill": "票据",
+  "DiscountApplication": "贴现申请",
+  "Discountable": "可贴现票据",
+  "EndorsementRecord": "背书记录",
+  "Holder": "持票人",
+  "NonDiscountable": "禁止贴现票据",
+  "ValidApplication": "有效申请",
+  "currentHolder": "当前持票人",
+  "hasAcceptor": "票据承兑人",
+  "hasDiscountApplication": "票据的贴现申请",
+  "hasEndorsee": "被背书人",
+  "hasEndorsementRecord": "票据背书记录",
+  "hasEndorser": "背书人",
+  "initiatedBy": "申请发起人",
+  "isUpstreamOf": "链上游背书记录",
+  "targetsBill": "针对票据",
+  "applicationDate": "申请日期",
+  "applicationNumber": "申请编号",
+  "applicationStatus": "申请状态",
+  "billNumber": "票号",
+  "creditRating": "信用等级",
+  "dueDate": "到期日期",
+  "endorsementDate": "背书日期",
+  "endorsementSequenceNo": "背书序号",
+  "enterpriseName": "企业名称",
+  "expectedDiscountAmount": "期望贴现金额",
+  "faceAmount": "票面金额",
+  "issueDate": "出票日期",
+  "unifiedSocialCreditCode": "统一社会信用代码",
+  "ruleR1": "R1 发起人持票核对规则",
+  "ruleR3": "R3 A 级禁止贴现规则",
+  "ruleR4": "R4 AAA 可贴现规则（G1-Q1 收窄版）",
+  "ruleR5": "R5 小额票据不入贴现池规则",
+  "ruleR7": "R7 背书链有效衔接推导规则"
+ },
+ "notes": [
+  {
+   "level": "warning",
+   "code": "W08",
+   "message": "属性 billNumber 为具名 datatype BillNumberFormat（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 'PJ2026062000078' 未验证"
+  },
+  {
+   "level": "warning",
+   "code": "W08",
+   "message": "属性 faceAmount 为具名 datatype PositiveAmount（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 80000 未验证"
+  },
+  "canonicalize 缓存命中（sha=ec85ca9598b4）"
+ ],
+ "cache": {
+  "dir": ".sim-cache",
+  "hit": true,
+  "t_canonical": 0.0
+ }
+}
