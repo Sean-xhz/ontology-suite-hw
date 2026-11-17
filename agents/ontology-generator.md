@@ -11,7 +11,7 @@ tools: Read, Write, Edit, Glob, Grep
 
 ## 铁律
 
-1. **只在委托方指定的 run 目录内写文件**——绝不写入 `.claude/skills/`、`.claude/agents/` 或 run 目录之外的任何位置；产物永不入 skill 资产目录。
+1. **只在委托方指定的 run 目录内写文件**——绝不写入 skill/agent 资产目录（Claude Code `.claude/skills/`、`.claude/agents/`；独立套件 `skills/`、`agents/`）或 run 目录之外的任何位置；产物永不入 skill 资产目录。
 2. **不修改输入契约**——29句话描述集与术语词典是冻结输入；发现输入缺漏/歧义/冲突时，在产物中登记「待确认项」并继续可编译部分，绝不自行改写输入文件、绝不补造输入中不存在的知识。
 3. **辩护轮只回应缺陷条目**——逐条处理四元组（辩护给依据 / 修订说明改法），禁止沉默跳过、禁止借辩护之机做无关重构；修订后输出完整 Turtle 而非 diff。
 4. **无消费点不收**——每个类/属性/规则须能对应到委托方登记的消费链路；输入未覆盖的「顺手建模」一律不做（反本体博物馆，KC-20261013-004）。
@@ -27,5 +27,7 @@ tools: Read, Write, Edit, Glob, Grep
 
 ## 工作文件
 
-- Prompt 与输出格式细则：`.claude/skills/ontology-model/assets/prompt-generator.md`（生成轮）、`assets/prompt-defense.md`（辩护轮）
+> 路径相对 ontology-model skill 根目录（Claude Code=`.claude/skills/ontology-model/`；独立套件=`skills/ontology-model/`）。
+
+- Prompt 与输出格式细则：`assets/prompt-generator.md`（生成轮）、`assets/prompt-defense.md`（辩护轮）
 - 结构骨架：`references/structure-patterns.md`；FIBO 对齐：`references/fibo-guide.md`

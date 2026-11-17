@@ -3,6 +3,19 @@
 > **版本约定**：semver（MAJOR.MINOR.PATCH）——MAJOR=执行契约不兼容变更（Stage/闸门/交付契约改变）；MINOR=新增能力或条款；PATCH=措辞与修正。frontmatter `metadata.version` 为当前版本（skill schema 不支持顶层 version 属性，登记于 metadata）。子协议版本（如 golden-cases schema 1.0、SWRL 规范 v2）在对应版本条目登记，不随 skill 版本号联动。
 > **本文件=构建档案层**（C1/N11 三受众拆分：SKILL.md=执行契约 / README.md=人类手册 / CHANGELOG.md=档案）。执行不依赖本文件；「实证证据登记」节为从执行资产迁出的构建史与证据链，开源发行可选携带。历史指针中的 vault 构建区路径仅为溯源记录，不构成运行依赖。
 
+## 1.6.0（2026-11-17）— R2 增量 patch 引擎（短期 CLI 能力增强首项）
+
+- **R2 增量 patch 引擎**：新增 `scripts/incremental_patch.py`（机械 backbone，纯 rdflib 核心，顶层仅标准库+rdflib+同目录 rdflib-only 复用模块；owlready2/推理层经 run_one 函数内延迟导入）。消费结构化编辑操作 JSON（schema 1.0）→ rdflib 增量修改产 **draft TTL + patch-report.json**（不覆盖权威）→ L1/L2 零新增 error delta 闸门 + 可选 L3 + 黄金用例受影响子集回归守护 + 语义版本 diff。R2 是 D4 拖拽编辑的机械 patch 地基；「意见→编辑操作」语义翻译由外接编排器（LLM/D4 前端/手工）承担，R2 只机械执行不含 LLM 调用。
+- **8 操作目录**：add_triple（幂等）/ remove_triple（目标必存）/ replace_literal（s 可选全图唯一匹配，oneOf 枚举改值高频形态）/ modify_label（PATCH 单值化）/ add_class / add_property（MINOR）/ remove_rule / replace_rule（MAJOR，规则级编辑绕开 bnode 寻址）。项编码契约：字符串一律 IRI（全 IRI/前缀名/裸 localname→默认 ns），字面量 dict，number/bool 仅 o 位，**`_:` 项一律拒绝**（bnode 跨 parse 不可寻址，实证 no-op）。
+- **契约模板**：新增 `assets/tpl-patch-schema.md`（第 13 模板）——patch JSON schema 1.0 全文 + 操作目录 + 项编码 + 虚构票据配例（modify_label/replace_rule）+ exit 三态 + 纪律节 + 回归子集算法 + 保真边界。
+- **三处设计裁定**（对原迭代清单两段 bump 规格的 refine）：① 版本 bump 三段 PATCH/MINOR/MAJOR（annotation→PATCH，结构→MINOR，规则→MAJOR）；② L1/L2 闸门=零新增 error（delta 口径，对齐基线迭代细则⑥；`--strict` 绝对档）；③ MAJOR 回归守护硬前提（MAJOR+无 --golden→blocked 转入口 (c)；MAJOR+无 Java→blocked；MINOR/PATCH+无 Java→降级登记放行）。
+- **复用面**（只 import 不改）：validate_ontology.Validator（L1/L2 双侧 delta）/ run_golden_cases.run_one+canonicalize_base+find_java（回归双侧实跑）/ check_consistency.strip_swrl（MAJOR 闭包检测通道②）+ subprocess（L3）。规则级联删除按 simulate_reason._destroy_list/drop_rule **同算法图级实现**（不 import：其顶层 import owlready2 破坏 rdflib-only + model→simulate 反向分层）。
+- **纪律零改动**：意见单 schema §四.2「一切形式化修改走入口 (c)」不变——R2 产 draft 携带 `entry_c:pending_audit`，晋升仍走入口 (c) S4 审计→G2/G3→人工闸门，R2 永不执行晋升。零回写三文件 sha256 断言 + 输出 realpath 碰撞守卫 + 默认输出落 cwd。
+- **SKILL.md 薄指针**：S0 入口 (c) 增量通道 + S4 第一步增量修改通道命令行 + 资产索引 scripts/assets 各一条（不叠条款，契约细节在 tpl-patch-schema）。README §六后补「增量 patch（R2）」小节。references/reasoner-limits.md **不动**（复用⑩⑭既定机制，无新引擎限制）。
+- **子协议登记**：patch JSON schema **1.0**（独立子协议，不随 skill 版本联动）；report schema 1.0。
+- **版本判据**：新增脚本+模板资产（能力面扩展），执行契约 Stage/闸门/交付零改动（入口 (c) 纪律不变）→ MINOR。
+- **实证证据**：见下「实证证据登记 F 节」（虚构票据 fixture 手工矩阵 + 契约边界 10/10 + MAJOR 全集回归 + L3 通道 + 双跑确定性 + 零回写）。套件 T11 验收电池见套件 CHANGELOG/README v9。
+
 ## 1.5.0（2026-11-12）— 盲测模板补齐 + 交付节瘦身 + 引擎归因成文 + 部署表述泛化
 
 - **盲测还原率对照报告模板**：新增 `assets/tpl-restoration-report.md`（12 模板）——对照口径与方法（两侧形态差异/判定三档/双口径公式）→ 摘要结论 → 五矩阵（实体/关系/公理/规则库/切片）→ 误报清单 → 漏检三分类归因 → 形式化增量 → 盲测效力诚实声明 → 汇总计算表。S1 盲测段与 manifest 勾稽位补模板指针；收卷硬要求（双口径+误报/漏检清单）不变。
@@ -107,3 +120,37 @@
 - 登记待办（1.0.0 时点）：HermiT 实例层复测（探索项，已于 1.1.0 完成=限制⑬）/ structure-patterns [provisional] 项待第三场景复核（已于 1.1.0 完成 5 项升级，处置档档数维持 provisional）。
 - **任务 2 可视化审核平台暂缓史**：2026-10-27 裁定暂缓收尾——WebProtégé 实测出局（round-trip SWRL hollowing+inverseOf 丢失），修订组合方向=审阅图示层/意见回流/管线重编译分离承载。该方向后由 ontology-review skill 承接落地（2026-11-10，课题 2）；图示三外采组件（OntoInk/WebVOWL/Reactodia）实测不满足 SWRL/hasKey/oneOf 门禁→自建 cytoscape 单文件（详见 ontology-review CHANGELOG）。
 - L3 引擎限制原始实测档案=vault 构建区 `00 构建资料/L3-reasoner环境与用法.md`（2026-10-26 实测定型，含本机环境明细与 Java 下载通道注记）；执行侧自包含登记已内核化至 `references/reasoner-limits.md`（1.4.0）。
+
+### F. R2 增量 patch 引擎实证矩阵（2026-11-17，1.6.0）
+
+> fixture=虚构票据贴现载体（套件 `examples/票据贴现/建模run/ontology.ttl`，566 三元组/0 error 0 warning/10 类 9 对象 13 数据 5 规则；golden-cases.json 16 用例 Q3-STRESS exempt→15 active，纯全局 X1-X4）。环境=python 3.9.6 / rdflib 7.6.0 / owlready2 0.51 / Java jdk-25.0.5 Pellet。patch JSON 运行时生成（sha 运行时算），examples/ 零改动。
+
+**设计 grounding 实证**（Plan 阶段，修正原草图 7 处）：
+- bnode 跨 parse 不可寻址：两次 parse bnode 标签随机不同，用 bnode term 做 remove 是 no-op→契约禁 `_:` 项 + 规则级编辑 + 单 parse 工作图（三元组复制共享 bnode 对象）。
+- 序列化确定性：canonical-copy-rebind turtle（to_canonical_graph→复制普通 Graph〔ReadOnlyGraphAggregate 不可 bind〕→rebind 原前缀）跨 PYTHONHASHSEED 字节稳定；diff 渲染经 to_canonical_graph 取确定性 cb 哈希标签（report 无随机标签泄漏，v6 纪律）。
+- 回归子集原型：remove_ruleR3 受影响 7→保守扩展 37→15/15 选中（MAJOR 全审查合理）；孤立新类（无 subclass_of）→交集空→仅全局守卫。
+- L2-DISJOINT error 触发：`:Discountable rdfs:subClassOf :NonDiscountable`（二者 AllDisjointClasses 成员）→new_errors≥1。
+- oneOf 字面量挂 bnode list cell：replace_literal p=rdf:first，s 省略全图唯一匹配；锚点反向 BFS 回溯承载属性（applicationStatus）。
+
+**手工实证矩阵**（incremental_patch.py 直跑，输出落 tmp）：
+
+| 子例 | 操作 | 结果 |
+|---|---|---|
+| T11a 注解 | modify_label :Bill | exit 0；bump=PATCH（auto=patch）；regression=skipped(annotation-only)；zero_wb ✓ |
+| T11b 结构 | add_class :PatchDemoClass ⊑ :Bill | exit 0；bump=MINOR；regression=pass（选中 15，Bill 重连接→保守扩展全子集）；new_errors 0 |
+| T11c L2 反例 | add_triple :Discountable ⊑ :NonDiscountable | exit 1；new_errors 1；blocked；draft 仍产；regression=skipped(l1l2-blocked)（短路省 JVM） |
+| T11d 回归反例 | replace_literal oneOf 已提交→已递交 | exit 1；bump=MINOR；regression=fail；选中 9（G1/G4/G6/E4/X1-X4/X7，锚点+扩展精度非全集）；newly_failed G1/G4/E4/X7；通过率 100→55.6% |
+| T11e1 MAJOR 政策 | remove_rule ruleR3 无 --golden | exit 1；bump=MAJOR；regression=blocked（硬前提缺失转入口 (c)） |
+| T11e2 契约 | baseline sha 错配 | exit 2；不产 draft（防陈旧 patch） |
+| T11f 确定性 | T11a 双跑（两子进程） | draft md5 字节一致（c18a2097…） |
+| MAJOR 全集回归 | remove_rule ruleR3 + --golden + Java | exit 1；bump=MAJOR rule_touched ✓；regression=fail 选中 15；baseline 15/15→draft 14/15；newly_failed G2；通过率 100→93.3%（守护检出规则删除影响）；zero_wb ✓ |
+| L3 通道 | modify_label + --with-l3 | exit 0；L3 subprocess consistent=True reasoner=pellet exit_code 0 |
+| 零回写独立 | examples/ baseline+golden sha 前后 | baseline sha 不变 ✓ golden 稳定 ✓（权威 fixture 未被改动） |
+
+**契约边界矩阵 10/10 PASS**：replace_rule 合法片段→MAJOR blocked（无 golden）/ bnode 变量片段→exit 2 / 片段含 @prefix→exit 2 / 片段 IRI 不匹配→exit 2 / remove_triple 目标缺失→exit 2（附实际宾语）/ replace_literal 多匹配→exit 2 / `_:` 项→exit 2 / 未知前缀→exit 2 / add_class 重复声明→exit 2 / o 位字符串→IRI（永不解释为字面量）。
+
+**保真边界实证**：rdflib 序列化丢失原文件注释（fixture 版本史头注释）——draft 头注释 + report 承载版本溯源，晋升时历史注释合并由编排器/人工承接（文本级保注释 patch 否决）。枚举字面量变更 diff 整 oneOf 子树过报（bnode 链哈希全变，安全侧；named_summary 从操作日志补可读性）。
+
+**套件 T11 验收电池（`run_suite_tests.py`，2026-11-17 v9 重冻结）**：Java 档 **PASS 12 / FAIL 0 / SKIP 0**（T0 py_compile 14 脚本含 incremental_patch.py；T11 6 子例聚合行 PASS：a=PATCH/annotation-skip｜b=MINOR/pass｜c=L2-blocked/短路｜d=回归翻转 G1｜e=MAJOR-blocked/sha-exit2｜f=双跑字节一致｜零回写 ✓）；`--skip-java` 档 PASS 11 / SKIP 1 exit 0（T8 SKIP，T11d SKIP 登记，T11b not-requested）；坏套件根（`--suite-root` 空目录）exit 2——三态验证 ✓。CLI `model patch` 分发 exit 透传实证（注解 only exit 0，`entry_c.authoritative=false`·`pending_audit`，fixture 零回写）。权威↔快照 rsync 字节级一致（skills×3+agents×5）；套件 109 文件（+2）零缓存残留、examples 零副作用。
+
+> **T11f 测试台修复（非引擎缺陷，构建档案登记）**：电池初版 T11f 误用不同 patch_id（t11a vs t11f）双跑比较——draft 溯源头含 `patch_id` 字段，不同 patch_id 头部必异→假 FAIL；另 `d` 变量被后续子例覆盖指向 t11e1 draft。修正为**复用同一 patch JSON（同 patch_id）跨进程二次跑**（真确定性测试：同输入→同输出）+ 独立 `da` 锁定 T11a draft 路径。引擎确定性本身经隔离实证（同 patch_id 跨 PYTHONHASHSEED 1/999 双跑 md5 一致 a58e3375…）+ 手工矩阵 T11f（c18a2097…）双重确认，**零引擎改动**（incremental_patch.py 未因此修复变更）。

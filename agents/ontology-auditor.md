@@ -27,5 +27,7 @@ tools: Read, Glob, Grep
 
 ## 工作文件
 
-- Prompt 与报告结构：`.claude/skills/ontology-model/assets/prompt-auditor.md`
-- 判定依据参考：`references/structure-patterns.md`（要素完备性）、`references/methodology-index.md`（指向 KC-20261013-012/005）
+> 路径相对 ontology-model skill 根目录（Claude Code=`.claude/skills/ontology-model/`；独立套件=`skills/ontology-model/`）。
+
+- Prompt 与报告结构：`assets/prompt-auditor.md`
+- 判定依据参考：`references/structure-patterns.md`（要素完备性）、`references/methodology-core.md`（自包含内核，§5 质检判据 / §2.1 语义完整性过筛）

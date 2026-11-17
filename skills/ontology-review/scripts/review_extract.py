@@ -592,14 +592,14 @@ def plain_swrl(t, cls_label, prop_label, prop_range):
       角色定名 = ClassAtom 类中文名（权威）> 对象属性第二参 range 类名
                > 数据属性第二参「属性名+值」> 兜底「对象」
       首现 = 「某+角色」（存在引入），回指 = 「该+角色」；
-      同角色名词被多个变量占用时以甲/乙消歧（某票据甲/某票据乙）
-    句式：
-      ClassAtom 且角色==类名 → 独立句「某票据」（存在引入）；回指时省略
-        （角色名词已隐含类归属，冗余回指句会产出「如果· 该企业客户」式残句）
-      ClassAtom 且角色!=类名 → 「该票据 是『禁止贴现票据』」（归类结论）
-      IndividualPropertyAtom → 「该票据 的『票据承兑人』是 某承兑人」
-      DatavaluedPropertyAtom → 「该承兑人 的『信用等级』= A」
-      BuiltinAtom            → 「该账龄值 大于 360」（未收录比较词回退原文）
+      同角色名词被多个变量占用时以甲/乙消歧（某实体甲/某实体乙）
+    句式（以中性占位「实体/关系/属性」示意，实际代入本体类中文名）：
+      ClassAtom 且角色==类名 → 独立句「某实体」（存在引入）；回指时省略
+        （角色名词已隐含类归属，冗余回指句会产出「如果· 该实体」式残句）
+      ClassAtom 且角色!=类名 → 「该实体 是『某结论类』」（归类结论）
+      IndividualPropertyAtom → 「该实体 的『某关系』是 某关联实体」
+      DatavaluedPropertyAtom → 「该关联实体 的『某属性』= 值」
+      BuiltinAtom            → 「该数值 大于 360」（未收录比较词回退原文）
     无 atoms 返回 None。
     """
     body = t.get("body_atoms") or []
@@ -615,7 +615,7 @@ def plain_swrl(t, cls_label, prop_label, prop_range):
         role[v] = base if n == 1 else base + "甲乙丙丁戊"[n - 2]
 
     # 角色定名只看 body（head 的 ClassAtom 是结论归类，不得篡夺主语角色——
-    # 曾现 head ValidApplication(?1) 把主体角色从「贴现申请」覆写成「有效申请」）
+    # 曾现 head 结论类(?1) 把主体角色从「主体类」覆写成「结论类」）
     # 第一遍：body ClassAtom 权威（角色名=该类中文名）
     for a in body:
         if a.get("atom_type") != "ClassAtom":

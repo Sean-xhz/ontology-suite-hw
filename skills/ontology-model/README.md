@@ -82,6 +82,23 @@
 
 **引擎限制**：限制①-⑭清单、削减实验矩阵、三级降级链与 L2/L3 分工的自包含登记=`references/reasoner-limits.md`（执行与失败归因必读；引擎版本变更须逐项复核）。要点：限制⑨=具名枚举 datatype Pellet 值空间判空→唯一兼容形态=range 内联匿名 oneOf（补 rdf:type rdfs:Datatype 为标准推荐形）；限制⑩=facet 具名 datatype 模式层兼容/实例层假不一致→S6 执行器剥离降级（内联 oneOf 保留，实例层有真强制力）；限制⑭=canonical 确定性档内置+孤立场景失灵由并发压力用例承载验收。
 
+### 增量 patch（R2）
+
+**何时用**：既有本体的简单修改——label/注解、受控枚举值、增删类/属性、规则级编辑——不必触发全量重建（入口 (c) 重编译）。R2 消费结构化编辑操作 JSON，rdflib 增量修改产 **draft TTL + patch-report.json**，附 L1/L2 零新增 error 闸门 + 黄金用例受影响子集回归守护 + 语义版本 diff。R2 是 D4 拖拽编辑的机械 patch 地基（前端产 patch JSON，R2 机械执行）。
+
+```bash
+python3 scripts/incremental_patch.py <baseline.ttl> <patch.json> \
+    [--golden cases.json] [--with-l3] [--output-draft PATH] [--report PATH] \
+    [--bump auto|major|minor|patch] [--strict] [--regression-full] [--cache-dir DIR]
+# 套件统一 CLI：ontology_cli.py model patch <baseline.ttl> <patch.json> [...]
+```
+
+**exit**：2=应用前输入错（schema/sha 错配/项编码错/操作目标缺失，不产 draft）；0=released；1=blocked（L1/L2 新增 error / 回归检出翻转 / MAJOR 无守护 / L3 不一致）。exit 0/1 均产 draft+report（blocked draft 供检视）。
+
+**纪律边界**：① **draft 非权威**——意见单 schema §四.2「一切形式化修改走入口 (c)」零改动，R2 产 draft 携带 `entry_c:pending_audit`，晋升仍走入口 (c) S4 审计→G2/G3→人工闸门，R2 永不执行晋升。② **零回写**——baseline/golden/patch 三文件 sha256 前后断言 + 输出 realpath 碰撞守卫，默认输出落 cwd 不进 run 目录。③ **与全量重建分界**——规则编码变更（MAJOR）无 `--golden` 回归守护→blocked 转入口 (c) 全量审计；R2 不是绕过闸门的捷径。④ **保真边界**——rdflib 序列化丢失原文件注释，draft 为机械中间产物，晋升时历史注释合并由编排器/人工承接。
+
+契约全文（patch JSON schema 1.0 + 8 操作目录 + 项编码 + 虚构配例）=`assets/tpl-patch-schema.md`。「意见→编辑操作」语义翻译由外接编排器（LLM/D4 前端/手工）承担，R2 只机械执行不含 LLM 调用。
+
 ## 七、环境与目录约定
 
 **依赖**：python3（3.9+）+ rdflib + owlready2 + JRE（HermiT 需 Java ≥17；**Pellet 需 Java ≥25**——`find_java()` 自动选本机最高版本，环境变量 `OWL_JAVA_EXE` 可显式覆盖）。node 仅 ontology-review 回归层语法检查项需要。L3 不可用时自动降级 L2 并登记 manifest，不阻塞交付。

@@ -1,7 +1,7 @@
 ---
 name: ontology-model
 metadata:
-  version: 1.5.0
+  version: 1.6.0
 description: 业务场景自动化本体建模管线——把业务资料/访谈/术语集编译为符合 W3C 规范的结构化本体（RDF/OWL/SKOS/SWRL，Turtle 输出），含双模型生成-审计-仲裁质检与黄金用例验收。当用户要求为业务场景（金融、保险、供应链、制造等行业域）构建领域本体/知识图谱 schema、把自然语言业务资料转成 RDF/OWL/SWRL 结构化模型、审计或质检既有本体 TTL 文件、做本体黄金用例验收、或提到「本体建模」「ontology」「TTL 生成」「本体审计」「29句话」「7+1 语义」时使用本 skill。即使用户只说「帮我把这份业务资料建模」而未点名本体，只要产物指向结构化语义模型，也应触发。
 ---
 
@@ -47,7 +47,7 @@ description: 业务场景自动化本体建模管线——把业务资料/访谈
 
 ## S0 准入与裁剪决策
 
-1. 评估输入形态，定入口模式并登记 manifest：**(a)** 原始业务资料→全管线；**(b)** 已有 29 句描述集→跳 S1；**(c)** 既有 TTL→只跑 S4 审计起（S5/S6 按需）。所有裁剪（跳过的 Stage、降级的验证层、未启用的扩展位）显式登记，禁止静默裁剪。
+1. 评估输入形态，定入口模式并登记 manifest：**(a)** 原始业务资料→全管线；**(b)** 已有 29 句描述集→跳 S1；**(c)** 既有 TTL→只跑 S4 审计起（S5/S6 按需）。所有裁剪（跳过的 Stage、降级的验证层、未启用的扩展位）显式登记，禁止静默裁剪。**入口 (c) 增量通道（R2）**：既有 TTL 的简单修改（label/注解/受控值/增删类属性/规则级编辑）可走 `scripts/incremental_patch.py`（编辑操作 JSON→draft TTL+report，不覆盖权威，契约=`assets/tpl-patch-schema.md`），draft 仍以入口 (c) 起审计晋升；规则编码变更（MAJOR）无回归守护时转入口 (c) 全量审计。
 
    **基线迭代细则（入口 (b) 变体）**：对既有本体基线做迭代修订的 run，标准流程=①影响评估（新输入变化→受影响构件与规则族定位）→②修订对照表（基线构件 vs 新诉求，逐项处置=不动/修订/新增/删除）→③G1 评审对照表（口径冲突类业务裁定在闸门完成，不遗留到生成后）→④增量生成（冻结区零触碰，新构件只进增量区）→⑤继承黄金集**逐字节冻结**（哈希比对登记；改动既有用例必须走 G2 裁定）→⑥零回归双证明（继承用例全 PASS+机械校验全量复跑零新增 error）→⑦构件计数以机械实测为准（禁手抄）。迭代 run **事件驱动启动**（源头数据归一化完成/结构性缺口登记/生产化排期启动等触发条件），无触发条件不制造 run（反博物馆）。
 2. 定 run 目录：`<runs_root>/<场景名>_<YYYYMMDD>/`。**runs_root 解析顺序**：①用户调用时显式指定 → ②环境变量 `ONTOLOGY_RUNS_ROOT` → ③本 skill README「环境与目录约定」节的部署环境默认。**真实业务敏感场景：runs_root 必须指向受控目录（不进版本控制/不进入对外分发通道）**——按 `references/sensitivity-rules.md` 确认目录受控状态并登记。
@@ -104,6 +104,8 @@ python3 <skill根>/scripts/check_consistency.py <run>/ontology.ttl --json-output
 
 exit≠0 的 error 级发现直接回 generator 修订（不占审计轮次）；L3 exit 2（环境不可用）→登记 manifest 降级 L2，不阻塞。warning 全部登记 manifest。
 
+**增量修改通道（R2，入口 (c) 简单修改适用）**：`python3 <skill根>/scripts/incremental_patch.py <baseline.ttl> <patch.json> [--golden cases.json] [--with-l3]`——消费编辑操作 JSON 产 draft TTL+patch-report（L1/L2 零新增 error 闸门 + 受影响子集回归守护 + 版本 diff，**不覆盖权威**），draft 再以入口 (c) 起审计。exit 2=输入错不产 draft / 0=released / 1=blocked。契约与操作目录=`assets/tpl-patch-schema.md`。
+
 **第二步·双模型审计**：委托 **ontology-auditor**（Claude Code 参考实现 model: sonnet，只读；异构纪律见铁律 4）按 `assets/prompt-auditor.md` 出三维度四元组缺陷报告；主会话落盘 `缺陷报告.md`（`assets/tpl-defect-report.md`）。**入口 (c) 无描述集/词典时**：委托 prompt 须显式声明业务贴合度基准缺失——维度三降级为「有无核对」（消费登记缺失可查，与第 8 节一致性不可查），不得以「无基准下一切构件皆自创」机械推论充数；降级口径记入缺陷报告维度覆盖声明节。
 
 **第三步·辩护/修订**：有缺陷→委托 generator 按 `assets/prompt-defense.md` 逐条辩护或修订→修订后重跑机械脚本+再审计。**收敛上限 3 轮**；超限未决或双方立场冲突→升级 G2。
@@ -154,7 +156,7 @@ manifest 收卷补全：入口模式/裁剪登记/博弈轮次与收敛轨迹/L3
 ## 资产索引
 
 - `references/`：**methodology-core（方法论内核，自包含执行依据，S1-S6/G1 判据细节）** / **reasoner-limits（引擎限制①-⑭+削减实验矩阵+降级链+L2/L3 分工，自包含）** / methodology-index（vault 卡簇溯源索引，深度追踪用，执行不依赖）/ fibo-guide（公共层对齐）/ structure-patterns（四层结构骨架+SWRL 编译形态约束 §七，[verified]/[provisional] 两级标注）/ sensitivity-rules（敏感纪律）/ structured-input-mapping（结构化输入→29 句集通用映射方法+示例，S1' 机械映射档）
-- `assets/`：tpl-29-sentences / tpl-term-dict / prompt-generator / prompt-auditor / prompt-defense / tpl-defect-report / tpl-golden-cases / tpl-ontology-doc / checklist-visual-review / tpl-gate-submission（G1/G2/G3 呈报件骨架）/ tpl-production-handoff（生产化交接说明，第 9 件可选）/ tpl-restoration-report（盲测还原率对照报告，收卷勾稽位必产物）
-- `scripts/`：validate_ontology.py（L1+L2，exit 0/1/2）/ check_consistency.py（L3 reasoner 三级降级链，exit 0/1/2）/ report_topology.py（S5 文本拓扑）/ run_golden_cases.py（S6 执行器，canonical 确定性档内置）/ closeout_check.py（收卷自查：齐套+敏感模式+计数一致+净化清单，exit 0/1/2）
+- `assets/`：tpl-29-sentences / tpl-term-dict / prompt-generator / prompt-auditor / prompt-defense / tpl-defect-report / tpl-golden-cases / tpl-ontology-doc / checklist-visual-review / tpl-gate-submission（G1/G2/G3 呈报件骨架）/ tpl-production-handoff（生产化交接说明，第 9 件可选）/ tpl-restoration-report（盲测还原率对照报告，收卷勾稽位必产物）/ tpl-patch-schema（R2 增量 patch 编辑操作 JSON 契约，schema 1.0）
+- `scripts/`：validate_ontology.py（L1+L2，exit 0/1/2）/ check_consistency.py（L3 reasoner 三级降级链，exit 0/1/2）/ report_topology.py（S5 文本拓扑）/ run_golden_cases.py（S6 执行器，canonical 确定性档内置）/ closeout_check.py（收卷自查：齐套+敏感模式+计数一致+净化清单，exit 0/1/2）/ incremental_patch.py（R2 增量 patch 引擎：编辑操作→draft+L1/L2+回归守护+版本 diff，不覆盖权威，exit 0/1/2）
 - agents：ontology-generator（S3/S4 辩护）/ ontology-auditor（S4 审计，只读）
 - 姊妹 skill：ontology-review（下游专家审阅+意见回流）/ ontology-simulate（下游 what-if 模拟+A/B 实证）

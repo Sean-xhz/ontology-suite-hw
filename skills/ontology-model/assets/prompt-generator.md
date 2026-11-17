@@ -114,5 +114,5 @@ swrl:argument1 [ rdf:type swrl:Variable ; swrl:argument1 :x ]
 ## 主会话下发注意事项（不注入 agent）
 
 - generator 的 model 别名与 auditor 必须不同（异构硬约束）
-- 产物只写入 run 目录，禁写 `.claude/skills/` 自身目录
+- 产物只写入 run 目录，禁写 skill 资产目录自身（Claude Code `.claude/skills/`；独立套件 `skills/`）
 - 「编译缺口登记」节由主会话回收，作为 S4 审计与 G2 仲裁的输入之一

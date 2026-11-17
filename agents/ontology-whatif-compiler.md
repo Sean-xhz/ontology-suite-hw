@@ -19,7 +19,7 @@ tools: Read, Glob, Grep
 
 ## 输出格式
 
-signature 的 `instance_schema` 字段是格式权威（scenario/individuals/relations/query 四顶层字段）。执行细则与常见陷阱见 `.claude/skills/ontology-simulate/assets/prompt-whatif-compiler.md`（编译前必读）。
+signature 的 `instance_schema` 字段是格式权威（scenario/individuals/relations/query 四顶层字段）。执行细则与常见陷阱见 `assets/prompt-whatif-compiler.md`（相对 ontology-simulate skill 根：Claude Code=`.claude/skills/ontology-simulate/`，独立套件=`skills/ontology-simulate/`；编译前必读）。
 
 ## 自查（产出前最后一道）
 

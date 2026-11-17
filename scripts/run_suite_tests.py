@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """run_suite_tests.py —— 本体能力套件统一验收入口（N5）。
 
-以 examples/ 虚构载体为 fixture，编排套件 README 验收表 T1-T10 + py_compile，
+以 examples/ 虚构载体为 fixture，编排套件 README 验收表 T1-T11 + py_compile，
 替代分散的手工命令组合；CI（.github/workflows/tests.yml）消费本入口。
 
 设计纪律：
@@ -246,6 +246,119 @@ class SuiteTests:
                     "PASS" if not hits else "FAIL",
                     "%d 命中" % len(hits))
 
+    # ---- T11 R2 增量 patch（6 子例聚合，patch JSON 运行时生成于 tmp，examples 零改动）----
+    def t11_patch(self):
+        before = {p: sha256(p) for p in (self.ttl, self.cases)}
+        script = self.script("ontology-model", "incremental_patch.py")
+        base_sha = sha256(self.ttl)
+        details, fails = [], []
+
+        def run_patch(ops, tag, extra=None, sha=None):
+            patch = {"schema_version": "1.0", "patch_id": tag,
+                     "baseline": {"path": self.ttl, "sha256": sha or base_sha},
+                     "source": {"channel": "manual", "ref": "T11"},
+                     "bump": "auto", "operations": ops}
+            pj = os.path.join(self.tmp, tag + ".patch.json")
+            with open(pj, "w", encoding="utf-8") as fh:
+                json.dump(patch, fh, ensure_ascii=False)
+            draft = os.path.join(self.tmp, tag + ".draft.ttl")
+            rep = os.path.join(self.tmp, tag + ".report.json")
+            p = self.py(script, self.ttl, pj, "--output-draft", draft,
+                        "--report", rep, *(extra or []))
+            r = json.load(open(rep, encoding="utf-8")) if os.path.exists(rep) else None
+            return p.returncode, r, draft
+
+        # T11a 注解正例：modify_label → PATCH + annotation-only skip（不付 JVM）
+        rc, r, d = run_patch([{"op": "modify_label", "target": "Bill",
+                               "label": "票据（T11 验收）", "lang": "zh"}],
+                             "t11a", ["--golden", self.cases])
+        da = d  # 锁定 T11a draft 路径（d 会被后续子例覆盖，T11f 双跑须比同一操作）
+        a_ok = (rc == 0 and r and r["version"]["bump_applied"] == "patch"
+                and r["regression"]["verdict"] == "skipped(annotation-only)"
+                and os.path.exists(d))
+        details.append("a=PATCH/annotation-skip" if a_ok else "a FAIL")
+        if not a_ok:
+            fails.append("a")
+
+        # T11b 结构正例：add_class ⊑ Bill → MINOR（Java 档回归 pass / skip-java 档 not-requested）
+        extra_b = [] if self.skip_java else ["--golden", self.cases]
+        rc, r, d = run_patch([{"op": "add_class", "id": "PatchDemoClass",
+                               "label": "补丁演示类", "subclass_of": "Bill"}],
+                             "t11b", extra_b)
+        if self.skip_java:
+            b_ok = (rc == 0 and r and r["version"]["bump_applied"] == "minor"
+                    and r["regression"]["verdict"] == "not-requested" and os.path.exists(d))
+            b_detail = "b=MINOR/not-requested(skip-java)"
+        else:
+            b_ok = (rc == 0 and r and r["version"]["bump_applied"] == "minor"
+                    and r["regression"]["verdict"] in ("pass", "downgraded")
+                    and os.path.exists(d))
+            b_detail = "b=MINOR/%s" % (r["regression"]["verdict"] if r else "?")
+        details.append(b_detail if b_ok else "b FAIL")
+        if not b_ok:
+            fails.append("b")
+
+        # T11c L2 反例：disjoint ∧ subClassOf → exit 1 + new_errors≥1 + 回归短路 + draft 仍产
+        rc, r, d = run_patch([{"op": "add_triple", "s": "Discountable",
+                               "p": "rdfs:subClassOf", "o": "NonDiscountable"}],
+                             "t11c", ["--golden", self.cases])
+        c_ok = (rc == 1 and r and len(r["validation"]["l1_l2"]["new_errors"]) >= 1
+                and r["regression"]["verdict"] == "skipped(l1l2-blocked)"
+                and os.path.exists(d))
+        details.append("c=L2-blocked/短路" if c_ok else "c FAIL")
+        if not c_ok:
+            fails.append("c")
+
+        # T11d 回归反例：replace_literal oneOf 已提交→已递交 → G1 翻转（需 Java；skip-java/无 Java→SKIP 登记）
+        if self.skip_java:
+            d_ok, d_detail = True, "d=SKIP(skip-java，翻转检出需 Java)"
+        else:
+            rc, r, d = run_patch([{"op": "replace_literal", "p": "rdf:first",
+                                   "old": {"value": "已提交"}, "new": {"value": "已递交"}}],
+                                 "t11d", ["--golden", self.cases])
+            if r and r["regression"]["verdict"] == "downgraded":
+                d_ok, d_detail = True, "d=SKIP(Java 不可用，MINOR 降级)"
+            else:
+                d_ok = (rc == 1 and r and "G1" in r["regression"].get("newly_failed", []))
+                d_detail = "d=回归翻转 G1" if d_ok else "d FAIL"
+        details.append(d_detail)
+        if not d_ok:
+            fails.append("d")
+
+        # T11e 契约/政策：① remove_rule 无 --golden → MAJOR blocked exit 1；② sha 错配 → exit 2 不产 draft
+        rc, r, d = run_patch([{"op": "remove_rule", "rule": "ruleR3"}], "t11e1")
+        e1_ok = (rc == 1 and r and r["version"]["bump_applied"] == "major"
+                 and r["regression"]["verdict"] == "blocked")
+        rc2, r2, d2 = run_patch([{"op": "modify_label", "target": "Bill", "label": "x"}],
+                                "t11e2", sha="0" * 64)
+        e2_ok = (rc2 == 2 and not os.path.exists(d2))
+        e_ok = e1_ok and e2_ok
+        details.append("e=MAJOR-blocked/sha-exit2" if e_ok else "e FAIL")
+        if not e_ok:
+            fails.append("e")
+
+        # T11f 确定性：同一 patch（同 patch_id=t11a）跨进程双跑 draft 字节一致
+        # 复用 T11a 已落盘 patch JSON 二次跑——draft 溯源头含 patch_id，须同输入才同输出
+        pj_a = os.path.join(self.tmp, "t11a.patch.json")
+        d3 = os.path.join(self.tmp, "t11f.draft.ttl")
+        rep3 = os.path.join(self.tmp, "t11f.report.json")
+        self.py(script, self.ttl, pj_a, "--output-draft", d3,
+                "--report", rep3, "--golden", self.cases)
+        f_ok = (os.path.exists(da) and os.path.exists(d3)
+                and open(da, "rb").read() == open(d3, "rb").read())
+        details.append("f=双跑字节一致" if f_ok else "f FAIL")
+        if not f_ok:
+            fails.append("f")
+
+        after = {p: sha256(p) for p in (self.ttl, self.cases)}
+        zero_writeback = before == after
+        if not zero_writeback:
+            fails.append("zero-writeback")
+        ok = not fails
+        self.record("T11", "R2 增量 patch（6 子例）",
+                    "PASS" if ok else "FAIL",
+                    "｜".join(details) + ("｜零回写 ✓" if zero_writeback else "｜零回写 ✗"))
+
     def run_all(self):
         self.check_fixtures()
         self.t0_py_compile()
@@ -258,6 +371,7 @@ class SuiteTests:
         self.t8_simulate()
         self.t9_closeout()
         self.t10_brand()
+        self.t11_patch()
         n_pass = sum(1 for r in self.results if r[2] == "PASS")
         n_fail = sum(1 for r in self.results if r[2] == "FAIL")
         n_skip = sum(1 for r in self.results if r[2] == "SKIP")

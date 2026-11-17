@@ -2,7 +2,7 @@
 
 > Automated business ontology modeling → visual expert review → simulation & A/B empirical validation.
 > A three-skill suite, carrier-neutral (applicable to any industry domain).
-> 中文文档：[README.md](README.md) ｜ Frozen snapshot v8 (2026-11-12).
+> 中文文档：[README.md](README.md) ｜ Frozen snapshot v9 (2026-11-17).
 
 ## What this is
 
@@ -28,12 +28,24 @@ self-review) is platform-neutral — see [agents/README.md](agents/README.md) fo
 bash scripts/bootstrap.sh --run-tests
 
 # 2. Or run the acceptance battery alone (examples/ fictional carrier as fixture)
-python3 scripts/run_suite_tests.py            # T0-T10, exit 0 = all pass
+python3 scripts/run_suite_tests.py            # T0-T11, exit 0 = all pass
 python3 scripts/run_suite_tests.py --skip-java  # no-Java environment (T8 registered SKIP)
 
-# 3. Open the example review page in any browser (offline, zero dependencies)
+# 3. Unified CLI facade for the mechanical backbone (LLM orchestration stays external)
+python3 scripts/ontology_cli.py --help        # capability map: model / review / simulate / suite
+python3 scripts/ontology_cli.py suite doctor  # read-only environment self-check
+python3 scripts/ontology_cli.py model validate examples/票据贴现/建模run/ontology.ttl
+
+# 4. Open the example review page in any browser (offline, zero dependencies)
 #    examples/票据贴现/建模run/审阅页.html
 ```
+
+The unified CLI (`scripts/ontology_cli.py`) is a **thin dispatcher**: it forwards remaining
+args to the underlying deterministic scripts (subprocess) and passes exit codes through — zero
+behavior change, scripts still run standalone. Groups: `model` (validate/consistency/topology/golden/patch),
+`review` (extract/page/ingest/selftest), `simulate` (signature/check/reason/ab-score),
+`suite` (test/doctor). The LLM orchestration layer (S0-S6 pipeline, human gates, dual-model
+generate-audit) is **not** in the CLI — it is driven by an external orchestrator.
 
 Each skill is driven by its `SKILL.md` execution contract (LLM orchestration entry) with
 `README.md` as the human manual. Iterable domain specifications live in each skill's
@@ -61,7 +73,7 @@ relative imports) and point `ONTOLOGY_RUNS_ROOT` at your run directory.
 │                      #   + assets/references/scripts)
 ├── agents/            # five agent definitions (Claude Code reference implementation) + adaptation guide
 ├── examples/票据贴现/  # fully fictional bill-discounting carrier: modeling run + review + simulation demos
-├── scripts/           # bootstrap.sh (environment) + run_suite_tests.py (unified acceptance, N5)
+├── scripts/           # ontology_cli.py (unified CLI) + bootstrap.sh + run_suite_tests.py (acceptance, N5)
 ├── requirements.txt   # Python dependencies (pinned/verified)
 ├── docs/              # GitHub Pages site (landing page + live review-page demo)
 ├── .github/workflows/ # CI matrix (tests.yml) + Pages deploy (pages.yml) — activates on release
@@ -71,12 +83,14 @@ relative imports) and point `ONTOLOGY_RUNS_ROOT` at your run directory.
 
 ## Testing
 
-`scripts/run_suite_tests.py` orchestrates the full acceptance battery (T0-T10) against the
+`scripts/run_suite_tests.py` orchestrates the full acceptance battery (T0-T11) against the
 fictional example carrier: py_compile, review self-test (E1-E10), golden-case schema, L1/L2
 validation, signature full-equality + double-run determinism, instance gate positive/negative,
 cross-skill imports, Pellet
 materialization (inferred triples + rule attribution + zero-writeback hash assertion), closeout
-sensitive scan, and the brand-name contract. All outputs land in a temporary directory —
+sensitive scan, the brand-name contract, and the R2 incremental-patch engine (T11: annotation/
+structural positives, L2-disjoint negative, regression-flip negative, MAJOR-guard policy,
+sha-mismatch contract, double-run determinism). All outputs land in a temporary directory —
 `examples/` is read-only. CI (`.github/workflows/tests.yml`) consumes the same entry.
 
 ## Sensitive-data discipline (red lines)

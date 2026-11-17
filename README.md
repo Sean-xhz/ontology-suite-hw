@@ -1,8 +1,19 @@
 # 本体能力套件（Ontology Capability Suite）
 
 > 业务场景自动化本体建模 → 可视化审阅 → 模拟验证与 A/B 实证的三件套能力快照（载体中立，适用各行业域）。
-> 冻结日期：2026-11-12（**v8 重冻结**）｜三 skill 本体能力套件 + 开源工程资产｜中文 ｜ [English](README.en.md)
-> 发布状态：**工程资产就绪，发布暂缓**（用户裁定 2026-11-11）——LICENSE/CI/单测/vendor 合规/Pages 站点已落套件；发布目录与 push 待用户决定时再做。
+> 冻结日期：2026-11-17（**v9 重冻结**）｜三 skill 本体能力套件 + 开源工程资产｜中文 ｜ [English](README.en.md)
+> 发布状态：**GitHub private 仓已发布**（`Sean-xhz/ontology-suite-hw`）；本地 v9 增量（统一 CLI + R2）待用户决定时再回推同步；Pages 站点搁置（待转 public）；转 public 时机与 LICENSE 署名调整待用户决定。
+
+## v9 变更记录（2026-11-17，统一 CLI 入口 + R2 增量 patch 引擎，短期 CLI 能力增强首项）
+
+用户三阶段战略框定（2026-11-17）：**短期**=三件套作为本体生产管线基础能力，目标「一套完整的本体建模通用 CLI 能力独立存在」（机械 backbone 独立封装，LLM 编排外接；「去本地化」=通用性，非禁用多模态/LLM）；**中期**=与 OntoMind 融合平台（待周五汇报立项后启动设计）；**长期**=嵌入 AgentOS 语义基座。短期三桶裁定：桶 A 通用 CLI 补全 **R2 P0 起步** → R4 → D1-light → D3c。本批次落地统一 CLI 门面 + 桶 A 首项 R2。
+
+1. **统一 CLI 入口（`scripts/ontology_cli.py` 1.1.0）**：三件套确定性机械脚本聚合为统一命令面（model/review/simulate/suite 四组），薄分发门面——剩余参数原样转发底层脚本（subprocess）、退出码透传、脚本行为零改变（仍可独立运行）。LLM 编排层（S0-S6 管线、人工闸门、双模型生成-审计）**不在 CLI 内**，由外部编排器承担。`suite doctor` 只读环境自检（14 脚本就位）；未知 group/action exit 2。
+2. **model 1.6.0 — R2 增量 patch 引擎（`scripts/incremental_patch.py`）**：消费结构化编辑操作 JSON → rdflib 增量修改产 **draft TTL（不覆盖权威）** → L1/L2 delta 复检 + 可选 L3 → 黄金用例子集回归守护 → 版本 diff + semver bump。8 种操作（add/remove_triple、replace_literal、modify_label、add_class、add_property、remove_rule、replace_rule）；纯 rdflib 核心（owlready2/推理层延迟导入）；bnode 不可寻址（禁 `_:` 项，SWRL 编辑走规则级）；单一 parse 工作图执行；canonical-copy-rebind 序列化跨 PYTHONHASHSEED 字节稳定。**draft→权威仍走入口 (c) 审计/闸门**（意见单 schema §四.2 纪律零改动，report 固定携带 `entry_c.authoritative=false`）。R2 是 D4 拖拽编辑的机械 patch 地基。
+3. **契约模板（`assets/tpl-patch-schema.md`，第 13 模板）**：patch JSON schema 1.0 全文 + 项编码契约（字符串=IRI / 字面量=dict / `_:` 拒绝）+ 8 操作目录 + 虚构票据配例 + exit 三态 + 版本 bump/闸门政策 + 回归子集算法 + 保真边界。子协议 patch schema 1.0 独立登记，不随 skill 版本联动。
+4. **三处设计裁定**：① bump 三段 PATCH/MINOR/MAJOR（annotation→PATCH，结构→MINOR，规则→MAJOR）；② L1/L2 闸门=零新增 error（delta 口径，对齐基线迭代细则⑥；`--strict` 绝对档）；③ MAJOR 回归守护硬前提（MAJOR+无 `--golden`→blocked exit 1 转入口 (c)；MAJOR+无 Java→blocked；MINOR/PATCH+无 Java→降级登记放行）。L1/L2 已失败→回归短路（省 JVM）。
+5. **T11 验收（`run_suite_tests.py`）**：新增 `t11_patch`（6 子例聚合，patch JSON 运行时生成于 tmp，examples 零改动）——a 注解正例 PATCH/annotation-skip｜b 结构正例 MINOR/pass｜c L2 反例 blocked/短路｜d 回归反例 G1 翻转（选中 9 非全集，锚点+扩展精度）｜e MAJOR 政策 blocked + sha 错配 exit 2｜f 同 patch 跨进程双跑字节一致。零回写 before/after sha 断言并入行判定。
+6. **重冻结验收**：权威↔快照 rsync 字节级一致（skills×3 + agents×5）；统一入口 Java 档 **PASS 12 / FAIL 0 / SKIP 0**（T0 py_compile 14 脚本；T11 6 子例全过）；`--skip-java` 档 PASS 11 / SKIP 1 exit 0、坏套件根 exit 2，三态验证 ✓；CLI 三态（`--help` 含 model patch / `suite doctor` 14 脚本 / `model patch` 分发 exit 透传 / 未知 action exit 2）✓；全套件敏感扫描零命中；套件 **109 文件**（+2：incremental_patch.py + tpl-patch-schema.md）零缓存残留、examples 零副作用。
 
 ## v8 变更记录（2026-11-12，纯净化 + 盲测模板补齐 + 引擎归因成文）
 
@@ -96,6 +107,26 @@
 
 配套 agents（`agents/`）：ontology-generator / ontology-auditor（双模型异构质检）、ontology-whatif-compiler / ontology-whatif-interpreter（模拟编译与解读）、ab-responder（A/B 三臂应答，臂别无关）。
 
+## 统一 CLI 入口
+
+`scripts/ontology_cli.py` 把三件套的**确定性机械脚本**聚合为一个统一命令面——机械 backbone 的门面。LLM 编排层（S0-S6 管线、G1-G3 / SG1-SG2 / AG1-AG2 人工闸门、双模型生成-审计）**不在 CLI 内**，由外部编排器承担（Claude Code skills 或其他平台）；CLI 只暴露可独立运行的机械能力。
+
+```bash
+python3 scripts/ontology_cli.py <group> <action> [args...]
+python3 scripts/ontology_cli.py --help                  # 能力地图
+python3 scripts/ontology_cli.py suite doctor            # 只读环境自检
+python3 scripts/ontology_cli.py model validate --help   # 转发底层脚本帮助
+```
+
+| group | action | 底层能力 |
+|---|---|---|
+| **model** | `validate` / `consistency` / `topology` / `golden` / `patch` | L1+L2 校验 / L3 一致性 / S5 文本拓扑 / S6 黄金用例 / R2 增量 patch |
+| **review** | `extract` / `page` / `ingest` / `selftest` | 双源提取 / 单文件审阅页 / 意见单回流 / E1-E10 自测 |
+| **simulate** | `signature` / `check` / `reason` / `ab-score` | 编译签名 / 实例零臆造校验 / what-if 物化 / A/B 判据评分 |
+| **suite** | `test` / `doctor` | 统一验收电池 T0-T11 / 只读环境自检 |
+
+**薄分发纪律**：每个子命令把剩余参数原样转发底层脚本（subprocess），退出码透传，脚本行为零改变——各脚本仍可独立运行，CLI 只是便利门面。脚本路径相对套件根（`__file__` 自动定位，与 cwd 无关）；跨 skill import 由各脚本自身的相对 `sys.path` 垫片承接。未知 group/action 或脚本缺失 = exit 2。
+
 ## 目录导览
 
 ```text
@@ -103,7 +134,7 @@
 ├── skills/            # 三 skill 冻结副本（SKILL.md 执行契约 + README 人类手册 + CHANGELOG 构建档案 + assets/references/scripts）
 ├── agents/            # 五 agent 定义冻结副本 + README（角色一览/异构纪律/平台适配，双语）
 ├── examples/票据贴现/  # 全虚构发行示例（可对外）：建模 run + 审阅与意见 + 模拟 demo
-├── scripts/           # bootstrap.sh（环境引导）+ run_suite_tests.py（统一验收入口，N5）
+├── scripts/           # ontology_cli.py（统一 CLI 入口）+ bootstrap.sh（环境引导）+ run_suite_tests.py（统一验收入口，N5）
 ├── requirements.txt   # Python 依赖（owlready2==0.51 钉住 + rdflib>=7.6,<8）
 ├── docs/              # GitHub Pages 站点（index.html 门面 + demo.html 审阅页在线预览）
 ├── .github/workflows/ # CI 矩阵（tests.yml）+ Pages 部署（pages.yml）——发布后启用
@@ -120,9 +151,11 @@
 - node（可选，仅 review `self_test.py` 的模板 JS 语法检查项，缺失降级 skip）
 - CI：`.github/workflows/tests.yml`（python 3.9/3.12 矩阵 × temurin Java 25 × node 20，消费统一验收入口；发布后随仓库启用）
 
-## 验收状态（2026-11-12 v8 重冻结后套件内实跑）
+## 验收状态（2026-11-17 v9 重冻结后套件内实跑）
 
-**统一入口（N5）**：`python3 scripts/run_suite_tests.py`（T0-T10 编排，examples 为 fixture，零副作用，`--skip-java` 降级档；exit 0/1/2）——v8 复跑 **PASS 11 / FAIL 0 / SKIP 0**（含 T0 py_compile 13 脚本；T4 全量一致+双跑确定性；T1 self_test E1-E10 10/10）；`--skip-java` 档 PASS 10 / SKIP 1 exit 0、坏套件根 exit 2，三态验证 ✓。CI 消费同一入口。
+**统一入口（N5）**：`python3 scripts/run_suite_tests.py`（T0-T11 编排，examples 为 fixture，零副作用，`--skip-java` 降级档；exit 0/1/2）——v9 复跑 **PASS 12 / FAIL 0 / SKIP 0**（含 T0 py_compile 14 脚本；T4 全量一致+双跑确定性；T1 self_test E1-E10 10/10；T11 R2 增量 patch 6 子例全过）；`--skip-java` 档 PASS 11 / SKIP 1 exit 0、坏套件根 exit 2，三态验证 ✓。CI 消费同一入口。
+
+**统一 CLI 入口（2026-11-17 新增，v9 含 R2）**：`scripts/ontology_cli.py` 1.1.0 薄分发门面——`--help` 能力地图（含 `model patch`）/ `suite doctor` 只读自检（python·rdflib·owlready2·java·node + 14 脚本就位）/ 实际分发（`model validate`、`model patch`、`simulate signature` 跨 skill import）exit 0 透传 / 未知 group·action exit 2 / `suite test` 经 CLI 复跑 **PASS 12 / FAIL 0 / SKIP 0**；退出码透传、零副作用（examples 0 改动）、权威↔快照字节级一致实证 ✓。
 
 | # | 项 | 结果 |
 |---|---|---|
@@ -135,6 +168,7 @@
 | T8 | `simulate_reason.py` demo1 物化实跑（Pellet） | exit 0，推断 3/3（ruleR1/ruleR3/ruleR7）与快照一致，零回写断言 PASS |
 | T9 | `closeout_check.py`（建模 run 收卷：齐套+敏感扫描） | exit 0 |
 | T10 | 品牌名 grep 契约（虚构载体） | 0 命中 ✓ |
+| T11 | `incremental_patch.py` R2 增量 patch（6 子例聚合） | a PATCH/annotation-skip｜b MINOR/pass｜c L2-blocked/短路｜d 回归翻转 G1（选中 9 非全集）｜e MAJOR-blocked/sha-exit2｜f 同 patch 双跑字节一致；零回写 ✓ |
 
 > T4 注：v6 引擎维护批次已修复 `parse_ttl` bnode 非确定性并重生成冻结 signature——历史三类漂移（union 字段/bnode 域标签/`?` 前缀）消除，验收由计数口径升级为**全量一致 + 双跑字节确定性**（2026-11-11）。review.json ×2 与审阅页 ×2 同步重生成（见 v6 变更记录）；check_instance/simulate_reason 消费兼容由 T5/T6/T8 实证。
 

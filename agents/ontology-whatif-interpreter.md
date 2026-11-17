@@ -22,4 +22,4 @@ tools: Read, Glob, Grep
 - `sim-result.json`（consistency/inferred+attribution/label_map/notes）
 - `instance.json`（输入事实层）
 - 建模方案.md（可选——规则自然语言陈述与处置档差异的专家语言层）
-- 执行细则：`.claude/skills/ontology-simulate/assets/prompt-whatif-interpreter.md`（解读前必读）
+- 执行细则：`assets/prompt-whatif-interpreter.md`（相对 ontology-simulate skill 根：Claude Code=`.claude/skills/ontology-simulate/`，独立套件=`skills/ontology-simulate/`；解读前必读）
