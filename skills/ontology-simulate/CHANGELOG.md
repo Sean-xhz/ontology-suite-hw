@@ -4,6 +4,13 @@
 > **本文件=构建档案层**（C1/N11 三受众拆分：SKILL.md=执行契约 / README.md=人类手册 / CHANGELOG.md=档案）。执行不依赖本文件；「实证证据登记」节为从执行资产迁出的构建史与证据链，开源发行可选携带。历史指针中的 vault 构建区路径仅为溯源记录，不构成运行依赖。
 > **敏感纪律**：真实载体 run 的评分数字/答卷/盲评材料只落 run 目录受控区（内部流转），**本文件只记机制级结论与虚构载体数字**。
 
+## 1.2.4（2026-11-17）— facet 承接方注释口径修正（R4 SHACL 联动，逻辑零改动）
+
+- **注释口径修正**：check_instance.py E08 docstring + W08 消息、simulate_reason.py LITERAL_FORMS 注释 + compile_instance_ttl 数值编码注释——facet 实例校验承接方「ontology-model L2 脚本」→「ontology-model SHACL 层（R4，derive_shacl+validate_shacl）」。实证定位：L2（validate_ontology）只查具名枚举 datatype 的 Pellet 陷阱形态（模式层），无 withRestrictions 解析、无实例值校验；「facet 由 L2 承接」声称不成立。R4 SHACL 层（model 1.7.0）才是实例级 facet/基数/唯一性强制器。
+- **T3 组合薄指针**：SKILL.md T3 节补「check_instance（JSON 零臆造）→ validate_shacl（TTL 数据完整性）→ simulate_reason（物化推理）」三闸正交组合指针（编排器职责，契约见 model tpl-shacl-shapes）。
+- **逻辑零改动**：check_instance E01-E10 校验逻辑、simulate_reason 编译/物化/归因逻辑全不变；W08 仍 WARN 放行（rc=0），仅消息文本承接方措辞修正（输出表示修正，消费端全兼容）。补洞三态对偶实证：同 facet 越限场景 check_instance rc=0（W08 放行）vs validate_shacl rc=1（MinExclusive+Pattern 检出）。
+- **版本判据**：注释口径修正 + 薄指针，执行契约（T 阶段/SG 闸门/A-B 协议）零改动 → PATCH。子协议（应答契约 v1.1/题库 schema 1.0）不联动。
+
 ## 1.2.3（2026-11-11）— 文档结构治理：A/B 协议抽出 references（防堆砌）
 
 - **A/B 实验协议独立成文**：新增 `references/ab-protocol.md`——三臂定义/应答契约版本注（v1.1）/题库编制契约 4 条/执行纪律 6 条自 SKILL.md 原样迁出；文件头立防堆砌纪律（协议迭代一律在该文件内，SKILL.md 只留三臂定义+AG2 闸门+指针）+ 子协议版本独立登记指针（CHANGELOG B 节）。

@@ -2,7 +2,7 @@
 
 > Automated business ontology modeling → visual expert review → simulation & A/B empirical validation.
 > A three-skill suite, carrier-neutral (applicable to any industry domain).
-> 中文文档：[README.md](README.md) ｜ Frozen snapshot v9 (2026-11-17).
+> 中文文档：[README.md](README.md) ｜ Frozen snapshot v10 (2026-11-17).
 
 ## What this is
 
@@ -28,13 +28,15 @@ self-review) is platform-neutral — see [agents/README.md](agents/README.md) fo
 bash scripts/bootstrap.sh --run-tests
 
 # 2. Or run the acceptance battery alone (examples/ fictional carrier as fixture)
-python3 scripts/run_suite_tests.py            # T0-T11, exit 0 = all pass
+python3 scripts/run_suite_tests.py            # T0-T12, exit 0 = all pass
 python3 scripts/run_suite_tests.py --skip-java  # no-Java environment (T8 registered SKIP)
 
 # 3. Unified CLI facade for the mechanical backbone (LLM orchestration stays external)
 python3 scripts/ontology_cli.py --help        # capability map: model / review / simulate / suite
 python3 scripts/ontology_cli.py suite doctor  # read-only environment self-check
 python3 scripts/ontology_cli.py model validate examples/票据贴现/建模run/ontology.ttl
+python3 scripts/ontology_cli.py model shapes ontology.ttl --output-shapes shapes.ttl  # R4 TTL→SHACL derivation
+python3 scripts/ontology_cli.py model shacl data.ttl shapes.ttl --strict              # R4 instance data-integrity gate
 
 # 4. Open the example review page in any browser (offline, zero dependencies)
 #    examples/票据贴现/建模run/审阅页.html
@@ -42,7 +44,7 @@ python3 scripts/ontology_cli.py model validate examples/票据贴现/建模run/o
 
 The unified CLI (`scripts/ontology_cli.py`) is a **thin dispatcher**: it forwards remaining
 args to the underlying deterministic scripts (subprocess) and passes exit codes through — zero
-behavior change, scripts still run standalone. Groups: `model` (validate/consistency/topology/golden/patch),
+behavior change, scripts still run standalone. Groups: `model` (validate/consistency/topology/golden/patch/shapes/shacl),
 `review` (extract/page/ingest/selftest), `simulate` (signature/check/reason/ab-score),
 `suite` (test/doctor). The LLM orchestration layer (S0-S6 pipeline, human gates, dual-model
 generate-audit) is **not** in the CLI — it is driven by an external orchestrator.
@@ -56,8 +58,9 @@ relative imports) and point `ONTOLOGY_RUNS_ROOT` at your run directory.
 
 ## Environment
 
-- **python3 ≥3.9** + `rdflib` + `owlready2` (see `requirements.txt`; owlready2 pinned to 0.51 —
-  engine behavior is registered against that version)
+- **python3 ≥3.9** + `rdflib` + `owlready2` + `pyshacl` (see `requirements.txt`; owlready2 pinned
+  to 0.51 — engine behavior registered against that version; pyshacl pinned to 0.29.1 — the R4
+  SHACL data-integrity layer, pure Python, orthogonal to the Java reasoner axis)
 - **Java**: Pellet requires **≥25**; HermiT requires ≥17 (L3 consistency & SWRL materialization;
   jars ship inside the owlready2 pip package). Without Java, scripts degrade to L2 and register
   the downgrade — L1/L2 and most acceptance items still run.
@@ -83,15 +86,18 @@ relative imports) and point `ONTOLOGY_RUNS_ROOT` at your run directory.
 
 ## Testing
 
-`scripts/run_suite_tests.py` orchestrates the full acceptance battery (T0-T11) against the
+`scripts/run_suite_tests.py` orchestrates the full acceptance battery (T0-T12) against the
 fictional example carrier: py_compile, review self-test (E1-E10), golden-case schema, L1/L2
 validation, signature full-equality + double-run determinism, instance gate positive/negative,
 cross-skill imports, Pellet
 materialization (inferred triples + rule attribution + zero-writeback hash assertion), closeout
-sensitive scan, the brand-name contract, and the R2 incremental-patch engine (T11: annotation/
+sensitive scan, the brand-name contract, the R2 incremental-patch engine (T11: annotation/
 structural positives, L2-disjoint negative, regression-flip negative, MAJOR-guard policy,
-sha-mismatch contract, double-run determinism). All outputs land in a temporary directory —
-`examples/` is read-only. CI (`.github/workflows/tests.yml`) consumes the same entry.
+sha-mismatch contract, double-run determinism), and the R4 SHACL constraint layer (T12:
+TTL→shapes derivation determinism + count anchors, conform positives, facet/cardinality/
+enum/hasKey negatives, the check_instance-vs-SHACL complementarity dual, contract errors).
+All outputs land in a temporary directory — `examples/` is read-only. CI
+(`.github/workflows/tests.yml`) consumes the same entry.
 
 ## Sensitive-data discipline (red lines)
 

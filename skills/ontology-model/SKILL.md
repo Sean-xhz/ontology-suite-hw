@@ -1,7 +1,7 @@
 ---
 name: ontology-model
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 description: 业务场景自动化本体建模管线——把业务资料/访谈/术语集编译为符合 W3C 规范的结构化本体（RDF/OWL/SKOS/SWRL，Turtle 输出），含双模型生成-审计-仲裁质检与黄金用例验收。当用户要求为业务场景（金融、保险、供应链、制造等行业域）构建领域本体/知识图谱 schema、把自然语言业务资料转成 RDF/OWL/SWRL 结构化模型、审计或质检既有本体 TTL 文件、做本体黄金用例验收、或提到「本体建模」「ontology」「TTL 生成」「本体审计」「29句话」「7+1 语义」时使用本 skill。即使用户只说「帮我把这份业务资料建模」而未点名本体，只要产物指向结构化语义模型，也应触发。
 ---
 
@@ -106,6 +106,8 @@ exit≠0 的 error 级发现直接回 generator 修订（不占审计轮次）�
 
 **增量修改通道（R2，入口 (c) 简单修改适用）**：`python3 <skill根>/scripts/incremental_patch.py <baseline.ttl> <patch.json> [--golden cases.json] [--with-l3]`——消费编辑操作 JSON 产 draft TTL+patch-report（L1/L2 零新增 error 闸门 + 受影响子集回归守护 + 版本 diff，**不覆盖权威**），draft 再以入口 (c) 起审计。exit 2=输入错不产 draft / 0=released / 1=blocked。契约与操作目录=`assets/tpl-patch-schema.md`。
 
+**SHACL 约束校验通道（R4，实例级数据完整性）**：`python3 <skill根>/scripts/derive_shacl.py <ontology.ttl>` 从 TBox 机械派生 shapes.ttl+derivation-report（纯 rdflib）；`python3 <skill根>/scripts/validate_shacl.py <data.ttl> <shapes.ttl>` 用 pyshacl 校验实例数据 facet/基数/唯一性（补限制⑩剥离后推理器侧空白，纯 Python 无 Java）。与 S6 推理验收正交（SHACL=输入完整性闸门，不接入 golden 集）；与 check_instance 正交互补（零臆造 vs 数据完整性）。契约=`assets/tpl-shacl-shapes.md`。
+
 **第二步·双模型审计**：委托 **ontology-auditor**（Claude Code 参考实现 model: sonnet，只读；异构纪律见铁律 4）按 `assets/prompt-auditor.md` 出三维度四元组缺陷报告；主会话落盘 `缺陷报告.md`（`assets/tpl-defect-report.md`）。**入口 (c) 无描述集/词典时**：委托 prompt 须显式声明业务贴合度基准缺失——维度三降级为「有无核对」（消费登记缺失可查，与第 8 节一致性不可查），不得以「无基准下一切构件皆自创」机械推论充数；降级口径记入缺陷报告维度覆盖声明节。
 
 **第三步·辩护/修订**：有缺陷→委托 generator 按 `assets/prompt-defense.md` 逐条辩护或修订→修订后重跑机械脚本+再审计。**收敛上限 3 轮**；超限未决或双方立场冲突→升级 G2。
@@ -126,7 +128,7 @@ A/B 结论一致（审计通过或辩护全部成立）→自动通过，manifes
 
 **执行器**：`scripts/run_golden_cases.py ONTOLOGY.ttl CASES.json [--only ID ...] [--json-output FILE] [--engine pellet|hermit]`（--engine hermit=DL 对照档：HermiT 拒跑 SWRL builtin 且 datatype 需 ignore 参数，仅 DL 层对照可用，见 `references/reasoner-limits.md` 限制⑬）。用例外置 JSON（schema 1.0）=专家黄金集输入接口的形式化：`meta`（schema_version/scenario/source）+ `cases[]`（id/kind/seed/gen/desc/ttl/expect；kind∈expert_seed/ai_edge/ai_negative/ai_stress；exempt 条目登记不执行）；断言枚举与 arity 见脚本 `ASSERT_ARITY`。`--check` 仅做 schema 校验（exit 0/1，可入单测）。字段接口详见 `assets/tpl-golden-cases.md` §5。
 
-**实例级推理执行纪律（限制⑩⑭；机制、证据与削减实验方法详见 `references/reasoner-limits.md`）**：两项引擎处置均已内置执行器默认档——具名 datatype 剥离（`strip_named_datatypes()`，默认开启，`--no-strip` 仅调试档；内联匿名 oneOf 保留，实例层有真强制力）与 canonical 确定性档（`canonicalize_base()`，一次性 ~60s；S6 结果跨进程可复现，「≥2 轮零 FAIL」具备确定性含义）。操作纪律：①**首跑失败禁止盲改本体/用例**——先跑 canonical 档两次确认确定性，再做削减实验定根因（方法=reasoner-limits §六）；漂移期的单次 PASS/FAIL 均不构成证据。②黄金集须含**多规则并发压力用例**作为 builtin 数值规则的语义验收主载体（孤立单规则场景存在引擎级确定性失灵，FAIL 时转 exempt 第四类）。③本体文件不因引擎限制改动；facet 实例校验由 L2 脚本+数据管线承接。
+**实例级推理执行纪律（限制⑩⑭；机制、证据与削减实验方法详见 `references/reasoner-limits.md`）**：两项引擎处置均已内置执行器默认档——具名 datatype 剥离（`strip_named_datatypes()`，默认开启，`--no-strip` 仅调试档；内联匿名 oneOf 保留，实例层有真强制力）与 canonical 确定性档（`canonicalize_base()`，一次性 ~60s；S6 结果跨进程可复现，「≥2 轮零 FAIL」具备确定性含义）。操作纪律：①**首跑失败禁止盲改本体/用例**——先跑 canonical 档两次确认确定性，再做削减实验定根因（方法=reasoner-limits §六）；漂移期的单次 PASS/FAIL 均不构成证据。②黄金集须含**多规则并发压力用例**作为 builtin 数值规则的语义验收主载体（孤立单规则场景存在引擎级确定性失灵，FAIL 时转 exempt 第四类）。③本体文件不因引擎限制改动；facet 实例校验由 SHACL 层（R4，`scripts/derive_shacl.py`+`validate_shacl.py`）+数据管线承接。
 
 **执行预算**：黄金集 >60 条时改用 `--only` 分片分组执行，每组时长登记 manifest——canonical 档每进程含一次性 canonicalization 开销（约 60s），大集一次全量执行进度不可观察、失败即全量重跑；分片兼具失败隔离与预算可见。
 
@@ -156,7 +158,7 @@ manifest 收卷补全：入口模式/裁剪登记/博弈轮次与收敛轨迹/L3
 ## 资产索引
 
 - `references/`：**methodology-core（方法论内核，自包含执行依据，S1-S6/G1 判据细节）** / **reasoner-limits（引擎限制①-⑭+削减实验矩阵+降级链+L2/L3 分工，自包含）** / methodology-index（vault 卡簇溯源索引，深度追踪用，执行不依赖）/ fibo-guide（公共层对齐）/ structure-patterns（四层结构骨架+SWRL 编译形态约束 §七，[verified]/[provisional] 两级标注）/ sensitivity-rules（敏感纪律）/ structured-input-mapping（结构化输入→29 句集通用映射方法+示例，S1' 机械映射档）
-- `assets/`：tpl-29-sentences / tpl-term-dict / prompt-generator / prompt-auditor / prompt-defense / tpl-defect-report / tpl-golden-cases / tpl-ontology-doc / checklist-visual-review / tpl-gate-submission（G1/G2/G3 呈报件骨架）/ tpl-production-handoff（生产化交接说明，第 9 件可选）/ tpl-restoration-report（盲测还原率对照报告，收卷勾稽位必产物）/ tpl-patch-schema（R2 增量 patch 编辑操作 JSON 契约，schema 1.0）
-- `scripts/`：validate_ontology.py（L1+L2，exit 0/1/2）/ check_consistency.py（L3 reasoner 三级降级链，exit 0/1/2）/ report_topology.py（S5 文本拓扑）/ run_golden_cases.py（S6 执行器，canonical 确定性档内置）/ closeout_check.py（收卷自查：齐套+敏感模式+计数一致+净化清单，exit 0/1/2）/ incremental_patch.py（R2 增量 patch 引擎：编辑操作→draft+L1/L2+回归守护+版本 diff，不覆盖权威，exit 0/1/2）
+- `assets/`：tpl-29-sentences / tpl-term-dict / prompt-generator / prompt-auditor / prompt-defense / tpl-defect-report / tpl-golden-cases / tpl-ontology-doc / checklist-visual-review / tpl-gate-submission（G1/G2/G3 呈报件骨架）/ tpl-production-handoff（生产化交接说明，第 9 件可选）/ tpl-restoration-report（盲测还原率对照报告，收卷勾稽位必产物）/ tpl-patch-schema（R2 增量 patch 编辑操作 JSON 契约，schema 1.0）/ tpl-shacl-shapes（R4 SHACL shapes 派生与校验契约，shapes schema 1.0）
+- `scripts/`：validate_ontology.py（L1+L2，exit 0/1/2）/ check_consistency.py（L3 reasoner 三级降级链，exit 0/1/2）/ report_topology.py（S5 文本拓扑）/ run_golden_cases.py（S6 执行器，canonical 确定性档内置）/ closeout_check.py（收卷自查：齐套+敏感模式+计数一致+净化清单，exit 0/1/2）/ incremental_patch.py（R2 增量 patch 引擎：编辑操作→draft+L1/L2+回归守护+版本 diff，不覆盖权威，exit 0/1/2）/ derive_shacl.py（R4 TTL→SHACL shapes 派生，纯 rdflib，exit 0/1/2）/ validate_shacl.py（R4 pyshacl 实例级数据完整性校验，exit 0/1/2）
 - agents：ontology-generator（S3/S4 辩护）/ ontology-auditor（S4 审计，只读）
 - 姊妹 skill：ontology-review（下游专家审阅+意见回流）/ ontology-simulate（下游 what-if 模拟+A/B 实证）

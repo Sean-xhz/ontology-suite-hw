@@ -1,7 +1,7 @@
 ---
 name: ontology-simulate
 metadata:
-  version: 1.2.3
+  version: 1.2.4
 description: 本体 what-if 模拟验证——客户画像+业务诉求（受控范围内接受真实案例，对外产物用虚构案例）→ 合规实例编译 → Pellet 物化推理（双快照 diff+逐规则归因）→ 业务语言解读报告。三闸门防臆造（check_instance 机械拦截/compiler 零臆造纪律/SG1 人核）。触发：「what-if 模拟」「本体推演」「模拟业务验证」「画像模拟」。
 ---
 
@@ -48,6 +48,8 @@ python3 <skill根>/scripts/check_instance.py <instance.json> <signature.json>
 ```
 
 exit 1（臆造/越权/类型错）→ 缺陷清单回编译侧修订（≤2 轮，超限停等用户裁决）；exit 0 过（warning 如 W08 具名 datatype 登记性提示，如实入报告存疑项）。
+
+**T3 组合（数据完整性补闸，编排器职责）**：check_instance 是签名词汇表封闭闸门（防臆造/越权/类型错）；W08 具名 datatype 的 facet 实例校验由 ontology-model **SHACL 层（R4）**承接——编译产 TTL 后可喂 `ontology-model/scripts/validate_shacl.py <data.ttl> <shapes.ttl>`（shapes 经 `derive_shacl.py` 从本体派生）做 facet/基数/唯一性强制，再进 T4。三闸正交：check_instance（JSON 零臆造）→ validate_shacl（TTL 数据完整性）→ simulate_reason（物化推理）。契约见 ontology-model `assets/tpl-shacl-shapes.md`。
 
 ## T4 物化推理
 

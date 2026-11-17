@@ -52,7 +52,7 @@ SWRL = Namespace("http://www.w3.org/2003/11/swrl#")
 # 归因自动降级阈值：规则数超过即默认关逐规则归因（N+1 次 Pellet 成本）
 ATTRIBUTION_RULE_LIMIT = 12
 
-# 字面量类型 → turtle 语法（具名 datatype 一律 plain string：facet 由 L2 承接，限制⑩对偶）
+# 字面量类型 → turtle 语法（具名 datatype 一律 plain string：facet 由 SHACL 层〔R4〕承接，限制⑩对偶）
 LITERAL_FORMS = {
     "integer": lambda v: str(int(v)),
     "decimal": lambda v: '"%s"^^<http://www.w3.org/2001/XMLSchema#decimal>' % v,
@@ -97,7 +97,7 @@ def compile_instance_ttl(inst, sig, prefix_header_text):
                 lit = "true" if val else "false"
             elif isinstance(val, (int, float)):
                 # 数值编码为数值字面量（swrlb 数值比较可用；具名 datatype
-                # 的 facet 约束本就由 L2 承接——限制⑩对偶，模拟侧不做）。
+                # 的 facet 约束本就由 SHACL 层〔R4〕承接——限制⑩对偶，模拟侧不做）。
                 # float 必须用引号词法形态 "0.7"^^xsd:decimal——数值短记法
                 # 带 ^^ 非法 Turtle（2026-11-09 真实载体 A/B run 首现修复；
                 # 引号形态与短记法 RDF term 等价）

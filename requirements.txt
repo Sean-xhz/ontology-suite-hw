@@ -1,15 +1,21 @@
 # 本体能力套件 Python 依赖（N4 bootstrap）
-# 实证环境：Python 3.9.6 / rdflib 7.6.0 / owlready2 0.51（2026-11-11 套件验收 T1-T10 全过）
+# 实证环境：Python 3.9.6 / rdflib 7.6.0 / owlready2 0.51 / pyshacl 0.29.1
+#   （2026-11-17 套件验收 T1-T12 全过）
 #
 # owlready2 钉住 0.51：引擎行为按 0.51 登记（skills/ontology-model/references/reasoner-limits.md
 #   限制⑧——sync_reasoner_pellet(x 位置传参) / 版本属性为 VERSION 而非 __version__）；
 #   升级版本须逐项复核限制①-⑭并重跑套件验收。
+# pyshacl 钉住 0.29.1（R4 SHACL 约束校验层，核心依赖非可选）：validate_shacl 显式 advanced=True
+#   + inference=None + allow_warnings/allow_infos 行为按 0.29.1 实证登记；SHACL 纯 Python 无 Java，
+#   与 Java 推理机是两条正交环境轴（skip-java 档仍执行数据完整性闸门）；升级版本须重跑 T12 + 实证矩阵。
 # rdflib 下限=实证版本，上限 <8 防 major API 漂移。
 #
-# 许可：rdflib BSD-3-Clause / owlready2 LGPL-3.0（pip 单独安装，不随套件捆绑；
-#   见 THIRD-PARTY-LICENSES.md）。LGPL 依赖经 import 调用、不修改不捆绑，与套件 MIT 许可兼容。
+# 许可：rdflib BSD-3-Clause / owlready2 LGPL-3.0 / pyshacl Apache-2.0（pip 单独安装，不随套件捆绑；
+#   见 THIRD-PARTY-LICENSES.md）。LGPL 依赖经 import 调用、不修改不捆绑，与套件 MIT 许可兼容；
+#   pyshacl 传递依赖 owlrl（W3C-20150513，再分发须保留 NOTICE）/ html5rdf（MIT）见许可清单 §二。
 #
 # Java（L3 推理机）与 node（review self_test E9 可选）不在 pip 范围——
 #   见 scripts/bootstrap.sh 环境检查与 reasoner-limits.md §一（Pellet 需 Java ≥25）。
 rdflib>=7.6.0,<8
 owlready2==0.51
+pyshacl==0.29.1

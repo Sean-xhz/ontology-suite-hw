@@ -34,7 +34,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 # 套件根 = 本文件所在 scripts/ 的上一级（__file__ 绝对定位，与 cwd 无关）
 SUITE_ROOT = Path(__file__).resolve().parent.parent
@@ -57,6 +57,12 @@ DISPATCH = {
     ("model", "patch"): (
         "skills/ontology-model/scripts/incremental_patch.py",
         "R2 增量 patch（编辑操作→draft+L1/L2+回归守护+版本 diff，不覆盖权威），exit 0/1/2"),
+    ("model", "shapes"): (
+        "skills/ontology-model/scripts/derive_shacl.py",
+        "R4 TTL→SHACL shapes 派生（TTL-direct，纯 rdflib），exit 0/1/2"),
+    ("model", "shacl"): (
+        "skills/ontology-model/scripts/validate_shacl.py",
+        "R4 SHACL 实例级数据完整性校验（pyshacl，facet/基数/唯一性），exit 0/1/2"),
     ("review", "extract"): (
         "skills/ontology-review/scripts/review_extract.py",
         "建模方案表 + TTL 双源提取 → review.json（TTL 权威）"),
@@ -83,7 +89,7 @@ DISPATCH = {
         "A/B 三臂机械判据评分 + 专家盲评聚合"),
     ("suite", "test"): (
         "scripts/run_suite_tests.py",
-        "统一验收电池 T0-T11（虚构示例 fixture，零副作用），exit 0/1/2"),
+        "统一验收电池 T0-T12（虚构示例 fixture，零副作用），exit 0/1/2"),
 }
 
 GROUPS = ("model", "review", "simulate", "suite")
@@ -108,11 +114,13 @@ def print_help():
             print("    %-12s %s" % (a, purpose))
         print("")
     print("  [suite] 额外命令:")
-    print("    %-12s %s" % ("doctor", "只读环境自检（python/rdflib/owlready2/java/node）"))
+    print("    %-12s %s" % ("doctor", "只读环境自检（python/rdflib/owlready2/pyshacl/java/node）"))
     print("")
     print("示例:")
     print("    ontology_cli.py model validate examples/票据贴现/建模run/ontology.ttl")
     print("    ontology_cli.py model patch ontology.ttl patch.json --golden cases.json")
+    print("    ontology_cli.py model shapes ontology.ttl --output-shapes shapes.ttl")
+    print("    ontology_cli.py model shacl data.ttl shapes.ttl --strict")
     print("    ontology_cli.py review page --run-name 票据贴现")
     print("    ontology_cli.py simulate reason --instance inst.json --ttl ontology.ttl")
     print("    ontology_cli.py suite test --skip-java")
@@ -134,7 +142,7 @@ def doctor():
     ok = ok and py_ok
 
     # 核心 Python 依赖
-    for mod in ("rdflib", "owlready2"):
+    for mod in ("rdflib", "owlready2", "pyshacl"):
         try:
             m = __import__(mod)
             ver = getattr(m, "__version__", "?")

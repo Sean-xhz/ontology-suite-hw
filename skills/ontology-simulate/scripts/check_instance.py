@@ -12,7 +12,8 @@
   E07 受控值——oneOf_enum 属性的值必须在枚举内
   E08 字面量类型——xsd 基型形态校验（integer/decimal/boolean/date）；具名
       datatype（pattern 类，如 ApplicationNumberFormat）只 WARN 不 FAIL
-      （facet 校验由 ontology-model L2 脚本承接，模拟侧不做——限制⑩对偶登记）
+      （facet 校验由 ontology-model SHACL 层〔R4，derive_shacl+validate_shacl〕承接，
+      模拟侧不做——限制⑩对偶登记）
   E09 对象属性存在性+domain/range 兼容+个体引用存在性
   E10 推导属性越权——规则 head 的 propertyPredicate（如 isUpstreamOf）是推导结论，
       不得出现在 relations 输入（与 E04 同语义：结论由推理器物化产出）
@@ -154,7 +155,7 @@ def check_instance(inst, sig):
                         err("E08", "属性 %s 类型 %s 不符：%r" % (key, rng, val))
             else:
                 warn("W08", "属性 %s 为具名 datatype %s（pattern 类）——模拟侧不做 "
-                            "facet 校验（L2 承接），值 %r 未验证" % (key, rng, val))
+                            "facet 校验（SHACL 层 R4 承接），值 %r 未验证" % (key, rng, val))
 
     # ---- 关系
     derived_props = set(sig.get("derived_properties") or [])

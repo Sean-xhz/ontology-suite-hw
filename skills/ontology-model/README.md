@@ -78,9 +78,9 @@
 | L1 | rdflib | Turtle 语法解析+标准前缀 IRI 字节级校验（L1-PREFIX） |
 | L2 | validate_ontology.py | 循环继承/属性特征矛盾/domain-range 悬挂/disjoint∧subClassOf/具名枚举 datatype 陷阱/SWRL 结构 |
 | L3 | check_consistency.py（owlready2+Java） | Pellet/HermiT 一致性推理含 SWRL；三级降级链（Pellet 全量→HermiT→剥离 SWRL），swrl_verified 字段登记档位 |
-| L4 | Protégé/pySHACL | 可选位（当前环境未启用） |
+| L4 | pySHACL（R4）+ Protégé | **pySHACL 已启用（R4）**：derive_shacl+validate_shacl 实例级数据完整性（facet/基数/唯一性）；Protégé 仍可选 |
 
-**引擎限制**：限制①-⑭清单、削减实验矩阵、三级降级链与 L2/L3 分工的自包含登记=`references/reasoner-limits.md`（执行与失败归因必读；引擎版本变更须逐项复核）。要点：限制⑨=具名枚举 datatype Pellet 值空间判空→唯一兼容形态=range 内联匿名 oneOf（补 rdf:type rdfs:Datatype 为标准推荐形）；限制⑩=facet 具名 datatype 模式层兼容/实例层假不一致→S6 执行器剥离降级（内联 oneOf 保留，实例层有真强制力）；限制⑭=canonical 确定性档内置+孤立场景失灵由并发压力用例承载验收。
+**引擎限制**：限制①-⑭清单、削减实验矩阵、三级降级链与 L2/L3 分工的自包含登记=`references/reasoner-limits.md`（执行与失败归因必读；引擎版本变更须逐项复核）。要点：限制⑨=具名枚举 datatype Pellet 值空间判空→唯一兼容形态=range 内联匿名 oneOf（补 rdf:type rdfs:Datatype 为标准推荐形）；限制⑩=facet 具名 datatype 模式层兼容/实例层假不一致→S6 执行器剥离降级（内联 oneOf 保留，实例层有真强制力），实例级 facet 校验由 R4 SHACL 层承接；限制⑭=canonical 确定性档内置+孤立场景失灵由并发压力用例承载验收。
 
 ### 增量 patch（R2）
 
@@ -99,9 +99,30 @@ python3 scripts/incremental_patch.py <baseline.ttl> <patch.json> \
 
 契约全文（patch JSON schema 1.0 + 8 操作目录 + 项编码 + 虚构配例）=`assets/tpl-patch-schema.md`。「意见→编辑操作」语义翻译由外接编排器（LLM/D4 前端/手工）承担，R2 只机械执行不含 LLM 调用。
 
+### SHACL 约束校验（R4）
+
+**何时用**：实例级数据完整性校验——数值上下界/正则 pattern/必填基数/functional 多值/限定基数/hasKey 唯一性。OWL 开放世界「未推出≠否定」+ 限制⑩下 Pellet 剥离 facet 后推理器侧永不校验实例值，check_instance E08 对具名 facet datatype 只 W08 放行；R4 用 W3C SHACL（封闭世界数据完整性）补此盲区，是套件内首个实例级 facet/基数/唯一性强制器，纯 Python 无 Java（skip-java 也可跑），R6 实例化管道前置地基。
+
+```bash
+python3 scripts/derive_shacl.py <ontology.ttl> [--output-shapes PATH] [--report PATH]
+python3 scripts/validate_shacl.py <data.ttl> <shapes.ttl> \
+    [--json-output FILE] [--derivation-report FILE] [--strict] [--focus IRI]
+# 套件统一 CLI：ontology_cli.py model shapes <ontology.ttl> [...] / model shacl <data.ttl> <shapes.ttl> [...]
+```
+
+**exit**：derive 0=成功 / 1=IRI 碰撞或零回写失败 / 2=输入错；validate 0=无 error（非 strict 放行 warning）/ 1=有 error（strict 下 warning 也致 1）/ 2=输入错或 pyshacl 缺失。
+
+**四设计裁定**（实证驱动，正确性必需）：R-a 定义类展开（qualified cardinality onClass 定义类展开 equivalentClass，修复输入侧未物化漏检）/ R-b 逆路径（inverseOf 属性 sh:alternativePath 双向匹配）/ R-c 子类闭包（sh:class 改具名子类闭包 sh:or，对齐 check_instance E06，SHACL 不得比它更严）/ R-d 数值 datatype 容忍（decimal/double/float 不发 sh:datatype，修复 compile int→xsd:integer 误报）。
+
+**纪律边界**：① shapes 非权威·可再生（源 TTL 不变则字节不变，TTL 变更后须重派生）；② 零回写（源 TTL sha 前后断言+realpath 守卫，默认落 cwd）；③ 确定性（canonical-copy-rebind+无时间戳，序列化前绝不喂 pyshacl）；④ TTL-direct 派生（不动签名提取，避 T4 冻结漂移；provenance 经 rdfs:comment 源句不断链）。
+
+**分界**：与 S6 推理验收正交（SHACL=输入完整性闸门，不接入 golden 集——golden 15 active 仅 2/15 conform，开放世界推理 fixture 设计使然）；与 check_instance 正交互补（零臆造 vs 数据完整性，T3 组合=check_instance→compile→validate_shacl→simulate_reason）。
+
+契约全文（映射表+四裁定+unmapped 登记+exit 三态+虚构配例+金额 JSON 数值契约）=`assets/tpl-shacl-shapes.md`。
+
 ## 七、环境与目录约定
 
-**依赖**：python3（3.9+）+ rdflib + owlready2 + JRE（HermiT 需 Java ≥17；**Pellet 需 Java ≥25**——`find_java()` 自动选本机最高版本，环境变量 `OWL_JAVA_EXE` 可显式覆盖）。node 仅 ontology-review 回归层语法检查项需要。L3 不可用时自动降级 L2 并登记 manifest，不阻塞交付。
+**依赖**：python3（3.9+）+ rdflib + owlready2 + pyshacl（R4 SHACL 校验，==0.29.1；derive_shacl 派生仅需 rdflib）+ JRE（HermiT 需 Java ≥17；**Pellet 需 Java ≥25**——`find_java()` 自动选本机最高版本，环境变量 `OWL_JAVA_EXE` 可显式覆盖）。node 仅 ontology-review 回归层语法检查项需要。L3 不可用时自动降级 L2 并登记 manifest，不阻塞交付；R4 SHACL 纯 Python 无 Java，skip-java 环境也可跑。
 
 **目录约定（按部署环境）**：
 

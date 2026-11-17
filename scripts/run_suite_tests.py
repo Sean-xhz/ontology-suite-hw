@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """run_suite_tests.py —— 本体能力套件统一验收入口（N5）。
 
-以 examples/ 虚构载体为 fixture，编排套件 README 验收表 T1-T11 + py_compile，
+以 examples/ 虚构载体为 fixture，编排套件 README 验收表 T1-T12 + py_compile，
 替代分散的手工命令组合；CI（.github/workflows/tests.yml）消费本入口。
 
 设计纪律：
@@ -359,6 +359,183 @@ class SuiteTests:
                     "PASS" if ok else "FAIL",
                     "｜".join(details) + ("｜零回写 ✓" if zero_writeback else "｜零回写 ✗"))
 
+    # ---- T12 R4 SHACL 派生+校验（7 子例聚合，data/shapes 运行时生成于 tmp，examples 零改动）----
+    def t12_shacl(self):
+        before = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        derive = self.script("ontology-model", "derive_shacl.py")
+        validate = self.script("ontology-model", "validate_shacl.py")
+        check_inst = self.script("ontology-simulate", "check_instance.py")
+        shapes = os.path.join(self.tmp, "t12a.shapes.ttl")
+        dreport = os.path.join(self.tmp, "t12a.report.json")
+        details, fails = [], []
+
+        # 虚构票据数据构造器（运行时 tmp；金额裸 integer 字面量验 R-d 数值容忍；base 对齐 fixture）
+        P = ('@prefix : <http://example.org/bill-discount#> .\n'
+             '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\n')
+        ACC = (':acc1 a :Acceptor ; :creditRating "AAA" ; '
+               ':unifiedSocialCreditCode "91110000AAAAAAAAAA" .\n')
+        HOLD = (':hold1 a :Holder ; :enterpriseName "虚构持票企业A" ; '
+                ':unifiedSocialCreditCode "91110000BBBBBBBBBB" .\n')
+
+        def bill(num="PJ202601010001", amt="500000", acc=":acc1", holder=":hold1"):
+            return (':bill1 a :Bill ; :billNumber "%s" ; :faceAmount %s ; '
+                    ':issueDate "2026-01-01"^^xsd:date ; :dueDate "2026-07-01"^^xsd:date ; '
+                    ':hasAcceptor %s ; :currentHolder %s .\n' % (num, amt, acc, holder))
+
+        def app(num="ZX202601010001", status="已提交", cls=":DiscountApplication",
+                amt="495000", subj=":app1"):
+            return ('%s a %s ; :applicationNumber "%s" ; '
+                    ':applicationDate "2026-01-02"^^xsd:date ; :applicationStatus "%s" ; '
+                    ':expectedDiscountAmount %s ; :targetsBill :bill1 ; :initiatedBy :hold1 .\n'
+                    % (subj, cls, num, status, amt))
+
+        def run_validate(tag, data):
+            f = os.path.join(self.tmp, tag + ".data.ttl")
+            with open(f, "w", encoding="utf-8") as fh:
+                fh.write(data)
+            rep = os.path.join(self.tmp, tag + ".violations.json")
+            p = self.py(validate, f, shapes, "--json-output", rep,
+                        "--derivation-report", dreport)
+            r = json.load(open(rep, encoding="utf-8")) if os.path.exists(rep) else None
+            return p.returncode, r
+
+        def comps(r):
+            if not r:
+                return set()
+            return set(x["constraint_component"] for x in r["results"]
+                       if x["severity"] == "error")
+
+        # T12a 派生+确定性：双跑 shapes/report 字节一致 + 计数锚 + unmapped 登记（纯 rdflib 无 Java）
+        shapes2 = os.path.join(self.tmp, "t12a2.shapes.ttl")
+        dreport2 = os.path.join(self.tmp, "t12a2.report.json")
+        pa1 = self.py(derive, self.ttl, "--output-shapes", shapes, "--report", dreport)
+        pa2 = self.py(derive, self.ttl, "--output-shapes", shapes2, "--report", dreport2)
+        ra = json.load(open(dreport, encoding="utf-8")) if os.path.exists(dreport) else None
+        a_ok = (pa1.returncode == 0 and pa2.returncode == 0 and ra is not None
+                and os.path.exists(shapes2)
+                and open(shapes, "rb").read() == open(shapes2, "rb").read()
+                and open(dreport, "rb").read() == open(dreport2, "rb").read())
+        if a_ok:
+            kc = ra["kind_counts"]
+            uk = {}
+            for u in ra["unmapped"]:
+                uk[u["kind"]] = uk.get(u["kind"], 0) + 1
+            a_ok = (kc.get("facet-datatype") == 3 and kc.get("oneOf-in") == 2
+                    and kc.get("restriction-someValuesFrom") == 1
+                    and kc.get("restriction-maxQualifiedCardinality") == 1
+                    and kc.get("hasKey-sparql") == 4
+                    and uk.get("SWRL-rule") == 5 and uk.get("TransitiveProperty") == 1
+                    and uk.get("AllDisjointClasses") == 1)
+        details.append("a=派生双跑字节一致/计数锚" if a_ok else "a FAIL")
+        if not a_ok:
+            fails.append("a")
+
+        # T12b 正例 conform：完整 Bill（int 金额验 R-d）+ 一笔申请；变体仅类型化子类（验 R-c 闭包）
+        rc1, r1 = run_validate("t12b1", P + ACC + HOLD + bill() + app())
+        rc2, r2 = run_validate("t12b2", P + ACC + HOLD + bill()
+                               + app(cls=":AcceptableApplication"))
+        b_ok = (rc1 == 0 and r1 and r1["pass"] and rc2 == 0 and r2 and r2["pass"])
+        details.append("b=conform×2(R-d/R-c)" if b_ok else "b FAIL")
+        if not b_ok:
+            fails.append("b")
+
+        # T12c facet 越限（补洞演示）：SHACL 检出 MinExclusive+Pattern + 溯源挂源句；
+        #      对偶 check_instance 同场景 W08 放行 rc=0（Pellet 剥离/旧闸门放行/SHACL 检出三态）
+        rc, r = run_validate("t12c", P + ACC + HOLD + bill(num="随便写", amt="-5") + app())
+        c_shacl = (rc == 1 and r and not r["pass"]
+                   and "MinExclusiveConstraintComponent" in comps(r)
+                   and "PatternConstraintComponent" in comps(r)
+                   and any(x.get("source_sentences") for x in r["results"]
+                           if x["severity"] == "error"))
+        inst = json.load(open(os.path.join(self.demo, "demo1-instance.json"),
+                              encoding="utf-8"))
+        for ind in inst["individuals"]:
+            if ind["name"] == "indBill1":
+                ind["facts"]["faceAmount"] = -5
+                ind["facts"]["billNumber"] = "随便写"
+        cij = os.path.join(self.tmp, "t12c-instance.json")
+        with open(cij, "w", encoding="utf-8") as fh:
+            json.dump(inst, fh, ensure_ascii=False)
+        pc = self.py(check_inst, cij, self.sig)
+        c_ok = c_shacl and pc.returncode == 0 and "W08" in pc.stdout
+        details.append("c=SHACL检出+溯源/check_instance放行(补洞对偶)" if c_ok else "c FAIL")
+        if not c_ok:
+            fails.append("c")
+
+        # T12d 基数三反例：d1 无承兑人 MinCount / d2 两承兑人 MaxCount / d3 两笔审核中申请 QualifiedMaxCount
+        #      （d3=R-a 定义类展开+R-b 逆路径验收锚，输入侧无 Java 检出）
+        d1data = (P + ACC + HOLD
+                  + ':bill1 a :Bill ; :billNumber "PJ202601010001" ; :faceAmount 500000 ; '
+                    ':issueDate "2026-01-01"^^xsd:date ; :dueDate "2026-07-01"^^xsd:date ; '
+                    ':currentHolder :hold1 .\n' + app())
+        rc1, r1 = run_validate("t12d1", d1data)
+        d2data = (P + ACC
+                  + ':acc2 a :Acceptor ; :creditRating "AA" ; '
+                    ':unifiedSocialCreditCode "91110000CCCCCCCCCC" .\n' + HOLD
+                  + ':bill1 a :Bill ; :billNumber "PJ202601010001" ; :faceAmount 500000 ; '
+                    ':issueDate "2026-01-01"^^xsd:date ; :dueDate "2026-07-01"^^xsd:date ; '
+                    ':hasAcceptor :acc1, :acc2 ; :currentHolder :hold1 .\n' + app())
+        rc2, r2 = run_validate("t12d2", d2data)
+        d3data = (P + ACC + HOLD + bill()
+                  + app(num="ZX202601010001", status="审核中",
+                        cls=":AcceptableApplication", subj=":app1")
+                  + app(num="ZX202601010002", status="审核中",
+                        cls=":AcceptableApplication", subj=":app2"))
+        rc3, r3 = run_validate("t12d3", d3data)
+        d_ok = (rc1 == 1 and "MinCountConstraintComponent" in comps(r1)
+                and rc2 == 1 and "MaxCountConstraintComponent" in comps(r2)
+                and rc3 == 1 and "QualifiedMaxCountConstraintComponent" in comps(r3))
+        details.append("d=MinCount/MaxCount/QualifiedMaxCount" if d_ok else "d FAIL")
+        if not d_ok:
+            fails.append("d")
+
+        # T12e 枚举反例：creditRating="BBB" → InConstraintComponent（E07+Pellet oneOf+SHACL 三保险）
+        rc, r = run_validate("t12e", P
+                             + ':acc1 a :Acceptor ; :creditRating "BBB" ; '
+                               ':unifiedSocialCreditCode "91110000AAAAAAAAAA" .\n'
+                             + HOLD + bill() + app())
+        e_ok = (rc == 1 and "InConstraintComponent" in comps(r))
+        details.append("e=InConstraint" if e_ok else "e FAIL")
+        if not e_ok:
+            fails.append("e")
+
+        # T12f hasKey 反例：两完整 Bill 同 billNumber → SPARQLConstraintComponent（类内键值重复）
+        fdata = (P + ACC + HOLD
+                 + ':acc2 a :Acceptor ; :creditRating "AA" ; '
+                   ':unifiedSocialCreditCode "91110000CCCCCCCCCC" .\n'
+                 + ':hold2 a :Holder ; :enterpriseName "虚构持票企业B" ; '
+                   ':unifiedSocialCreditCode "91110000DDDDDDDDDD" .\n'
+                 + bill() + app()
+                 + ':bill2 a :Bill ; :billNumber "PJ202601010001" ; :faceAmount 600000 ; '
+                   ':issueDate "2026-01-01"^^xsd:date ; :dueDate "2026-07-01"^^xsd:date ; '
+                   ':hasAcceptor :acc2 ; :currentHolder :hold2 .\n')
+        rc, r = run_validate("t12f", fdata)
+        f_ok = (rc == 1 and "SPARQLConstraintComponent" in comps(r))
+        details.append("f=SPARQL(hasKey)" if f_ok else "f FAIL")
+        if not f_ok:
+            fails.append("f")
+
+        # T12g 契约错：缺失 data 文件 / 坏 TTL（解析失败）→ 各 exit 2
+        missing = os.path.join(self.tmp, "t12g-missing.ttl")
+        pg1 = self.py(validate, missing, shapes)
+        bad = os.path.join(self.tmp, "t12g-bad.ttl")
+        with open(bad, "w", encoding="utf-8") as fh:
+            fh.write("this is not valid turtle <<< @@@\n")
+        pg2 = self.py(validate, bad, shapes)
+        g_ok = (pg1.returncode == 2 and pg2.returncode == 2)
+        details.append("g=缺文件/坏TTL exit2" if g_ok else "g FAIL")
+        if not g_ok:
+            fails.append("g")
+
+        after = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        zero_writeback = before == after
+        if not zero_writeback:
+            fails.append("zero-writeback")
+        ok = not fails
+        self.record("T12", "R4 SHACL 派生+校验（7 子例）",
+                    "PASS" if ok else "FAIL",
+                    "｜".join(details) + ("｜零回写 ✓" if zero_writeback else "｜零回写 ✗"))
+
     def run_all(self):
         self.check_fixtures()
         self.t0_py_compile()
@@ -372,6 +549,7 @@ class SuiteTests:
         self.t9_closeout()
         self.t10_brand()
         self.t11_patch()
+        self.t12_shacl()
         n_pass = sum(1 for r in self.results if r[2] == "PASS")
         n_fail = sum(1 for r in self.results if r[2] == "FAIL")
         n_skip = sum(1 for r in self.results if r[2] == "SKIP")

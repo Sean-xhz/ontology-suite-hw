@@ -31,7 +31,7 @@ else
   echo "== pip 依赖检查（--no-install）=="
   python3 - <<'PY'
 import importlib
-for m in ("rdflib", "owlready2"):
+for m in ("rdflib", "owlready2", "pyshacl"):
     try:
         importlib.import_module(m); print(m, "✓")
     except ImportError:

@@ -3,6 +3,19 @@
 > **版本约定**：semver（MAJOR.MINOR.PATCH）——MAJOR=执行契约不兼容变更（Stage/闸门/交付契约改变）；MINOR=新增能力或条款；PATCH=措辞与修正。frontmatter `metadata.version` 为当前版本（skill schema 不支持顶层 version 属性，登记于 metadata）。子协议版本（如 golden-cases schema 1.0、SWRL 规范 v2）在对应版本条目登记，不随 skill 版本号联动。
 > **本文件=构建档案层**（C1/N11 三受众拆分：SKILL.md=执行契约 / README.md=人类手册 / CHANGELOG.md=档案）。执行不依赖本文件；「实证证据登记」节为从执行资产迁出的构建史与证据链，开源发行可选携带。历史指针中的 vault 构建区路径仅为溯源记录，不构成运行依赖。
 
+## 1.7.0（2026-11-17）— R4 SHACL 约束校验层（短期 CLI 能力增强第二项）
+
+- **R4 SHACL 约束校验层**：新增 `scripts/derive_shacl.py`（TTL→SHACL shapes 派生，纯 rdflib，无 Java/无 pyshacl/无 LLM）+ `scripts/validate_shacl.py`（pyshacl 实例级数据完整性校验）。SHACL（封闭世界数据完整性）补 OWL（开放世界逻辑一致性）盲区：限制⑩下 Pellet 剥离 facet 具名 datatype 后推理器侧永不校验实例值，check_instance E08 对具名 facet datatype 只 W08 放行（实证 faceAmount=-5/billNumber="随便写" 当前通过）——R4 是套件内首个实例级 facet/基数/唯一性强制器，纯 Python 无 Java（skip-java 也可跑），R6 实例化管道前置地基，激活 README §六 L4 既有 pySHACL 预留位。
+- **TTL-direct 派生（规格 refine，审批级）**：shapes 从 ontology.ttl（TBox）直接派生，非从 29 句话描述集——TTL 是 G1 冻结+S3 编译+S4 审计+L3 返修定版，含描述集没有的精确化（正则位数/InverseFunctional→hasKey 替代/枚举内联化/qualified cardinality 裁量），从描述集派生绕过裁定链、重新引入已消解歧义。provenance 经 rdfs:comment 源句编号（SOURCE_RE）不断链。不改 extract_signature/parse_ttl/review_extract（避 T4 冻结签名漂移）。
+- **四设计裁定**（实证驱动，正确性必需非可选优化）：R-a 定义类展开（qualified cardinality onClass 定义类展开 equivalentClass intersectionOf/hasValue/someValuesFrom，深度≤3，修复输入侧未物化漏检）/ R-b 逆路径（inverseOf 属性 path=sh:alternativePath(p, inversePath(q))，**独立 list 节点+谓词包裹**——path 节点本身不可为 rdf:list 否则 pyshacl 误判序列路径静默失效）/ R-c 子类闭包（sh:class 值约束改具名子类闭包 sh:or，对齐 check_instance E06 ancestors，SHACL 不得比它更严；hasKey SPARQL ?other 类型匹配同用闭包 UNION）/ R-d 数值 datatype 容忍（decimal/double/float range 不发 sh:datatype，compile int→xsd:integer 误报修复；minExclusive decimal 对 integer 数值提升比较实证成立）。
+- **契约模板**：新增 `assets/tpl-shacl-shapes.md`（第 14 模板）——TBox→SHACL 映射表 + 四裁定 + unmapped 登记契约 + CLI/exit 三态 + 虚构票据配例（派生计数锚+校验三态）+ 金额 JSON 数值契约 + 边界分界（targetClass 无推理 limitation/与 check_instance 正交/与 S6 分界/R2 解耦）。
+- **复用面**（只 import/重实现不改）：validate_ontology.VOCAB_NS/local_name（只读 import）；incremental_patch.serialize_draft 确定性配方（canonical-copy-rebind 同算法重实现，自有 header）；review_extract.rdf_list_items/union_class_members 算法（本地重实现，不 import 避 model→review 反向分层）；simulate_reason.compile_instance_ttl base 回推算法（TTL-direct 版，不 import 避顶层 owlready2）；check_instance 报告体例（pass/counts 对齐）。
+- **纪律零改动**：check_instance 逻辑零改动（仅 W08/E08 注释指针「L2 承接」→「SHACL 层 R4 承接」，见 simulate 1.2.4）；SHACL 不接入 run_golden_cases/S6（golden 15 active 仅 2/15 conform，开放世界推理 fixture 设计使然，语义正交）；agents 零改动（五 agent 职责面不变）。shapes 非权威·可再生·零回写（源 TTL sha 前后断言+realpath 守卫+默认落 cwd）；确定性（canonical-copy-rebind+无时间戳+禁 bnode 随机标签，**序列化前绝不喂 pyshacl**——validate 篡改 shapes 图注入 owl 公理实证）。
+- **SKILL.md 薄指针**：S4 第一步 SHACL 通道命令行 + S6 末句 facet 承接方措辞 refine + 资产索引 scripts/assets 各一条（不叠条款，契约细节在 tpl-shacl-shapes）。README §六 L4 行 pySHACL 启用 + R2 小节后「SHACL 约束校验（R4）」同构小节 + §七依赖 pyshacl。references/reasoner-limits.md 限制⑩ + §五表 facet 承接方措辞 refine（编号①-⑭稳定不动）。
+- **子协议登记**：shapes schema **1.0** / derivation-report **1.0** / violations-report **1.0**（三独立子协议，不随 skill 版本联动）。pyshacl **==0.29.1** 精确钉住为核心 pip 依赖（照 owlready2==0.51 体例，升级须重跑 T12+实证矩阵）。
+- **版本判据**：新增脚本+模板资产（能力面扩展），执行契约 Stage/闸门/交付零改动 → MINOR。
+- **实证证据**：见下「实证证据登记 G 节」（E1-E20 规划期预验证 + 实施期正式脚本重跑：派生双跑字节一致+计数锚+8 例校验矩阵+补洞三态对偶+手工边界矩阵）。套件 T12 验收电池见套件 CHANGELOG/README v10。
+
 ## 1.6.0（2026-11-17）— R2 增量 patch 引擎（短期 CLI 能力增强首项）
 
 - **R2 增量 patch 引擎**：新增 `scripts/incremental_patch.py`（机械 backbone，纯 rdflib 核心，顶层仅标准库+rdflib+同目录 rdflib-only 复用模块；owlready2/推理层经 run_one 函数内延迟导入）。消费结构化编辑操作 JSON（schema 1.0）→ rdflib 增量修改产 **draft TTL + patch-report.json**（不覆盖权威）→ L1/L2 零新增 error delta 闸门 + 可选 L3 + 黄金用例受影响子集回归守护 + 语义版本 diff。R2 是 D4 拖拽编辑的机械 patch 地基；「意见→编辑操作」语义翻译由外接编排器（LLM/D4 前端/手工）承担，R2 只机械执行不含 LLM 调用。
@@ -154,3 +167,44 @@
 **套件 T11 验收电池（`run_suite_tests.py`，2026-11-17 v9 重冻结）**：Java 档 **PASS 12 / FAIL 0 / SKIP 0**（T0 py_compile 14 脚本含 incremental_patch.py；T11 6 子例聚合行 PASS：a=PATCH/annotation-skip｜b=MINOR/pass｜c=L2-blocked/短路｜d=回归翻转 G1｜e=MAJOR-blocked/sha-exit2｜f=双跑字节一致｜零回写 ✓）；`--skip-java` 档 PASS 11 / SKIP 1 exit 0（T8 SKIP，T11d SKIP 登记，T11b not-requested）；坏套件根（`--suite-root` 空目录）exit 2——三态验证 ✓。CLI `model patch` 分发 exit 透传实证（注解 only exit 0，`entry_c.authoritative=false`·`pending_audit`，fixture 零回写）。权威↔快照 rsync 字节级一致（skills×3+agents×5）；套件 109 文件（+2）零缓存残留、examples 零副作用。
 
 > **T11f 测试台修复（非引擎缺陷，构建档案登记）**：电池初版 T11f 误用不同 patch_id（t11a vs t11f）双跑比较——draft 溯源头含 `patch_id` 字段，不同 patch_id 头部必异→假 FAIL；另 `d` 变量被后续子例覆盖指向 t11e1 draft。修正为**复用同一 patch JSON（同 patch_id）跨进程二次跑**（真确定性测试：同输入→同输出）+ 独立 `da` 锁定 T11a draft 路径。引擎确定性本身经隔离实证（同 patch_id 跨 PYTHONHASHSEED 1/999 双跑 md5 一致 a58e3375…）+ 手工矩阵 T11f（c18a2097…）双重确认，**零引擎改动**（incremental_patch.py 未因此修复变更）。
+
+### G. R4 SHACL 约束校验层实证矩阵（2026-11-17，1.7.0）
+
+> fixture=虚构票据贴现载体（套件 `examples/票据贴现/建模run/ontology.ttl`，566 三元组/10 类 9 对象 13 数据 3 facet datatype 5 SWRL 4 hasKey；golden-cases.json 15 active）。环境=python 3.9.6 / rdflib 7.6.0 / **pyshacl 0.29.1**（Apache-2.0）/ owlready2 0.51 / Java jdk-25（R4 纯 Python 无需 Java）。data/shapes 运行时 tmp 生成，examples/ 零改动；冒烟 PYTHONPYCACHEPREFIX 外置，skill 目录零缓存残留。
+
+**规划期 grounding（Plan agent 内存实证 E1-E20，零落盘；四 refine + 电池否决来源）**：
+- E8/E9 → R-a 定义类展开 + R-b 逆路径：`sh:qualifiedValueShape [sh:class :ApplicationUnderReview]` 在输入数据图（未物化）conforms=True 假阴性；数据断言 targetsBill 而公理挂 hasDiscountApplication（inverseOf）须逆路径。
+- E11/E12 → R-d 数值容忍：compile_instance_ttl 把 JSON int 编码 xsd:integer，严格 sh:datatype xsd:decimal 误报；demo1（int 金额 500000/495000）conforms=True。
+- E14/E15 → R-c 子类闭包：个体仅类型化子类（:AcceptableApplication）严格 sh:class 误报；闭包 sh:or 修复，真阳性不损。
+- E13 → 电池设计否决：golden 15 active 仅 2/15 conform（9 例缺承兑人=开放世界推理 fixture 设计使然）→ SHACL 不接入 S6，T12 正例运行时自建。
+- E6（hasKey sh:sparql）/E16（canonical 确定性）/E17（--strict）/E18（advanced=True 显式）/E19（provenance regex 可提取）/E20（全链许可兼容 + FunctionalProperty=11 非 10 + shape IRI 零碰撞）。E10 owlrl/rdfs 备选登记不启用（inference=None）。
+
+**实施期正式脚本重跑（derive_shacl.py + validate_shacl.py 直跑，输出落 tmp）**：
+
+| 子例 | 构造 | 结果 |
+|---|---|---|
+| 派生确定性 | fixture derive 双跑（两子进程） | shapes+report 各字节一致 ✓；rc=0；零回写（源 TTL sha 前后一致）✓ |
+| 派生计数锚 | fixture | node_shapes 5 / property_shapes 23 / mapped 34 / unmapped 7；kind_counts: data_property 14（USCC 双 domain）/ facet-datatype 3 / oneOf-in 2 / object_property 9 / restriction-someValuesFrom 1 / restriction-maxQualifiedCardinality 1 / hasKey-sparql 4；unmapped=SWRL×5+Transitive×1+AllDisjoint×1 |
+| 结构核验 | shapes 图遍历 | R-b alternativePath=[hasDiscountApplication, inversePath(targetsBill)] 正确构造 ✓；R-a qualifiedValueShape sh:or 闭包 4 类+applicationStatus hasValue 审核中 ✓；hasAcceptor minCount1+maxCount1 幂等合并 ✓；R-d faceAmount datatype=None+minExclusive ✓；hasKey 闭包 UNION ✓ |
+| b1 正例 | 完整 Bill（int 500000）+Acceptor(AAA)+Holder+DiscountApplication 申请 | rc=0 conforms（R-d 数值容忍） |
+| b2 变体 | 申请仅类型化 AcceptableApplication | rc=0 conforms（R-c 子类闭包） |
+| c facet 越限 | faceAmount=-5 + billNumber="随便写" | rc=1 MinExclusive+Pattern |
+| d1 无承兑人 | Bill 缺 hasAcceptor | rc=1 MinCount（someValuesFrom） |
+| d2 两承兑人 | Bill 两 hasAcceptor | rc=1 MaxCount（Functional） |
+| d3 限定基数 | 两笔审核中 AcceptableApplication 申请经 targetsBill 指向同一 Bill | rc=1 QualifiedMaxCount（R-a 展开+R-b 逆路径+R-c 闭包三合一） |
+| e 枚举 | creditRating="BBB" | rc=1 In |
+| f hasKey | 两完整 Bill 同 billNumber | rc=1 SPARQL×2 |
+
+**补洞三态对偶（c 场景，纯 Python 无 Java）**：同场景 instance JSON 喂 check_instance→**rc=0**（4×W08「具名 datatype…facet 校验 SHACL 层 R4 承接，值未验证」放行，含 faceAmount=-5）；同场景 data TTL 喂 validate_shacl→**rc=1**（MinExclusive+Pattern 检出）。三态=「Pellet 剥离放行 / check_instance W08 放行 / SHACL 检出」，实证 R4 填补实例级数据完整性真空白。
+
+**手工边界矩阵**：shape IRI 碰撞（源图含 :BillShape 类）→derive exit 1（附碰撞 IRI）✓；复合 hasKey（2 键）→unmapped hasKey-composite ✓；深度>3 定义类（4 层嵌套 intersectionOf）→unmapped defined-class-too-deep ✓；坏 TTL/缺文件→derive exit 2 ✓；validate 缺 data/坏 data/缺 shapes→exit 2 ✓；空数据图→rc=0 平凡 conform ✓；--focus bill1→rc=1 ✓；Warning shape 非 strict rc=0 / --strict rc=1 ✓；realpath 守卫（output==input）→exit 2 ✓；py_compile 两脚本 OK ✓。
+
+**两处关键发现（实施期实证，写入脚本 docstring + 契约模板）**：
+- **alternativePath 正确构造**：必须「独立 rdf:list 节点 + sh:alternativePath 谓词包裹」——path 节点本身不可建成 rdf:list（漏 sh:alternativePath 谓词时 pyshacl `value_nodes_from_path`〔expression_helper.py L47〕先查 rdf:first 误判**序列路径**→空集→maxCount/qualifiedMaxCount 静默失效）。首测 conforms=True 假阴性经读 pyshacl 源码定位修正，T2-T7 全过。pyshacl 规格 alternativePath ≥2 项（单项抛 ReportableRuntimeError）。
+- **pyshacl.validate 篡改 shapes 图**：即使 inplace=False（该参数指 data 图），advanced 处理向 shapes 图注入 owl 公理（`owl:Class rdfs:subClassOf rdfs:Class` 等）→破坏 canonical 确定性。处置：derive_shacl 序列化前绝不喂 validate（天然满足）；validate_shacl 每次从文件 fresh parse。新鲜图 canonical-copy-rebind 双跑字节稳定=True 实证。
+
+> **derive 缺文件三态修复（构建档案登记）**：初版 main 在 load_ontology 存在性守卫**之前**调 file_sha256(src)，缺文件时 FileNotFoundError 未捕获→traceback exit 1（期 2）。修正为先 load_ontology（exit 2 守卫）再算 sha（parse 只读不影响零回写断言）。复测缺文件 exit 2 ✓ + fixture 重排后字节稳定 ✓，**派生逻辑零改动**。
+
+**datatype 语义锚（写脚本前隔离实证）**：sh:datatype xsd:string 接受 plain literal（RDF 1.1，compile 字符串编码形态兼容）✓；sh:minExclusive "0"^^xsd:decimal 对 xsd:integer 字面量数值提升比较（int 500000 conform / int -5 违反 MinExclusive）✓；sh:in 枚举 plain literal 匹配 ✓；hasKey sh:sparql 重复键→每 focus 一条 SPARQLConstraintComponent ✓。
+
+**套件 T12 验收电池**：见套件 CHANGELOG/README v10（run_suite_tests.py t12_shacl 7 子例聚合，Java 档 PASS 13 / --skip-java 档 PASS 12 SKIP 1，纯 Python 两档均执行）。

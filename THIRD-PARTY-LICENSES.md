@@ -101,11 +101,24 @@ SOFTWARE.
 |---|---|---|---|
 | rdflib | 7.6.0 | BSD-3-Clause | pip 包元数据 License 字段 |
 | owlready2 | 0.51 | LGPL-3.0 | 安装包 dist-info `LICENSE.txt`（GNU Lesser General Public License v3） |
+| pyshacl | 0.29.1 | Apache-2.0 | pip 包元数据 License 字段 + Classifier（Apache Software License） |
 
-- 两者经 `requirements.txt` 由 pip 安装，**不捆绑进套件发行包**；各自按其许可条款分发。
-- 套件代码以 import 方式调用、不修改不静态链接——LGPL-3.0 依赖与套件 MIT 许可兼容。
+**pyshacl 传递依赖**（R4 SHACL 约束校验层，pip 自动解析安装，不随套件捆绑）：
+
+| 依赖 | 实证版本 | 许可 | 核验来源 |
+|---|---|---|---|
+| owlrl | 7.6.2 | W3C-20150513 | 安装包 dist-info `LICENSE.txt`（W3C Software and Document Notice and License） |
+| html5rdf | 1.2.1 | MIT | 安装包 dist-info `LICENSE`（rdflib[html] 传递） |
+| prettytable | 3.16.0 | BSD-3-Clause | 安装包 dist-info `licenses/LICENSE` |
+| packaging | 26.2 | Apache-2.0 OR BSD-2-Clause | 安装包 dist-info `LICENSE`（双许可任选其一） |
+| importlib-metadata | 8.7.1 | Apache-2.0 | 安装包 dist-info `LICENSE`（仅 Python <3.12 需要） |
+
+- 上述依赖经 `requirements.txt` 由 pip 安装（pyshacl 传递依赖自动解析），**不捆绑进套件发行包**；各自按其许可条款分发。
+- 套件代码以 import 方式调用、不修改不静态链接——LGPL-3.0（owlready2）依赖与套件 MIT 许可兼容；pyshacl 全链 Apache-2.0/BSD/MIT/W3C 无 copyleft 传染。
+- **owlrl W3C-20150513 NOTICE 注记**：W3C 软件许可要求再分发时保留原始版权与许可声明。pip 单独安装不捆绑→套件发行包不含 owlrl 字节，NOTICE 义务随 pip 包自身分发承接；若未来捆绑 owlrl 须随附其 `LICENSE.txt` 全文。
 - owlready2 内置 Pellet/HermiT 推理机 jar（L3 通道），其许可随 owlready2 包分发；
   引擎行为限制登记见 `skills/ontology-model/references/reasoner-limits.md`。
+- pyshacl 为 R4 SHACL 层核心依赖（纯 Python 无 Java，与 Java 推理机两条正交环境轴）；validate_shacl 显式 `advanced=True`/`inference=None`，不启用 owlrl 推理闭包（owlrl 仅作 pyshacl 内部依赖安装，MVP 坚持输入侧断言数据口径）。
 - Java 运行时与 node 为用户环境组件，不随套件分发。
 
 ## 三、方法论来源致谢（非许可依赖）

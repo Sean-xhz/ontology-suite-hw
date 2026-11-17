@@ -35,7 +35,7 @@
 
 **⑨ 具名枚举 datatype 是 Pellet 陷阱（模式层）**：`rdfs:Datatype`+仅 `owl:oneOf`（无 onDatatype）→ Pellet **值空间判空**，引用它的 `owl:hasValue` 定义类静默 ≡⊥；补 `owl:onDatatype xsd:string` → Pellet 拒跑（"Trying to use a literal as an individual"）。**唯一兼容形态=range 内联匿名 `[ owl:oneOf (...) ]`**，推荐节点补 `rdf:type rdfs:Datatype`（OWL 2 DataOneOf 标准映射，实测同样兼容）。HermiT 对此不敏感（限制⑥参数掩盖）——只有 Pellet 全量档能暴露。已编译侧固化：prompt-generator datatype 硬规范 + validate_ontology L2-DATATYPE 检查。〔证据：2026-10-26 四变体最小重现实验 m1a/m1b/m1c/m1d，见 §六矩阵 A〕
 
-**⑩ facet 具名 datatype 的 Pellet 实例层假不一致**：限制⑨只覆盖模式层（individuals=0）——facet 类具名 datatype（xsd:pattern/minExclusive）模式层 Pellet 全量 consistent=true；但**个体断言字面量值后**，Pellet Jena loader 忽略 facet 三元组（Unsupported axiom 告警）而 datatype 推理对该值空间判空 → 个体字面量 ∉ 值空间 → range 违反 → **整个体层假不一致**（任何断言该属性字面量的用例均触发；日期/string range 不受影响）。**处置**：实例级推理加载前剥离具名 datatype——只剥 URIRef 节点的 `rdf:type rdfs:Datatype` 声明三元组及所有以该 IRI 为主/宾的三元组（含 range 引用）；**内联匿名 bnode oneOf 必须保留**（Pellet 实例层对内联 oneOf range 有真实强制力：受控值外断言剥离后仍检出不一致=真阳性）。facet 实例校验职责转 L2 脚本+数据管线；**本体文件不因 Pellet 限制改动**（facet datatype 是合法 OWL 2 形态，HermiT/Protégé 正常消费）。实现=`run_golden_cases.py::strip_named_datatypes()`（默认开启，`--no-strip` 仅调试档）。〔证据：2026-10-27 虚构载体 S6 首跑 11/15 期望一致用例全炸，削减实验 C1-C6/C1'/C4' 定位，见 §六矩阵 B〕
+**⑩ facet 具名 datatype 的 Pellet 实例层假不一致**：限制⑨只覆盖模式层（individuals=0）——facet 类具名 datatype（xsd:pattern/minExclusive）模式层 Pellet 全量 consistent=true；但**个体断言字面量值后**，Pellet Jena loader 忽略 facet 三元组（Unsupported axiom 告警）而 datatype 推理对该值空间判空 → 个体字面量 ∉ 值空间 → range 违反 → **整个体层假不一致**（任何断言该属性字面量的用例均触发；日期/string range 不受影响）。**处置**：实例级推理加载前剥离具名 datatype——只剥 URIRef 节点的 `rdf:type rdfs:Datatype` 声明三元组及所有以该 IRI 为主/宾的三元组（含 range 引用）；**内联匿名 bnode oneOf 必须保留**（Pellet 实例层对内联 oneOf range 有真实强制力：受控值外断言剥离后仍检出不一致=真阳性）。facet 实例校验职责转 SHACL 层（R4，model `scripts/derive_shacl.py`+`validate_shacl.py`，pyshacl 引擎，纯 Python 无 Java）+数据管线；**本体文件不因 Pellet 限制改动**（facet datatype 是合法 OWL 2 形态，HermiT/Protégé 正常消费）。实现=`run_golden_cases.py::strip_named_datatypes()`（默认开启，`--no-strip` 仅调试档）。〔证据：2026-10-27 虚构载体 S6 首跑 11/15 期望一致用例全炸，削减实验 C1-C6/C1'/C4' 定位，见 §六矩阵 B〕
 
 **⑪ SWRL head 多原子部分物化**：`swrl:head` 含 ClassAtom+IndividualPropertyAtom 两原子时，Pellet realize 仅物化其一（确定性复现，非随机）：body 为字面量原子形态→存类原子丢属性原子；body 含定义类 ClassAtom→存属性原子丢类原子；head 内原子顺序无关（换序证伪）。小本体（≤3 规则）三形态全过、builtin 存在时执行路径不同——缺陷仅在规则数多/body 含定义类原子的真实规模本体暴露。**深层规律**：SWRL 匹配阶段看不到 DL 推理出的定义类成员资格（增量装配实验：body ≤7 个普通原子全稳，加入定义类原子后 head 另一原子丢失）。**处置=编译形态约束（生成侧规避）**：head 单原子化——双结论规则 `body ⇒ C(a) ∧ P(a,r)` 拆为两条规则（与限制⑫联用双通道形态）。〔证据：2026-11-02 真实规模载体（26 规则/32 用例）9 组削减实验矩阵定位，见 §六矩阵 C〕
 
@@ -89,7 +89,7 @@
 | SWRL 规则语义冲突（ClassAtom 型，具名变量） | ✗（结构合法零 error） | ✅ Pellet 全量（swrl_verified="pellet"）；HermiT 亦可 |
 | SWRL 含 ObjectPropertyAtom+swrlb built-in | ✗ | ✅ Pellet 全量执行；HermiT ✗（literal 列表项翻译失败→降级③） |
 | 具名枚举 datatype 值空间判空 | ✅ L2-DATATYPE | ✅ 仅 Pellet 暴露（HermiT 掩盖）——限制⑨ |
-| facet datatype 实例层校验 | ✅ L2 脚本+数据管线承接 | ⚠️ Pellet 实例层假不一致（限制⑩）——执行器 strip 具名 datatype；内联 oneOf 枚举实例层真强制 |
+| facet datatype 实例层校验 | ✗ L2 不校验实例值（只查模式层陷阱形态）；转 SHACL 层（R4）+数据管线承接 | ⚠️ Pellet 实例层假不一致（限制⑩）——执行器 strip 具名 datatype；内联 oneOf 枚举实例层真强制 |
 | SWRL head 多原子 | ✅ 启发式 warning（L2-SWRL-FORM） | ⚠️ Pellet 部分物化（限制⑪）——生成侧 head 单原子化规避 |
 | 句法相同 body 的多条 swrl:Imp | ✗（可选增强：同构 body warning） | ⚠️ Pellet 去重丢弃（限制⑫）——双通道 body 须句法相异 |
 | builtin 数值规则跨进程可复现性 | ✗（L2 不涉及执行序） | ⚠️ 序列化非确定性已根治（canonical 档）；孤立场景确定性失灵=限制⑭第二段（并发压力用例承载验收） |

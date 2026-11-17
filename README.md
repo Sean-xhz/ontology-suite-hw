@@ -1,8 +1,20 @@
 # 本体能力套件（Ontology Capability Suite）
 
 > 业务场景自动化本体建模 → 可视化审阅 → 模拟验证与 A/B 实证的三件套能力快照（载体中立，适用各行业域）。
-> 冻结日期：2026-11-17（**v9 重冻结**）｜三 skill 本体能力套件 + 开源工程资产｜中文 ｜ [English](README.en.md)
-> 发布状态：**GitHub private 仓已发布**（`Sean-xhz/ontology-suite-hw`）；本地 v9 增量（统一 CLI + R2）待用户决定时再回推同步；Pages 站点搁置（待转 public）；转 public 时机与 LICENSE 署名调整待用户决定。
+> 冻结日期：2026-11-17（**v10 重冻结**）｜三 skill 本体能力套件 + 开源工程资产｜中文 ｜ [English](README.en.md)
+> 发布状态：**GitHub private 仓已发布**（`Sean-xhz/ontology-suite-hw`，v9 已同步）；本地 v10 增量（R4 SHACL 约束校验层）待用户决定时再回推同步；Pages 站点搁置（待转 public）；转 public 时机与 LICENSE 署名调整待用户决定。
+
+## v10 变更记录（2026-11-17，R4 SHACL 约束校验层，短期 CLI 能力增强第二项·桶 A P1）
+
+短期桶 A 推进序（v9 战略框定延续）：R2 增量 patch（P0，✅ v9）→ **R4 SHACL（P1，本批次）** → D1-light 文档解析 → D3c SPARQL。R4 = 套件内**首个实例级 facet/基数/唯一性强制器**——用 W3C SHACL（封闭世界数据完整性）补 OWL（开放世界逻辑一致性）盲区，纯 Python 无 Java（skip-java 档仍执行数据完整性闸门），是 R6 实例化管道（RML 批量实例 TTL→SHACL 校验→加载）的前置地基，激活 model README §六既有 pySHACL 预留位。
+
+1. **痛点实证定位**：现有校验链存在实例级数据完整性真空白——① OWL 开放世界「未推出≠否定」，且限制⑩下 Pellet 加载 facet 具名 datatype 值空间判空→执行器 `strip_named_datatypes` 剥离后**推理器侧永不校验 facet**；② check_instance 是签名词汇表封闭校验（防臆造/越权/类型错），E08 对具名 facet datatype 只发 W08 warning 放行（`faceAmount=-5`、`billNumber="随便写"` 当前通过）；③ 注释声称「facet 由 L2 承接」实证不成立（validate_ontology L2 只查具名枚举 datatype 的 Pellet 陷阱形态，无 withRestrictions 解析、无实例值校验）。真实空白=数值上下界/正则 pattern/必填基数/functional 多值/maxQualifiedCardinality/hasKey 唯一性（枚举非空白，E07+Pellet 内联 oneOf 双保险）。
+2. **model 1.7.0 — 双脚本（`scripts/derive_shacl.py` + `validate_shacl.py`）**：derive_shacl 从 **ontology.ttl 直接派生** shapes（TTL-direct，rdflib Graph 遍历 TBox，纯 rdflib 无 pyshacl）+ derivation-report（mapped/unmapped/四裁定/源句 provenance）；validate_shacl 用 pyshacl 校验实例数据 TTL→violations 看板（逐条挂源句溯源）。**审批级规格 refine**：shapes 从 TTL 派生而非「从 29 句话描述集」——TTL 是 G1 冻结+S3 编译+S4 审计+L3 返修定版，含描述集没有的精确化；provenance 经 rdfs:comment 源句编号不断链。**四设计裁定（实证驱动，正确性必需）**：R-a 定义类展开（qualifiedValueShape 展开 equivalentClass intersectionOf+hasValue，深度≤3）/ R-b 逆路径（inverseOf 属性 sh:alternativePath，独立 list 节点+谓词包裹）/ R-c 子类闭包（sh:class 值约束改具名子类闭包 sh:or，对齐 check_instance E06 ancestors）/ R-d 数值 datatype 容忍（decimal/double/float 不发 sh:datatype，compile int→xsd:integer 不误报）。不改 extract_signature/parse_ttl/review_extract（避 T4 冻结签名漂移）；shapes 非权威可再生零回写；确定性 canonical-copy-rebind 跨进程字节稳定。
+3. **契约模板（`assets/tpl-shacl-shapes.md`，第 14 模板）**：TBox→SHACL 映射表 + 四设计裁定 + unmapped 登记契约 + CLI exit 三态 + 虚构票据配例（派生计数锚+校验三态）+ 纪律边界（shapes 非权威/零回写/确定性/TTL-direct/IRI 碰撞守卫）+ 金额 JSON 数值契约 + targetClass limitation 文档化。子协议三 schema 独立登记不联动：shapes schema 1.0 / derivation-report 1.0 / violations-report 1.0。
+4. **simulate 1.2.4 PATCH（逻辑零改动）**：check_instance E08 docstring+W08 消息、simulate_reason 数值编码注释——facet 承接方「ontology-model L2 脚本」→「SHACL 层（R4）」口径修正；SKILL.md T3 补「check_instance（JSON 零臆造）→ validate_shacl（TTL 数据完整性）→ simulate_reason（物化推理）」三闸正交组合薄指针（编排器职责）。补洞三态对偶实证：同 facet 越限场景 check_instance rc=0（W08 放行）vs validate_shacl rc=1（MinExclusive+Pattern 检出）。
+5. **CLI 1.2.0 + T12 验收**：`ontology_cli.py` DISPATCH +2（`model shapes` 派生 / `model shacl` 校验），doctor 核心依赖 tuple +pyshacl，suite test T0-T12。`run_suite_tests.py` 新增 `t12_shacl`（7 子例聚合，data/shapes 运行时生成于 tmp，examples 零改动）——a 派生双跑字节一致+计数锚（facet-datatype 3/oneOf-in 2/someValuesFrom 1/maxQualifiedCardinality 1/hasKey-sparql 4；unmapped SWRL×5+Transitive+AllDisjoint）｜b conform×2（int 金额验 R-d + 子类单独类型化验 R-c）｜c facet 越限 SHACL 检出+溯源挂源句 vs check_instance W08 放行（补洞对偶）｜d 基数三反例 MinCount/MaxCount/QualifiedMaxCount（R-a 展开+R-b 逆路径输入侧无 Java 检出锚）｜e 枚举 In｜f hasKey SPARQL｜g 缺文件/坏 TTL exit 2。零回写 before/after sha 断言并入行判定。
+6. **工程资产**：`requirements.txt` +pyshacl==0.29.1 精确钉住（核心依赖非可选，照 owlready2 体例；SHACL 纯 Python 与 Java 两条正交环境轴）；`THIRD-PARTY-LICENSES.md` §二 +pyshacl Apache-2.0 + 传递依赖实证核验（owlrl 7.6.2 W3C-20150513 **NOTICE 注记** / html5rdf 1.2.1 MIT / prettytable 3.16.0 BSD-3-Clause / packaging 26.2 双许可 / importlib-metadata 8.7.1 Apache-2.0，全链无 copyleft）；`bootstrap.sh` 依赖检查 +pyshacl；CI step name T1-T12。
+7. **重冻结验收**：权威↔快照 rsync 字节级一致（skills×3，**agents 零改动不动**）；统一入口 Java 档 **PASS 13 / FAIL 0 / SKIP 0**（T0 py_compile 16 脚本；T8 物化推断 3/3 ruleR1/R3/R7+零回写；T11 6 子例全过；T12 7 子例全过）；`--skip-java` 档 PASS 12 / SKIP 1 exit 0、坏套件根 exit 2，三态验证 ✓；CLI 三态（`--help` 含 model shapes/shacl / `suite doctor` 16 脚本+pyshacl 就位 / `model shapes`·`model shacl` 分发 exit 透传〔正例 0/反例 1〕/ 未知 action exit 2）✓；全套件敏感扫描零命中；套件 **112 文件**（+3：derive_shacl.py + validate_shacl.py + tpl-shacl-shapes.md）零缓存残留、examples 零副作用（33 文件 sha 前后一致）。
 
 ## v9 变更记录（2026-11-17，统一 CLI 入口 + R2 增量 patch 引擎，短期 CLI 能力增强首项）
 
@@ -120,10 +132,10 @@ python3 scripts/ontology_cli.py model validate --help   # 转发底层脚本帮�
 
 | group | action | 底层能力 |
 |---|---|---|
-| **model** | `validate` / `consistency` / `topology` / `golden` / `patch` | L1+L2 校验 / L3 一致性 / S5 文本拓扑 / S6 黄金用例 / R2 增量 patch |
+| **model** | `validate` / `consistency` / `topology` / `golden` / `patch` / `shapes` / `shacl` | L1+L2 校验 / L3 一致性 / S5 文本拓扑 / S6 黄金用例 / R2 增量 patch / R4 TTL→SHACL 派生 / R4 实例级数据完整性校验 |
 | **review** | `extract` / `page` / `ingest` / `selftest` | 双源提取 / 单文件审阅页 / 意见单回流 / E1-E10 自测 |
 | **simulate** | `signature` / `check` / `reason` / `ab-score` | 编译签名 / 实例零臆造校验 / what-if 物化 / A/B 判据评分 |
-| **suite** | `test` / `doctor` | 统一验收电池 T0-T11 / 只读环境自检 |
+| **suite** | `test` / `doctor` | 统一验收电池 T0-T12 / 只读环境自检 |
 
 **薄分发纪律**：每个子命令把剩余参数原样转发底层脚本（subprocess），退出码透传，脚本行为零改变——各脚本仍可独立运行，CLI 只是便利门面。脚本路径相对套件根（`__file__` 自动定位，与 cwd 无关）；跨 skill import 由各脚本自身的相对 `sys.path` 垫片承接。未知 group/action 或脚本缺失 = exit 2。
 
@@ -135,7 +147,7 @@ python3 scripts/ontology_cli.py model validate --help   # 转发底层脚本帮�
 ├── agents/            # 五 agent 定义冻结副本 + README（角色一览/异构纪律/平台适配，双语）
 ├── examples/票据贴现/  # 全虚构发行示例（可对外）：建模 run + 审阅与意见 + 模拟 demo
 ├── scripts/           # ontology_cli.py（统一 CLI 入口）+ bootstrap.sh（环境引导）+ run_suite_tests.py（统一验收入口，N5）
-├── requirements.txt   # Python 依赖（owlready2==0.51 钉住 + rdflib>=7.6,<8）
+├── requirements.txt   # Python 依赖（owlready2==0.51 + pyshacl==0.29.1 钉住 + rdflib>=7.6,<8）
 ├── docs/              # GitHub Pages 站点（index.html 门面 + demo.html 审阅页在线预览）
 ├── .github/workflows/ # CI 矩阵（tests.yml）+ Pages 部署（pages.yml）——发布后启用
 ├── LICENSE            # MIT（主许可）
@@ -146,16 +158,16 @@ python3 scripts/ontology_cli.py model validate --help   # 转发底层脚本帮�
 
 ## 环境依赖
 
-- python3（≥3.9）+ `rdflib` + `owlready2`（L1/L2 校验、提取、物化）——**`requirements.txt` 钉住实证版本**（owlready2==0.51，引擎行为按该版本登记）；一键引导=`bash scripts/bootstrap.sh`（依赖检查+安装+可选验收）
+- python3（≥3.9）+ `rdflib` + `owlready2` + `pyshacl`（L1/L2 校验、提取、物化、R4 SHACL 数据完整性）——**`requirements.txt` 钉住实证版本**（owlready2==0.51，引擎行为按该版本登记；pyshacl==0.29.1，R4 SHACL 层核心依赖，纯 Python 无 Java，与 Java 推理机两条正交环境轴）；一键引导=`bash scripts/bootstrap.sh`（依赖检查+安装+可选验收）
 - Java + Pellet/HermiT 推理机 jar（L3 一致性与 SWRL 物化；**Pellet 需 Java ≥25**、HermiT ≥17；jar 随 owlready2 pip 包内置；引擎版本/JRE 要求/路径发现与限制登记见 `skills/ontology-model/references/reasoner-limits.md`）
 - node（可选，仅 review `self_test.py` 的模板 JS 语法检查项，缺失降级 skip）
 - CI：`.github/workflows/tests.yml`（python 3.9/3.12 矩阵 × temurin Java 25 × node 20，消费统一验收入口；发布后随仓库启用）
 
-## 验收状态（2026-11-17 v9 重冻结后套件内实跑）
+## 验收状态（2026-11-17 v10 重冻结后套件内实跑）
 
-**统一入口（N5）**：`python3 scripts/run_suite_tests.py`（T0-T11 编排，examples 为 fixture，零副作用，`--skip-java` 降级档；exit 0/1/2）——v9 复跑 **PASS 12 / FAIL 0 / SKIP 0**（含 T0 py_compile 14 脚本；T4 全量一致+双跑确定性；T1 self_test E1-E10 10/10；T11 R2 增量 patch 6 子例全过）；`--skip-java` 档 PASS 11 / SKIP 1 exit 0、坏套件根 exit 2，三态验证 ✓。CI 消费同一入口。
+**统一入口（N5）**：`python3 scripts/run_suite_tests.py`（T0-T12 编排，examples 为 fixture，零副作用，`--skip-java` 降级档；exit 0/1/2）——v10 复跑 **PASS 13 / FAIL 0 / SKIP 0**（含 T0 py_compile 16 脚本；T4 全量一致+双跑确定性；T1 self_test E1-E10 10/10；T8 物化推断 3/3+零回写；T11 R2 增量 patch 6 子例全过；T12 R4 SHACL 7 子例全过）；`--skip-java` 档 PASS 12 / SKIP 1 exit 0、坏套件根 exit 2，三态验证 ✓。CI 消费同一入口。
 
-**统一 CLI 入口（2026-11-17 新增，v9 含 R2）**：`scripts/ontology_cli.py` 1.1.0 薄分发门面——`--help` 能力地图（含 `model patch`）/ `suite doctor` 只读自检（python·rdflib·owlready2·java·node + 14 脚本就位）/ 实际分发（`model validate`、`model patch`、`simulate signature` 跨 skill import）exit 0 透传 / 未知 group·action exit 2 / `suite test` 经 CLI 复跑 **PASS 12 / FAIL 0 / SKIP 0**；退出码透传、零副作用（examples 0 改动）、权威↔快照字节级一致实证 ✓。
+**统一 CLI 入口（v9 新增，v10 含 R4）**：`scripts/ontology_cli.py` 1.2.0 薄分发门面——`--help` 能力地图（含 `model shapes`/`model shacl`）/ `suite doctor` 只读自检（python·rdflib·owlready2·pyshacl·java·node + 16 脚本就位）/ 实际分发（`model validate`、`model patch`、`model shapes`、`model shacl`〔正例 exit 0/反例 exit 1 透传〕、`simulate signature` 跨 skill import）exit 透传 / 未知 group·action exit 2 / `suite test` 经 CLI 复跑 **PASS 13 / FAIL 0 / SKIP 0**；退出码透传、零副作用（examples 0 改动）、权威↔快照字节级一致实证 ✓。
 
 | # | 项 | 结果 |
 |---|---|---|
@@ -169,6 +181,7 @@ python3 scripts/ontology_cli.py model validate --help   # 转发底层脚本帮�
 | T9 | `closeout_check.py`（建模 run 收卷：齐套+敏感扫描） | exit 0 |
 | T10 | 品牌名 grep 契约（虚构载体） | 0 命中 ✓ |
 | T11 | `incremental_patch.py` R2 增量 patch（6 子例聚合） | a PATCH/annotation-skip｜b MINOR/pass｜c L2-blocked/短路｜d 回归翻转 G1（选中 9 非全集）｜e MAJOR-blocked/sha-exit2｜f 同 patch 双跑字节一致；零回写 ✓ |
+| T12 | `derive_shacl.py`+`validate_shacl.py` R4 SHACL（7 子例聚合） | a 派生双跑字节一致+计数锚｜b conform×2（R-d/R-c）｜c SHACL 检出+溯源 vs check_instance W08 放行（补洞对偶）｜d MinCount/MaxCount/QualifiedMaxCount｜e In｜f SPARQL（hasKey）｜g 缺文件/坏 TTL exit 2；零回写 ✓ |
 
 > T4 注：v6 引擎维护批次已修复 `parse_ttl` bnode 非确定性并重生成冻结 signature——历史三类漂移（union 字段/bnode 域标签/`?` 前缀）消除，验收由计数口径升级为**全量一致 + 双跑字节确定性**（2026-11-11）。review.json ×2 与审阅页 ×2 同步重生成（见 v6 变更记录）；check_instance/simulate_reason 消费兼容由 T5/T6/T8 实证。
 

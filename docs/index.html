@@ -116,7 +116,7 @@ footer .links a { margin: 0 12px; }
       <div class="feat"><strong>双模型异构质检</strong><span>生成与审计必须由不同模型承担，禁止同模型自审。平台无关纪律。</span></div>
       <div class="feat"><strong>人工闸门停等</strong><span>业务语义由人确认（G1-G3 / SG1-SG2 / AG1-AG2），LLM 不代答代签。</span></div>
       <div class="feat"><strong>开放世界诚实</strong><span>未推出 ≠ 否定。信息不足时输出「未判定」，不伪装为通过或拒绝。</span></div>
-      <div class="feat"><strong>机械可验证</strong><span>T0-T11 统一验收电池，双跑字节确定性，零回写 hash 断言。</span></div>
+      <div class="feat"><strong>机械可验证</strong><span>T0-T12 统一验收电池，双跑字节确定性，零回写 hash 断言。</span></div>
       <div class="feat"><strong>自包含方法论</strong><span>28 条建模判据焙入 methodology-core，脱离知识库可独立执行。</span></div>
     </div>
   </section>
@@ -127,7 +127,7 @@ footer .links a { margin: 0 12px; }
 bash scripts/bootstrap.sh --run-tests
 
 # 2. 或单独跑验收电池（虚构示例载体为 fixture）
-python3 scripts/run_suite_tests.py              # T0-T11, exit 0 = 全过
+python3 scripts/run_suite_tests.py              # T0-T12, exit 0 = 全过
 python3 scripts/run_suite_tests.py --skip-java  # 无 Java 环境（T8 登记 SKIP）
 
 # 3. 统一 CLI 入口（机械 backbone 门面，LLM 编排外接）
@@ -135,6 +135,8 @@ python3 scripts/ontology_cli.py --help          # 能力地图：model / review 
 python3 scripts/ontology_cli.py suite doctor    # 只读环境自检
 python3 scripts/ontology_cli.py model validate examples/票据贴现/建模run/ontology.ttl
 python3 scripts/ontology_cli.py model patch ontology.ttl patch.json --golden cases.json  # R2 增量 patch
+python3 scripts/ontology_cli.py model shapes ontology.ttl --output-shapes shapes.ttl     # R4 TTL→SHACL 派生
+python3 scripts/ontology_cli.py model shacl data.ttl shapes.ttl --strict                 # R4 实例级数据完整性校验
 
 # 4. 浏览器打开示例审阅页（离线、零依赖）
 open examples/票据贴现/建模run/审阅页.html</code></pre>
@@ -147,7 +149,7 @@ open examples/票据贴现/建模run/审阅页.html</code></pre>
     <h2>环境依赖</h2>
     <table>
       <tr><th>组件</th><th>版本</th><th>用途</th></tr>
-      <tr><td>Python</td><td>≥ 3.9</td><td>脚本层（rdflib + owlready2）</td></tr>
+      <tr><td>Python</td><td>≥ 3.9</td><td>脚本层（rdflib + owlready2 + pyshacl）</td></tr>
       <tr><td>Java</td><td>≥ 25（Pellet）/ ≥ 17（HermiT）</td><td>L3 一致性 + SWRL 物化（无 Java 降级 L2）</td></tr>
       <tr><td>Node</td><td>可选</td><td>审阅页 self_test E9 语法检查（无则 skip）</td></tr>
     </table>
