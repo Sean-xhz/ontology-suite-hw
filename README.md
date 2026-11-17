@@ -2,7 +2,7 @@
 
 > 业务场景自动化本体建模 → 可视化审阅 → 模拟验证与 A/B 实证的三件套能力快照（载体中立，适用各行业域）。
 > 冻结日期：2026-11-17（**v10 重冻结**）｜三 skill 本体能力套件 + 开源工程资产｜中文 ｜ [English](README.en.md)
-> 发布状态：**GitHub private 仓已发布**（`Sean-xhz/ontology-suite-hw`，v9 已同步）；本地 v10 增量（R4 SHACL 约束校验层）待用户决定时再回推同步；Pages 站点搁置（待转 public）；转 public 时机与 LICENSE 署名调整待用户决定。
+> 发布状态：**GitHub private 仓已发布**（`Sean-xhz/ontology-suite-hw`，v10 已同步 5eef21f）；Pages 站点搁置（待转 public）；转 public 时机与 LICENSE 署名调整待用户决定。
 
 ## v10 变更记录（2026-11-17，R4 SHACL 约束校验层，短期 CLI 能力增强第二项·桶 A P1）
 
