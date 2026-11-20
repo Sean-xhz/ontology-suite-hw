@@ -1,8 +1,8 @@
 # ontology-simulate：本体 what-if 模拟验证 skill
 
 > 在专家复核过的本体上做**实例级业务模拟**：客户画像+诉求 → 合规实例编译 → Pellet 物化推理（推断层分离+规则归因）→ 业务语言解读报告；另含 **A/B 三臂实验协议**（本体臂/描述集臂/裸臂），量化「形式化相对自然语言的增量」。
-> 当前版本见 SKILL.md frontmatter；版本历史与构建档案见 `CHANGELOG.md`。
-> **本文件=人类手册**（三受众拆分：SKILL.md=LLM 执行契约 / README=人类手册 / CHANGELOG=构建档案）。
+> 当前版本见 SKILL.md frontmatter；版本历史见 `CHANGELOG.md`。
+> **本文件=人类手册**（三受众拆分：SKILL.md=LLM 执行契约 / README=人类手册 / CHANGELOG=版本历史）。
 
 ## 一、解决什么问题
 
@@ -38,13 +38,13 @@ python3 <skill根>/scripts/simulate_reason.py --instance <instance.json> --ttl <
 
 | 臂 | 注入材料 |
 |---|---|
-| ①本体臂 | 该题画像物化结果（v1.1 起 render-md 业务语言渲染+原始 JSON 双轨）；L1 题=signature TBox 摘要 |
+| ①本体臂 | 该题画像物化结果（render-md 业务语言渲染+原始 JSON 双轨）；L1 题=signature TBox 摘要 |
 | ②描述集臂 | 29句话描述集全文 |
 | ③裸臂 | 无（仅通用指令） |
 
 流程：题库编制（素材白名单+gold 裁定，见 `references/ab-protocol.md` 题库编制契约）→ 冻结双哈希 → 三臂×每题独立会话（ab-responder agent，臂别中立隔离目录）→ `ab_score.py score` 机械判据 + 盲评表单（A/B/C 乱序代名，映射表仅主会话持有）→ 专家盲评回收 → `ab_score.py aggregate`（含评分者间一致率）→ 六节报告（公平性披露+样本量限制为强制节）→ **AG2 终审停等**。
 
-参数建议值：题量 10-15（实证基线 12）/盲评 2 人（一致率计算最低人数）/1-5 分三维度——可调须登记；题库改动即重冻结+全量重跑。
+参数建议值：题量 10-15/盲评 2 人（一致率计算最低人数）/1-5 分三维度——可调须登记；题库改动即重冻结+全量重跑。
 
 完整协议条款（三臂定义/应答契约版本/编制契约/执行纪律/AG2 终审）见 `references/ab-protocol.md`（协议迭代唯一入口）。
 
@@ -52,7 +52,7 @@ python3 <skill根>/scripts/simulate_reason.py --instance <instance.json> --ttl <
 
 **依赖**：python3（3.9+）+ rdflib + owlready2 + JRE（**Pellet 需 Java ≥25**，`find_java()` 自动选最高版本，`OWL_JAVA_EXE` 可覆盖）。引擎限制与失败归因见 ontology-model `references/reasoner-limits.md`（限制⑭ canonical 确定性档/孤立场景 exempt 纪律同源）。
 
-**工作目录**：默认本体 run 目录旁 `模拟demo/`（每问题一组 instance/sim-result/report）；vault 环境惯例可另设 workspace 目录。
+**工作目录**：默认本体 run 目录旁 `模拟demo/`（每问题一组 instance/sim-result/report）；可另设 workspace 目录。
 
 **画像受控双轨**（敏感纪律，对齐 ontology-model `references/sensitivity-rules.md`）：
 
@@ -75,7 +75,7 @@ python3 <skill根>/scripts/simulate_reason.py --instance <instance.json> --ttl <
 ontology-simulate/
 ├── SKILL.md                  # T0-T6 执行契约 + A/B 协议指针（LLM 编排入口）
 ├── README.md                 # 本文件（人类手册）
-├── CHANGELOG.md              # 版本历史+构建档案（执行不依赖）
+├── CHANGELOG.md              # 版本历史（执行不依赖）
 ├── references/               # ab-protocol.md（A/B 三臂实验协议全文，迭代唯一入口）
 ├── assets/                   # prompt-whatif-compiler / prompt-whatif-interpreter
 │                             # / tpl-sim-report / prompt-ab-responder（三臂共用应答契约 v1.1）

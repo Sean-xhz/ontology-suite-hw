@@ -22,7 +22,7 @@ R2 是 D4 拖拽编辑的机械 patch 地基；「意见→编辑操作」的语
   SWRL 编辑走规则级 remove_rule/replace_rule（整片段按硬规范 v2），绕开 atom 级 bnode 手术。
 - **单 parse 工作图**：baseline parse 一次 → 三元组复制到 draft 图（bnode 对象共享），
   所有操作在同一工作图解析执行；diff 用原图集合差（保 bnode 同一性供锚点回溯），
-  report 渲染经 to_canonical_graph 取确定性 cb 标签（v6 确定性纪律）。
+  report 渲染经 to_canonical_graph 取确定性 cb 标签（确定性纪律）。
 
 契约：assets/tpl-patch-schema.md（patch JSON schema 1.0 + 操作目录 + 项编码）。
 复用：validate_ontology.Validator（L1/L2）/ run_golden_cases.run_one+canonicalize_base（回归）
@@ -386,7 +386,7 @@ def set_diff(g_base, g_draft):
 
 def _canonical_nt_lines(triples):
     """diff 三元组 → 确定性 NT 行（to_canonical_graph 重标 bnode 为 cb 哈希标签，
-    跨进程确定，report 无随机标签泄漏——v6 纪律）。"""
+    跨进程确定，report 无随机标签泄漏）。"""
     if not triples:
         return []
     g = Graph()

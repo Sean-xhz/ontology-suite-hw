@@ -182,10 +182,10 @@ def print_datatype_props(g):
     print()
 
 
-# SWRL atom 类型名双规范兼容（S5 工具观察②：占位符根因）——
+# SWRL atom 类型名双规范兼容——
 # SWRL 提交规范名（IndividualPropertyAtom/DatavaluedPropertyAtom/BuiltinAtom）
 # 与 OWLAPI/OWL 2 映射名（ObjectPropertyAtom/DatatypePropertyAtom/BuiltinsAtom）
-# 均合法出现，旧版只认后者致前者显示为 <占位符>
+# 均合法出现，须同时识别（只认其一会导致另一显示为 <占位符>）
 _ATOM_PROP = (SWRL.ObjectPropertyAtom, SWRL.IndividualPropertyAtom)
 _ATOM_DATA = (SWRL.DatatypePropertyAtom, SWRL.DatavaluedPropertyAtom)
 _ATOM_BUILTIN = (SWRL.BuiltinsAtom, SWRL.BuiltinAtom)

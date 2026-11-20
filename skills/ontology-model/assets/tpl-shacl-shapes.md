@@ -12,7 +12,7 @@
 |---|---|
 | **shapes 非权威·可再生** | `shapes.ttl` 是 TTL 的机械派生验证契约，非独立权威。源 TTL 变更（含 R2 patch 晋升）后**须重派生**；R2 `replace_literal` 改 oneOf 枚举后 shapes 手动重派生=操作纪律。 |
 | **零回写** | 源 TTL sha256 前后断言；输出 realpath 碰撞守卫（`--output-shapes`/`--report` 解析后不得等于源 TTL→exit 2）；默认输出落 **cwd**，不进 run 目录。validate_shacl 只读 data/shapes。 |
-| **确定性** | canonical-copy-rebind（`to_canonical_graph`→逐三元组 copy 新 Graph→rebind 原前缀→serialize turtle）+ 无时间戳溯源头；report 排序无时间戳；**禁 bnode 随机标签泄漏**（unmapped construct 用内容标识非裸 bnode，v6 纪律）。**序列化前绝不喂 pyshacl**——`validate` 会向 shapes 图注入 owl 公理破坏确定性（实证 2026-11-17）；validate_shacl 每次从文件 fresh parse。 |
+| **确定性** | canonical-copy-rebind（`to_canonical_graph`→逐三元组 copy 新 Graph→rebind 原前缀→serialize turtle）+ 无时间戳溯源头；report 排序无时间戳；**禁 bnode 随机标签泄漏**（unmapped construct 用内容标识非裸 bnode）。**序列化前绝不喂 pyshacl**——`validate` 会向 shapes 图注入 owl 公理破坏确定性；validate_shacl 每次从文件 fresh parse。 |
 | **TTL-direct 不动签名提取** | 不改 `extract_signature`/`parse_ttl`/`review_extract`（避 T4 冻结签名漂移 + review/simulate 连锁）。derive_shacl 直接 rdflib Graph 遍历 TBox；rdf_list/union 算法本地重实现（不 import review_extract，避 model→review 反向分层）。 |
 | **shape IRI 碰撞守卫** | shape IRI（`:<Cls>Shape` / `:<Cls>Shape_<prop>`）与源图具名 IRI 交集→**exit 1**（防派生构件覆盖源构件语义）。 |
 | **通用性 + 敏感** | 不耦合任何真实载体；本模板配例全虚构中性（票据贴现域）；skill 资产永不写真实业务数据。 |
@@ -38,12 +38,12 @@
 
 **NodeShape/PropertyShape IRI 约定**：`:<Cls>Shape`（`sh:targetClass <Cls>`）/ `:<Cls>Shape_<prop>`（`sh:path`）。同 (cls,prop) 多来源约束（对象属性派生 + Restriction 派生 + Functional）自然 AND 合并到同一 PropertyShape IRI（`path_for`/`add_class_constraint` memoize 防重复 bnode）。
 
-## 2. 四设计裁定（实证驱动，正确性必需非可选优化）
+## 2. 四设计取舍（实证驱动，正确性必需非可选优化）
 
-| 裁定 | 问题（实证） | 处置 |
+| 取舍 | 问题（实证） | 处置 |
 |---|---|---|
 | **R-a 定义类展开** | `sh:qualifiedValueShape [sh:class :ApplicationUnderReview]` 在**输入数据图**（未物化）漏检——定义类是推理产物，输入个体不显式 `rdf:type` 它（E8/E9 conforms=True 假阴性） | onClass 为定义类时展开 `owl:equivalentClass`：intersectionOf 逐成员 AND（具名成员→class 约束、hasValue Restriction→`sh:property[path+hasValue]`、someValuesFrom→minCount+class、allValuesFrom→class）；unionOf→sh:or 子展开；**深度上限 3**，超出/不支持形态→unmapped |
-| **R-b 逆路径** | 数据断言 `targetsBill` 而公理挂 `hasDiscountApplication`（inverseOf）——不做逆路径则输入侧失效（E9） | 凡带 `owl:inverseOf` 的属性，path=`sh:alternativePath(p, [sh:inversePath q])`。**构造要点**：alternativePath 须**独立 rdf:list 节点 + sh:alternativePath 谓词包裹**——path 节点本身不可建成 rdf:list（否则 pyshacl `value_nodes_from_path` 先查 rdf:first 误判序列路径→空集→约束静默失效，实证 2026-11-17）；≥2 项（pyshacl 规格） |
+| **R-b 逆路径** | 数据断言 `targetsBill` 而公理挂 `hasDiscountApplication`（inverseOf）——不做逆路径则输入侧失效（E9） | 凡带 `owl:inverseOf` 的属性，path=`sh:alternativePath(p, [sh:inversePath q])`。**构造要点**：alternativePath 须**独立 rdf:list 节点 + sh:alternativePath 谓词包裹**——path 节点本身不可建成 rdf:list（否则 pyshacl `value_nodes_from_path` 先查 rdf:first 误判序列路径→空集→约束静默失效）；≥2 项（pyshacl 规格） |
 | **R-c 子类闭包** | 个体仅类型化子类（`:app a :AcceptableApplication`），严格 `sh:class` 要求显式 rdf:type→误报/漏检（E14/E15） | 所有 sh:class 发射点改「具名子类闭包 sh:or」（闭包从 TTL 具名 subClassOf 传递计算，排序）；与 check_instance E06 ancestors 对齐（**SHACL 不得比它更严**）；hasKey SPARQL `?other` 类型匹配同用闭包 UNION（子类类型化个体不漏检）。`inference="rdfs"` 拒绝入 MVP（闭包副作用+性能+确定性风险），登记未来选项 |
 | **R-d 数值 datatype 容忍** | `compile_instance_ttl` 把 JSON int 编码 `xsd:integer`，严格 `sh:datatype xsd:decimal` 对 integer 字面量误报（E11/E12） | decimal/double/float range **不发 sh:datatype**，只发 facet + `sh:nodeKind sh:Literal`。实证 `sh:minExclusive "0"^^xsd:decimal` 对 integer 字面量数值提升比较成立（int 500000 conform / int -5 违反）。**金额 JSON 数值契约**见 §6 |
 

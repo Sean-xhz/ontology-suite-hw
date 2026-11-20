@@ -31,7 +31,7 @@ R-d 数值 datatype 容忍：decimal/double/float range 不发 sh:datatype（com
 - shapes 非权威·可再生·零回写：源 TTL sha256 前后断言；输出 realpath 碰撞守卫；
   默认输出落 cwd，不进 run 目录。源 TTL 不变则 shapes 字节不变。
 - 确定性：canonical-copy-rebind（to_canonical_graph→copy→rebind→serialize）+ 无时间戳
-  溯源头；report 排序无时间戳；禁 bnode 随机标签泄漏（v6 纪律，unmapped construct 用
+  溯源头；report 排序无时间戳；禁 bnode 随机标签泄漏（unmapped construct 用
   内容标识非裸 bnode）。**序列化前绝不喂 pyshacl**（validate 会篡改 shapes 图注入 owl
   公理，破坏确定性——实证 2026-11-17）。
 - 纯 rdflib 核心：顶层只 import 标准库+rdflib+同目录 validate_ontology 常量；

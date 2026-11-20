@@ -1,6 +1,8 @@
-# 本体能力套件 Python 依赖（N4 bootstrap）
+# 本体能力套件 Python 依赖（环境前置见 scripts/bootstrap.sh）
 # 实证环境：Python 3.9.6 / rdflib 7.6.0 / owlready2 0.51 / pyshacl 0.29.1
-#   （2026-11-17 套件验收 T1-T12 全过）
+#   + pypdf 6.14.2 / pypdfium2 5.11.0 / python-docx 1.2.0 / openpyxl 3.1.5 / python-pptx 1.0.2 / Pillow 11.3.0
+#   （SPARQL Read 查询用 rdflib 内置 SPARQL 1.1，零新增依赖）
+#   （ingest 保真进料：pypdfium2 PDF→页图渲染；LLM 整页转录为主路径，机械为完整性护栏）
 #
 # owlready2 钉住 0.51：引擎行为按 0.51 登记（skills/ontology-model/references/reasoner-limits.md
 #   限制⑧——sync_reasoner_pellet(x 位置传参) / 版本属性为 VERSION 而非 __version__）；
@@ -10,12 +12,31 @@
 #   与 Java 推理机是两条正交环境轴（skip-java 档仍执行数据完整性闸门）；升级版本须重跑 T12 + 实证矩阵。
 # rdflib 下限=实证版本，上限 <8 防 major API 漂移。
 #
-# 许可：rdflib BSD-3-Clause / owlready2 LGPL-3.0 / pyshacl Apache-2.0（pip 单独安装，不随套件捆绑；
-#   见 THIRD-PARTY-LICENSES.md）。LGPL 依赖经 import 调用、不修改不捆绑，与套件 MIT 许可兼容；
-#   pyshacl 传递依赖 owlrl（W3C-20150513，再分发须保留 NOTICE）/ html5rdf（MIT）见许可清单 §二。
+# ingest 2.0 保真进料机械层六库（ontology-ingest I1，默认安装即可复现进料）精确钉住：输出字节稳定性
+#   版本敏感（pypdf 文本层 inventory / pypdfium2 PDF→PNG 渲染 / openpyxl 公式双读 / docx 结构化 substrate /
+#   pptx 位置 substrate / Pillow 解码），升级版本须重跑双跑确定性。懒 import——缺库时 ingest parse 降级
+#   exit2+pip 提示，不阻塞 model/review/simulate（doctor 可选 WARN 档）。pypdf[crypto]（AES 加密 PDF）可选
+#   extra 默认未装（RC4 纯 Python 可解，AES→DependencyError→exit2 提示）；fitz/PyMuPDF 零代码路径
+#   （AGPL-3.0/商业双许可，MIT 套件污染风险，不引入，pypdfium2 替代渲染，见 parsing-limits.md ⑨）。
+#   pypdfium2 安装须 --only-binary=:all:（pip 21.2.4 旧版选 sdist 会触发 GitHub 下载 pdfium 二进制超时；
+#   wheel 自带 pdfium 二进制，托管 files.pythonhosted.org 可达）。LibreOffice（office→PDF 全视觉渲染增强）
+#   是可选系统前置（MPL-2.0 独立子进程，不污染 MIT），无则 office 退 substrate-only 纯 pip 主路径。
+#
+# 许可：rdflib BSD-3-Clause / owlready2 LGPL-3.0 / pyshacl Apache-2.0 / pypdf BSD-3-Clause /
+#   pypdfium2 BSD-3-Clause OR Apache-2.0 / python-docx MIT / openpyxl MIT / python-pptx MIT / Pillow MIT-CMU
+#   （pip 单独安装，不随套件捆绑；见 THIRD-PARTY-LICENSES.md）。LGPL 依赖经 import 调用、不修改不捆绑，
+#   与套件 MIT 许可兼容；pyshacl 传递依赖 owlrl（W3C-20150513，再分发须保留 NOTICE）/ html5rdf（MIT）；
+#   解析渲染六库传递依赖 lxml BSD-3 / et-xmlfile MIT / typing_extensions PSF-2.0 / XlsxWriter BSD-2 全链无
+#   copyleft，见许可清单 §二。LibreOffice MPL-2.0（文件级 copyleft，独立子进程不感染 MIT 套件代码）。
 #
 # Java（L3 推理机）与 node（review self_test E9 可选）不在 pip 范围——
 #   见 scripts/bootstrap.sh 环境检查与 reasoner-limits.md §一（Pellet 需 Java ≥25）。
 rdflib>=7.6.0,<8
 owlready2==0.51
 pyshacl==0.29.1
+pypdf==6.14.2
+pypdfium2==5.11.0
+python-docx==1.2.0
+openpyxl==3.1.5
+python-pptx==1.0.2
+Pillow==11.3.0

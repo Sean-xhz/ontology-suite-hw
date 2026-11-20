@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""ontology-suite 统一 CLI 入口 —— 三件套机械能力的薄分发门面。
+"""ontology-suite 统一 CLI 入口 —— 四件套机械能力的薄分发门面。
 
 定位
 ----
-本 CLI 是**机械 backbone 的统一命令面**，把三件套（ontology-model / ontology-review /
-ontology-simulate）的确定性机械脚本聚合为一个 cohesive 入口。LLM 编排层（S0-S6 管线、
-G1-G3 / SG1-SG2 / AG1-AG2 人工闸门、双模型生成-审计）**不在本 CLI 内**——它由外部编排器
-承担（Claude Code skills 或其他平台），本 CLI 只暴露可独立运行的机械能力。
+本 CLI 是**机械 backbone 的统一命令面**，把四件套（ontology-ingest / ontology-model /
+ontology-review / ontology-simulate）的确定性机械脚本聚合为一个 cohesive 入口。LLM 编排层
+（I0-I3 / S0-S6 管线、IG1 / G1-G3 / SG1-SG2 / AG1-AG2 人工闸门、双模型生成-审计、vision 识图）
+**不在本 CLI 内**——它由外部编排器承担（Claude Code skills 或其他平台），本 CLI 只暴露可独立
+运行的机械能力。
 
 设计纪律
 --------
@@ -14,7 +15,7 @@ G1-G3 / SG1-SG2 / AG1-AG2 人工闸门、双模型生成-审计）**不在本 CL
   保留各脚本自身的 argparse / 输出 / 退出码。脚本仍可独立运行，本 CLI 只是便利门面。
 - **部署形态**：本文件随套件分发（`scripts/ontology_cli.py`），按套件布局
   （`skills/<skill>/scripts/`）解析底层脚本；脚本路径相对套件根（__file__ 自动定位），
-  与调用时 cwd 无关。跨 skill import 由各脚本自身的相对 sys.path 垫片承接（三 skill 同级）。
+  与调用时 cwd 无关。跨 skill import 由各脚本自身的相对 sys.path 垫片承接（四 skill 同级）。
 - **只读自检**：`suite doctor` 只读探测环境，不安装不写盘。
 
 用法
@@ -25,7 +26,7 @@ G1-G3 / SG1-SG2 / AG1-AG2 人工闸门、双模型生成-审计）**不在本 CL
   python3 scripts/ontology_cli.py suite doctor      # 环境自检
   python3 scripts/ontology_cli.py suite test --skip-java  # 统一验收电池
 
-group ∈ {model, review, simulate, suite}；各 action 见 --help 能力地图。
+group ∈ {ingest, model, review, simulate, suite}；各 action 见 --help 能力地图。
 退出码：底层脚本退出码原样透传；未知 group/action 或脚本缺失 = 2。
 """
 import os
@@ -34,7 +35,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-__version__ = "1.2.0"
+__version__ = "1.5.0"
 
 # 套件根 = 本文件所在 scripts/ 的上一级（__file__ 绝对定位，与 cwd 无关）
 SUITE_ROOT = Path(__file__).resolve().parent.parent
@@ -42,6 +43,9 @@ SUITE_ROOT = Path(__file__).resolve().parent.parent
 # (group, action) -> (相对套件根的脚本路径, 一句话用途)
 # 顺序即 --help 能力地图的呈现顺序。
 DISPATCH = {
+    ("ingest", "parse"): (
+        "skills/ontology-ingest/scripts/parse_documents.py",
+        "I1 机械层→准备态萃取原料包（渲染+inventory+substrate，无 LLM；I2 整页转录由 vision agent 外接），exit 0/1/2"),
     ("model", "validate"): (
         "skills/ontology-model/scripts/validate_ontology.py",
         "L1+L2 机械校验（语法结构 + 语义启发式），exit 0/1/2"),
@@ -63,6 +67,9 @@ DISPATCH = {
     ("model", "shacl"): (
         "skills/ontology-model/scripts/validate_shacl.py",
         "R4 SHACL 实例级数据完整性校验（pyshacl，facet/基数/唯一性），exit 0/1/2"),
+    ("model", "queries"): (
+        "skills/ontology-model/scripts/derive_sparql.py",
+        "D3c TTL-direct 派生 SPARQL Read 查询模板库（7 类 SELECT，纯 rdflib 内置 SPARQL），exit 0/1/2"),
     ("review", "extract"): (
         "skills/ontology-review/scripts/review_extract.py",
         "建模方案表 + TTL 双源提取 → review.json（TTL 权威）"),
@@ -89,14 +96,14 @@ DISPATCH = {
         "A/B 三臂机械判据评分 + 专家盲评聚合"),
     ("suite", "test"): (
         "scripts/run_suite_tests.py",
-        "统一验收电池 T0-T12（虚构示例 fixture，零副作用），exit 0/1/2"),
+        "统一验收电池 T0-T15（虚构示例 fixture，零副作用），exit 0/1/2"),
 }
 
-GROUPS = ("model", "review", "simulate", "suite")
+GROUPS = ("ingest", "model", "review", "simulate", "suite")
 
 
 def print_help():
-    print("ontology-suite 统一 CLI 入口 v%s —— 三件套机械能力门面" % __version__)
+    print("ontology-suite 统一 CLI 入口 v%s —— 四件套机械能力门面" % __version__)
     print("")
     print("用法: python3 scripts/ontology_cli.py <group> <action> [args...]")
     print("      python3 scripts/ontology_cli.py <group> <action> --help  (底层脚本帮助)")
@@ -114,9 +121,10 @@ def print_help():
             print("    %-12s %s" % (a, purpose))
         print("")
     print("  [suite] 额外命令:")
-    print("    %-12s %s" % ("doctor", "只读环境自检（python/rdflib/owlready2/pyshacl/java/node）"))
+    print("    %-12s %s" % ("doctor", "只读环境自检（python/rdflib/owlready2/pyshacl/java/node/ingest 解析渲染库/LibreOffice）"))
     print("")
     print("示例:")
+    print("    ontology_cli.py ingest parse 制度.docx 费率表.xlsx --output-dir 萃取原料包")
     print("    ontology_cli.py model validate examples/票据贴现/建模run/ontology.ttl")
     print("    ontology_cli.py model patch ontology.ttl patch.json --golden cases.json")
     print("    ontology_cli.py model shapes ontology.ttl --output-shapes shapes.ttl")
@@ -174,6 +182,30 @@ def doctor():
     else:
         print("  [WARN] node 未找到 —— 审阅页 self_test E9 降级 skip")
 
+    # ingest 解析/渲染库（可选：2.0 保真进料机械层；缺失 ingest parse 降级 exit2，不阻塞三件套）
+    ingest_missing = []
+    for mod in ("pypdf", "pypdfium2", "docx", "openpyxl", "pptx", "PIL"):
+        try:
+            __import__(mod)
+        except ImportError:
+            ingest_missing.append(mod)
+    if ingest_missing:
+        print("  [WARN] ingest 解析/渲染库未装: %s —— ingest parse 降级 exit2（pip install pypdf "
+              "pypdfium2 python-docx openpyxl python-pptx Pillow），不阻塞 model/review/simulate"
+              % ", ".join(ingest_missing))
+    else:
+        print("  [OK] ingest 解析/渲染库齐（pypdf/pypdfium2/python-docx/openpyxl/python-pptx/Pillow）")
+
+    # LibreOffice（可选：office→PDF 全视觉渲染增强；缺失 office 退 substrate-only 纯 pip 主路径）
+    soffice = shutil.which("soffice") or shutil.which("libreoffice")
+    if not soffice and os.path.isfile("/Applications/LibreOffice.app/Contents/MacOS/soffice"):
+        soffice = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+    if soffice:
+        print("  [OK] LibreOffice: %s（office 全视觉渲染增强可用）" % soffice)
+    else:
+        print("  [WARN] LibreOffice 未找到 —— office（pptx/docx/xlsx）退 substrate-only（纯 pip 主路径仍工作；"
+              "全视觉渲染增强需 brew install --cask libreoffice）")
+
     # 底层脚本就位检查
     print("")
     missing = [rel for rel, _ in DISPATCH.values() if not (SUITE_ROOT / rel).exists()]
@@ -183,7 +215,7 @@ def doctor():
             print("         - %s" % rel)
         ok = False
     else:
-        print("  [OK] %d 个底层脚本全部就位（三 skill 同级布局）" % len(DISPATCH))
+        print("  [OK] %d 个底层脚本全部就位（四 skill 同级布局）" % len(DISPATCH))
 
     print("")
     print("结论: %s" % ("核心环境就绪 ✓" if ok else "核心依赖缺失 ✗（见 FAIL 项）"))

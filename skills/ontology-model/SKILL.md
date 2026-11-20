@@ -1,7 +1,7 @@
 ---
 name: ontology-model
 metadata:
-  version: 1.7.0
+  version: 1.10.0
 description: 业务场景自动化本体建模管线——把业务资料/访谈/术语集编译为符合 W3C 规范的结构化本体（RDF/OWL/SKOS/SWRL，Turtle 输出），含双模型生成-审计-仲裁质检与黄金用例验收。当用户要求为业务场景（金融、保险、供应链、制造等行业域）构建领域本体/知识图谱 schema、把自然语言业务资料转成 RDF/OWL/SWRL 结构化模型、审计或质检既有本体 TTL 文件、做本体黄金用例验收、或提到「本体建模」「ontology」「TTL 生成」「本体审计」「29句话」「7+1 语义」时使用本 skill。即使用户只说「帮我把这份业务资料建模」而未点名本体，只要产物指向结构化语义模型，也应触发。
 ---
 
@@ -9,11 +9,11 @@ description: 业务场景自动化本体建模管线——把业务资料/访谈
 
 ## 定位与边界
 
-七环管线（萃取→语义原料→准入→生成→质检→结构把关→验收）的 skill 化落地。方法论执行依据=**`references/methodology-core.md`（自包含内核，逐条括注来源卡 ID）**；深度溯源索引见 `references/methodology-index.md`（vault 环境可选附录，执行不依赖）。版本与构建史见 `CHANGELOG.md`（执行不依赖）。
+七环管线（萃取→语义原料→准入→生成→质检→结构把关→验收）的 skill 化落地。方法论执行依据=**`references/methodology-core.md`（自包含内核，源自《本体驱动的AI数据管理》公开方法论）**。版本历史见 `CHANGELOG.md`（执行不依赖）。
 
 **路径约定**：文中 `scripts/…`、`references/…`、`assets/…` 均相对本 skill 根目录，执行时按部署位置解析（Claude Code 环境=`.claude/skills/ontology-model/`；独立套件=`skills/ontology-model/`）。run 产物永不写入 skill 目录。
 
-- **MVP scope**：RDF/OWL/SKOS/SWRL 四标准；BPMN2.0/ODRL/SPARQL 服务类语义为「扩展位」，降级为 md 结构化描述
+- **MVP scope**：RDF/OWL/SKOS/SWRL 四标准；SPARQL **Read 取知已形式化激活**（D3c，`scripts/derive_sparql.py` 从 TBox 派生查询模板库）；BPMN2.0/ODRL/SPARQL C/U/D 服务类语义仍为「扩展位」，降级为 md 结构化描述
 - **语义覆盖矩阵**（7 类语义×承接形态三态，防「全覆盖」误读）：
 
 | 描述集类别 | 承接形态 | 构件/落位 |
@@ -24,9 +24,9 @@ description: 业务场景自动化本体建模管线——把业务资料/访谈
 | 4 控制规则类 | **编译进 TTL** | swrl:Imp + 结论类 disjoint；违反处置动作（4.3）登记于 md 处置档 |
 | 5 流程活动类 | **md 扩展位登记** | BPMN2.0+OWL-S（IOPE）扩展位；四要素表进建模方案 |
 | 6 权限管控类 | **md 扩展位登记** | ODRL 扩展位；角色-动作三档表进建模方案 |
-| 7 CRUD 查询类 | **md 扩展位登记** | SPARQL 扩展位；查询意图表由 S6 黄金用例直接消费 |
+| 7 CRUD 查询类 | **Read 形式化激活（D3c）+ C/U/D md 扩展位** | `derive_sparql.py` 产 7 类 SELECT 模板库（query-templates schema 1.0）；业务查询意图表由 S6 黄金用例消费；C/U/D（SPARQL UPDATE）留后续 R6 |
 
-  「+1 目标评估」=消费链路治理登记（md，G1 必填，反博物馆），不产本体构件；清单参数运算与数值评分=**不承接**（数据层/应用层职责，本体只登记结构位与受控词表）。**扩展位路线图**：BPMN2.0/ODRL/SPARQL 形式化为 MVP 后能力，无排期承诺；启用条件=消费场景提出形式化硬需求且经 G1 范围评审。
+  「+1 目标评估」=消费链路治理登记（md，G1 必填，反博物馆），不产本体构件；清单参数运算与数值评分=**不承接**（数据层/应用层职责，本体只登记结构位与受控词表）。**扩展位路线图**：SPARQL **Read 取知已 skill 级激活**（D3c，`derive_sparql.py`；真实业务 run 级消费仍须 G1 范围评审）；BPMN2.0/ODRL/SPARQL C/U/D 形式化为 MVP 后能力，无排期承诺；启用条件=消费场景提出形式化硬需求且经 G1 范围评审。
 - **三层边界**：机械脚本管形式层（语法/结构/推理一致性）、双模型管语义层（贴合度/逻辑漏洞）、人工管争议层（G1/G2/G3 闸门）——推理机与双模型互补不替代
 - **不做**：向量化/RAG 接入、图数据库入库、生产部署（管线只交付 8 件套产物）
 
@@ -47,7 +47,7 @@ description: 业务场景自动化本体建模管线——把业务资料/访谈
 
 ## S0 准入与裁剪决策
 
-1. 评估输入形态，定入口模式并登记 manifest：**(a)** 原始业务资料→全管线；**(b)** 已有 29 句描述集→跳 S1；**(c)** 既有 TTL→只跑 S4 审计起（S5/S6 按需）。所有裁剪（跳过的 Stage、降级的验证层、未启用的扩展位）显式登记，禁止静默裁剪。**入口 (c) 增量通道（R2）**：既有 TTL 的简单修改（label/注解/受控值/增删类属性/规则级编辑）可走 `scripts/incremental_patch.py`（编辑操作 JSON→draft TTL+report，不覆盖权威，契约=`assets/tpl-patch-schema.md`），draft 仍以入口 (c) 起审计晋升；规则编码变更（MAJOR）无回归守护时转入口 (c) 全量审计。
+1. 评估输入形态，定入口模式并登记 manifest：**(a)** 原始业务资料→全管线（异构文档载体 PDF/图片/Excel/Word/PPT 可先经姊妹 skill `/ontology-ingest` 产「萃取原料包」〔清洁保真 MD+manifest+attachments，含 unit_type/verification_status/personal_info_regions/md_heading 接缝 affordance〕再喂入 S1，**按 `references/s1-handoff-contract.md` §六消费协议**〔形态分派/图样多模态 Read/溯源携带/置信度校准/精确脱敏〕，hint+unit_type 加速 S1' 第1步、适用判定不降级）；**(b)** 已有 29 句描述集→跳 S1；**(c)** 既有 TTL→只跑 S4 审计起（S5/S6 按需）。所有裁剪（跳过的 Stage、降级的验证层、未启用的扩展位）显式登记，禁止静默裁剪。**入口 (c) 增量通道（R2）**：既有 TTL 的简单修改（label/注解/受控值/增删类属性/规则级编辑）可走 `scripts/incremental_patch.py`（编辑操作 JSON→draft TTL+report，不覆盖权威，契约=`assets/tpl-patch-schema.md`），draft 仍以入口 (c) 起审计晋升；规则编码变更（MAJOR）无回归守护时转入口 (c) 全量审计。
 
    **基线迭代细则（入口 (b) 变体）**：对既有本体基线做迭代修订的 run，标准流程=①影响评估（新输入变化→受影响构件与规则族定位）→②修订对照表（基线构件 vs 新诉求，逐项处置=不动/修订/新增/删除）→③G1 评审对照表（口径冲突类业务裁定在闸门完成，不遗留到生成后）→④增量生成（冻结区零触碰，新构件只进增量区）→⑤继承黄金集**逐字节冻结**（哈希比对登记；改动既有用例必须走 G2 裁定）→⑥零回归双证明（继承用例全 PASS+机械校验全量复跑零新增 error）→⑦构件计数以机械实测为准（禁手抄）。迭代 run **事件驱动启动**（源头数据归一化完成/结构性缺口登记/生产化排期启动等触发条件），无触发条件不制造 run（反博物馆）。
 2. 定 run 目录：`<runs_root>/<场景名>_<YYYYMMDD>/`。**runs_root 解析顺序**：①用户调用时显式指定 → ②环境变量 `ONTOLOGY_RUNS_ROOT` → ③本 skill README「环境与目录约定」节的部署环境默认。**真实业务敏感场景：runs_root 必须指向受控目录（不进版本控制/不进入对外分发通道）**——按 `references/sensitivity-rules.md` 确认目录受控状态并登记。
@@ -74,6 +74,8 @@ description: 业务场景自动化本体建模管线——把业务资料/访谈
 
 入口 (a) 且无现成描述集时执行。按 `references/methodology-core.md` §1（三维结构化访谈协议）的提问清单与萃取纪律，沿**对象–任务–规则**三维从原始资料萃取：对象维（实体/属性/标识）、任务维（流程/操作/时序）、规则维（约束/阈值/例外/权限）。产出萃取草稿直接喂 S2。资料含真实个人信息时在进入 S2 前替换为虚构标识（sensitivity-rules §四）。**输入已是统一章节模板的结构化文档集**（业务侧已完成文档标准化）→ 按 `references/structured-input-mapping.md` 走 S1' 机械映射档（章节→描述集分节映射，G1 闸门不降级）。
 
+**输入是 ingest 萃取原料包（清洁 md + manifest + attachments）→ 按 `references/s1-handoff-contract.md` §六消费协议执行**：①**形态分派**——读 manifest 每节 `unit_type`（形态维，与 `semantic_hint` 内容特征正交）：table→规则/参数维；flow-diagram/ui-interaction/architecture-diagram→**Read 清洁 md 嵌入的原图**提炼任务维（IOPE+拓扑）/对象维关联；text-prose→对象/规则维；decoration→skip；mixed/other→按子区域 / Read 原图判定。②**图样多模态消费**——图样类单元拓扑（分支/并行/泳道/时序）**未文字化**（ingest 只保形+照录图内文字），S1 须 Read 原图从视觉提炼，不依赖扁平文字；清洁 md 图内文字照录节作标签核对辅助。③**context 预算**（methodology-core §4.6 Token 超长三对策落地）——选择性 Read 图样单元原图（非全量页图）；图样密集文档（大规模文档集）可委托 vision agent 做「图样→任务维结构化」（复用 ontology-vision-extractor 模式，主会话只消费结构化结果），委托与否登记 manifest。④**溯源携带**——每条描述句挂来源（doc_id/section_id/locator，填 tpl-29「来源」列；md_heading 桥接清洁 md 节），S3 编译 TTL 挂 annotation。⑤**置信度消费**——读 `verification_status`（substrate-exact/render-transcribed/image-only-transcribed）+ gaps（uncertain-reading/inventory-miss），G1 对 image-only-transcribed + uncertain 单元更怀疑（不对所有内容一视同仁）。⑥**个人信息精确脱敏**——按 `personal_info_regions` 精确虚构替换（非全文猜，sensitivity-rules §四）。⑦**hint/unit_type 不替代识别**——只是加速底稿，S1 逐节复核三维萃取判断。
+
 **高频名词候选实体登记（机械步骤）**：萃取时对输入资料中出现 ≥3 次（或每万字 ≥2 次）的业务名词**强制登记候选实体清单**——每个名词一行「名词/出现频次/建实体 or 降属性 or 不收 + 一句话理由」。低密度但结构关键的名词（如某条线特有的关联对象）最易被三维访谈漏检；本清单是 S2 组装描述集前的**核对底稿**，G1 评审时随描述集一并呈报（专家可当场推翻建/不建判断）。
 
 **盲测对照（辅助验证模式，非默认路径）**：管线主路径=资料→方案+TTL 的**生成式建模**（入口 (a)/(b)）；盲测是一种**辅助验证模式**——当组织需要以历史人工方案为对照基准校准自动化建模能力（如采用决策评估、能力验收）时启用，不属日常建模场景。启用条件=存在历史人工方案作对照基准、需保护对照效力。执行纪律：S1/S3/S4 委托**干净上下文 subagent** 隔离执行（主会话可能已含历史方案摘要级信息，直接执行会污染对照效力）——委托时 subagent 禁读隔离区（历史方案/PRD 等，S0 在 manifest 中列明隔离清单），主会话只做编排与落盘；执行者偏差与「辅助验证模式」定位登记 manifest。盲测 run 收官时**必须**做还原率对照（模板=`assets/tpl-restoration-report.md`，见收卷清单勾稽位）。
@@ -91,7 +93,7 @@ description: 业务场景自动化本体建模管线——把业务资料/访谈
 
 ## S3 生成
 
-委托 **ontology-generator** agent（Claude Code 参考实现 model: opus；平台中立异构纪律见铁律 4），传：run 目录路径、29句话描述集、术语词典、消费链路登记、`assets/prompt-generator.md`（Prompt 四段式+SWRL 规范写法硬要求）。金融域公共层对齐按需读 `references/fibo-guide.md`（金融场景扩展参考，其他行业域可同构对接该域公共标准本体；类复用=owl:imports+rdfs:subClassOf；术语对齐=skos:exactMatch/broadMatch；登记来源 IRI）。产出 `ontology.ttl` + `建模方案.md`（骨架=`assets/tpl-ontology-doc.md`，结构细则=`references/structure-patterns.md`）。专家只读不写：生成过程无人工改稿，意见走 S4 缺陷通道。
+委托 **ontology-generator** agent（Claude Code 参考实现 model: opus；平台中立异构纪律见铁律 4），传：run 目录路径、29句话描述集、术语词典、消费链路登记、`assets/prompt-generator.md`（Prompt 四段式+SWRL 规范写法硬要求）。金融域公共层对齐按需读 `references/fibo-guide.md`（金融场景扩展参考，其他行业域可同构对接该域公共标准本体；类复用=owl:imports+rdfs:subClassOf；术语对齐=skos:exactMatch/broadMatch；登记来源 IRI）。产出 `ontology.ttl` + `建模方案.md`（骨架=`assets/tpl-ontology-doc.md`，结构细则=`references/structure-patterns.md`）。**溯源 annotation**：描述句「来源」列（doc_id/section_id/locator）经编译挂 TTL annotation——`rdfs:isDefinedBy` 指向源文档/节、`skos:note` 登记溯源，使构件可回溯到源单元（G1 回溯源页核验 / S4 审计引源 / S6 黄金用例溯源 / 产品参数变更定位受影响公理；s1-handoff-contract §五.2，prompt-generator 编译纪律）。专家只读不写：生成过程无人工改稿，意见走 S4 缺陷通道。
 
 ## S4 质检（机械→审计→辩护，≤3 轮）
 
@@ -107,6 +109,8 @@ exit≠0 的 error 级发现直接回 generator 修订（不占审计轮次）�
 **增量修改通道（R2，入口 (c) 简单修改适用）**：`python3 <skill根>/scripts/incremental_patch.py <baseline.ttl> <patch.json> [--golden cases.json] [--with-l3]`——消费编辑操作 JSON 产 draft TTL+patch-report（L1/L2 零新增 error 闸门 + 受影响子集回归守护 + 版本 diff，**不覆盖权威**），draft 再以入口 (c) 起审计。exit 2=输入错不产 draft / 0=released / 1=blocked。契约与操作目录=`assets/tpl-patch-schema.md`。
 
 **SHACL 约束校验通道（R4，实例级数据完整性）**：`python3 <skill根>/scripts/derive_shacl.py <ontology.ttl>` 从 TBox 机械派生 shapes.ttl+derivation-report（纯 rdflib）；`python3 <skill根>/scripts/validate_shacl.py <data.ttl> <shapes.ttl>` 用 pyshacl 校验实例数据 facet/基数/唯一性（补限制⑩剥离后推理器侧空白，纯 Python 无 Java）。与 S6 推理验收正交（SHACL=输入完整性闸门，不接入 golden 集）；与 check_instance 正交互补（零臆造 vs 数据完整性）。契约=`assets/tpl-shacl-shapes.md`。
+
+**SPARQL 查询模板通道（D3c，Read 取知形式化）**：`python3 <skill根>/scripts/derive_sparql.py <ontology.ttl>` 从 TBox 机械派生 query-templates.json+.md（7 类 SELECT 模板库，纯 rdflib 内置 SPARQL 1.1，零新增依赖）——下游 Agent「经 SPARQL 取知」的静态脚手架。CLI 只产结构脚手架；业务查询意图（组合拼接+ORDER BY+阈值绑定）由主会话 md 补写、S6 黄金用例消费。与 derive_shacl 同构（TTL-direct/非权威可再生/零回写）；derived-query 联动 ontology-simulate what-if（物化后查推理结论）。C/U/D 留后续 R6。契约=`assets/tpl-query-templates.md`。
 
 **第二步·双模型审计**：委托 **ontology-auditor**（Claude Code 参考实现 model: sonnet，只读；异构纪律见铁律 4）按 `assets/prompt-auditor.md` 出三维度四元组缺陷报告；主会话落盘 `缺陷报告.md`（`assets/tpl-defect-report.md`）。**入口 (c) 无描述集/词典时**：委托 prompt 须显式声明业务贴合度基准缺失——维度三降级为「有无核对」（消费登记缺失可查，与第 8 节一致性不可查），不得以「无基准下一切构件皆自创」机械推论充数；降级口径记入缺陷报告维度覆盖声明节。
 
@@ -153,12 +157,12 @@ manifest 收卷补全：入口模式/裁剪登记/博弈轮次与收敛轨迹/L3
 3. **敏感纪律**——`references/sensitivity-rules.md` 全程生效：skill 资产永不写真实业务数据；真实业务 run 必须在受控目录（不进版本控制/不进入对外分发通道）；模板配例一律虚构中性。
 4. **双模型异构（平台中立纪律）**——生成与审计两角色必须由**不同模型**承担，禁止同模型自审；Claude Code 参考实现=generator（opus）/ auditor（sonnet），其他平台按同构纪律配置不同模型（适配说明见套件 `agents/README.md`）；模型别名与底层模型映射若变更，异构性须复核。
 5. **不补造**——输入未覆盖的知识不进本体；缺失登记「待确认项」而非编造；生成物必须过质检才可交付——编译官不自带正确性保证。
-6. **方法论内核是执行权威**——执行依据=`references/methodology-core.md`（自包含，源 vault KC-20261013 卡簇）；发现内核与 vault 卡片表述冲突时，不得径改径行，回报用户裁定并同步修订两侧。
+6. **方法论内核是执行权威**——执行依据=`references/methodology-core.md`（自包含，源自《本体驱动的AI数据管理》公开方法论）；发现内核与来源方法论表述冲突时，不得径改径行，回报维护者裁定。
 
 ## 资产索引
 
-- `references/`：**methodology-core（方法论内核，自包含执行依据，S1-S6/G1 判据细节）** / **reasoner-limits（引擎限制①-⑭+削减实验矩阵+降级链+L2/L3 分工，自包含）** / methodology-index（vault 卡簇溯源索引，深度追踪用，执行不依赖）/ fibo-guide（公共层对齐）/ structure-patterns（四层结构骨架+SWRL 编译形态约束 §七，[verified]/[provisional] 两级标注）/ sensitivity-rules（敏感纪律）/ structured-input-mapping（结构化输入→29 句集通用映射方法+示例，S1' 机械映射档）
-- `assets/`：tpl-29-sentences / tpl-term-dict / prompt-generator / prompt-auditor / prompt-defense / tpl-defect-report / tpl-golden-cases / tpl-ontology-doc / checklist-visual-review / tpl-gate-submission（G1/G2/G3 呈报件骨架）/ tpl-production-handoff（生产化交接说明，第 9 件可选）/ tpl-restoration-report（盲测还原率对照报告，收卷勾稽位必产物）/ tpl-patch-schema（R2 增量 patch 编辑操作 JSON 契约，schema 1.0）/ tpl-shacl-shapes（R4 SHACL shapes 派生与校验契约，shapes schema 1.0）
-- `scripts/`：validate_ontology.py（L1+L2，exit 0/1/2）/ check_consistency.py（L3 reasoner 三级降级链，exit 0/1/2）/ report_topology.py（S5 文本拓扑）/ run_golden_cases.py（S6 执行器，canonical 确定性档内置）/ closeout_check.py（收卷自查：齐套+敏感模式+计数一致+净化清单，exit 0/1/2）/ incremental_patch.py（R2 增量 patch 引擎：编辑操作→draft+L1/L2+回归守护+版本 diff，不覆盖权威，exit 0/1/2）/ derive_shacl.py（R4 TTL→SHACL shapes 派生，纯 rdflib，exit 0/1/2）/ validate_shacl.py（R4 pyshacl 实例级数据完整性校验，exit 0/1/2）
+- `references/`：**methodology-core（方法论内核，自包含执行依据，S1-S6/G1 判据细节）** / **reasoner-limits（引擎限制①-⑭+削减实验矩阵+降级链+L2/L3 分工，自包含）** / **s1-handoff-contract（ingest→S1 接缝契约唯一接口权威：五类 affordance〔unit_type/图样保真/verification_status/personal_info_regions/md_heading〕+ S1 消费协议 §六 + 溯源链 §五）** / fibo-guide（公共层对齐）/ structure-patterns（四层结构骨架+SWRL 编译形态约束 §七，[verified]/[provisional] 两级标注）/ sensitivity-rules（敏感纪律）/ structured-input-mapping（结构化输入→29 句集通用映射方法+示例，S1' 机械映射档；形态维分派+溯源携带与 s1-handoff-contract 互补）
+- `assets/`：tpl-29-sentences / tpl-term-dict / prompt-generator / prompt-auditor / prompt-defense / tpl-defect-report / tpl-golden-cases / tpl-ontology-doc / checklist-visual-review / tpl-gate-submission（G1/G2/G3 呈报件骨架）/ tpl-production-handoff（生产化交接说明，第 9 件可选）/ tpl-restoration-report（盲测还原率对照报告，收卷勾稽位必产物）/ tpl-patch-schema（R2 增量 patch 编辑操作 JSON 契约，schema 1.0）/ tpl-shacl-shapes（R4 SHACL shapes 派生与校验契约，shapes schema 1.0）/ tpl-query-templates（D3c SPARQL Read 查询模板派生契约，query-templates schema 1.0）
+- `scripts/`：validate_ontology.py（L1+L2，exit 0/1/2）/ check_consistency.py（L3 reasoner 三级降级链，exit 0/1/2）/ report_topology.py（S5 文本拓扑）/ run_golden_cases.py（S6 执行器，canonical 确定性档内置）/ closeout_check.py（收卷自查：齐套+敏感模式+计数一致+净化清单，exit 0/1/2）/ incremental_patch.py（R2 增量 patch 引擎：编辑操作→draft+L1/L2+回归守护+版本 diff，不覆盖权威，exit 0/1/2）/ derive_shacl.py（R4 TTL→SHACL shapes 派生，纯 rdflib，exit 0/1/2）/ validate_shacl.py（R4 pyshacl 实例级数据完整性校验，exit 0/1/2）/ derive_sparql.py（D3c TTL→SPARQL Read 查询模板库派生，纯 rdflib 内置 SPARQL 1.1，exit 0/1/2）
 - agents：ontology-generator（S3/S4 辩护）/ ontology-auditor（S4 审计，只读）
-- 姊妹 skill：ontology-review（下游专家审阅+意见回流）/ ontology-simulate（下游 what-if 模拟+A/B 实证）
+- 姊妹 skill：ontology-ingest（上游异构文档进料：PDF/图片/Excel/Word/PPT→萃取原料包，I0-I3+IG1 轻停等，喂入本 skill S1 入口 (a)）/ ontology-review（下游专家审阅+意见回流）/ ontology-simulate（下游 what-if 模拟+A/B 实证）

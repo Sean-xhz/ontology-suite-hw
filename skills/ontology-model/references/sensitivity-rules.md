@@ -13,7 +13,7 @@
 
 ## 二、目录与版本控制纪律
 
-1. **真实业务场景 run**：产物目录必须位于**受控目录**（不进版本控制/不进入对外分发通道；vault 环境的 git 忽略区惯例见 ontology-model README「环境与目录约定」）——S0 阶段确认目录版本控制状态并登记入 run-manifest
+1. **真实业务场景 run**：产物目录必须位于**受控目录**（不进版本控制/不进入对外分发通道；git 忽略区惯例见 ontology-model README「环境与目录约定」）——S0 阶段确认目录版本控制状态并登记入 run-manifest
 2. **虚构/通用场景 run**（试跑、演示、模板验证）：可用版本控制目录（runs_root 默认位置，见 README 目录约定），前提是数据全虚构且不含任何真实商务参数
 3. **skill 资产红线**：本体三 skill 资产目录（ontology-model / ontology-review / ontology-simulate 的 references/assets/scripts）与配套 agent 定义属可分发资产——**永不写入任何真实业务数据**；模板配例一律用虚构中性示例
 4. **产物不入 skill 目录**：任何 run 的交付产物禁止写入 skill 资产自身目录（机械防线：agent 铁律+主会话复核）

@@ -1,5 +1,5 @@
 # ============================================================================
-# 票据贴现场景领域本体（虚构试跑）—— S3 编译产物
+# 票据贴现场景领域本体（虚构示例）—— S3 编译产物
 # v1.2.1（2026-10-26，S4 轮外轻量返修——第 2 轮审计通过后的定向修正，非修订轮）变更摘要：
 #   内联 oneOf 补 rdf:type rdfs:Datatype=OWL 2 DataOneOf 标准映射（m1d 实测 Pellet 兼容，
 #   S4 第 2 轮审计缺陷 1 消解）；isUpstreamOf comment 补背书记录数据前提；其余零改动，
@@ -7,7 +7,7 @@
 # v1.2（2026-10-26，S4 机械层返修·error 直返通道，不占审计轮次）变更摘要：
 #   ①（阻断）受控枚举 range 改内联：:applicationStatus/:creditRating 的 range 由具名枚举
 #     rdfs:Datatype（仅 oneOf 定义、无 onDatatype 的具名枚举 datatype 实体）改为内联匿名
-#     oneOf datatype 表达式。根因（主会话三变体最小重现实测裁定，workspace/swrl-variant-test
+#     oneOf datatype 表达式。根因（主会话三变体最小重现实测裁定，
 #     m1a/m1b/m1c——模板未覆盖的引擎限制，非建模语义错误）：具名枚举 datatype 在 Pellet 下
 #     值空间判空 ⇒ owl:hasValue "审核中" ∉ range 值空间 ⇒ :ApplicationUnderReview ≡
 #     DiscountApplication ⊓ ∃applicationStatus.{"审核中"} = ⊥（v1.1 L3 全量 Pellet 检出不可
@@ -55,8 +55,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.org/bill-discount> a owl:Ontology ;
-    rdfs:label "票据贴现场景领域本体（虚构试跑）"@zh ;
-    rdfs:comment "S3 生成产物，v1.2.1=S4 第 2 轮审计建议级返修（两处内联 oneOf 补 rdf:type rdfs:Datatype=OWL 2 DataOneOf 标准映射，m1d 实测 Pellet 兼容；变更摘要见文件头注释块）。v1.2=S4 机械层返修·error 直返通道（L3 全量 Pellet 检出 :ApplicationUnderReview ≡ ⊥——具名枚举 datatype 值空间判空；返修：受控枚举 range 改内联匿名 oneOf+删两个具名枚举 datatype 实体+:targetsBill 补 inverseOf 对称声明；变更摘要见文件头注释块）。v1.1=S4 第 1 轮辩护/修订（逐条映射缺陷报告 §2 条目①-⑦与残留风险 1-4）。源：29句话描述集.md（G1 冻结版，待确认项汇总已裁定：Q1=R2 优先 / Q2 仅状态停用 / Q3 无性能要求 / Q4 授权 S3 裁量）+ 术语词典.md。全虚构试跑：无真实机构/人名/商务参数。四条消费链路见描述集 8.2。" ;
+    rdfs:label "票据贴现场景领域本体（虚构示例）"@zh ;
+    rdfs:comment "S3 生成产物，v1.2.1=S4 第 2 轮审计建议级返修（两处内联 oneOf 补 rdf:type rdfs:Datatype=OWL 2 DataOneOf 标准映射，m1d 实测 Pellet 兼容；变更摘要见文件头注释块）。v1.2=S4 机械层返修·error 直返通道（L3 全量 Pellet 检出 :ApplicationUnderReview ≡ ⊥——具名枚举 datatype 值空间判空；返修：受控枚举 range 改内联匿名 oneOf+删两个具名枚举 datatype 实体+:targetsBill 补 inverseOf 对称声明；变更摘要见文件头注释块）。v1.1=S4 第 1 轮辩护/修订（逐条映射缺陷报告 §2 条目①-⑦与残留风险 1-4）。源：29句话描述集.md（G1 冻结版，待确认项汇总已裁定：Q1=R2 优先 / Q2 仅状态停用 / Q3 无性能要求 / Q4 授权 S3 裁量）+ 术语词典.md。全虚构示例：无真实机构/人名/商务参数。四条消费链路见描述集 8.2。" ;
     owl:versionInfo "1.2.1" .
 
 # ———————————————— 一、类（10 = 核心 5 + 规则结论 4 + 定义类 1） ————————————————
@@ -529,7 +529,7 @@
 # 不补造定义（源 3.3 与词典 broader 列引用而立，登记为编译缺口-7 同族裁量，见文末注释块）。
 
 :TermScheme a skos:ConceptScheme ;
-    rdfs:label "票据贴现场景术语集（虚构试跑）"@zh ;
+    rdfs:label "票据贴现场景术语集（虚构示例）"@zh ;
     rdfs:comment "源：术语词典.md（G1 冻结，11 条全量映射为 skos:Concept）；同义词/上下位关系源 3.2/3.3。消费：术语治理+②背书链查询/①受理判定的口径对齐。" .
 
 :conceptBill a skos:Concept ;
@@ -691,6 +691,6 @@
 #  8. 币种维度未建模（单一人民币场景，源 1.2a；登记于 :faceAmount comment）。
 #  9. FIBO 对齐仅登记于建模方案.md §七（IRI 未联网核验，不入本文件，无 owl:imports）。
 #
-# 【敏感纪律】全虚构试跑：示例个体仅在建模方案.md §二以虚构 YAML 呈现，本文件不含个体，
+# 【敏感纪律】全虚构示例：示例个体仅在建模方案.md §二以虚构 YAML 呈现，本文件不含个体，
 #   无真实机构/人名/商务参数。
 # ============================================================================

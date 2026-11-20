@@ -41,42 +41,41 @@ tr:hover td{background:#f2f6ff}
 /* 宽表横向滚动容器：公理/关系表列多且内容长，窄屏下不撑破页面 */
 .tbl-wrap{overflow-x:auto;margin:8px 0;border-radius:6px}
 .tbl-wrap table{margin:0;min-width:720px}
-/* 批注列 sticky 右置（AG1 第二轮问题③：无需横向拖到最右即可点批注） */
+/* 批注列 sticky 右置（无需横向拖到最右即可点批注） */
 .tbl-wrap th.stick,.tbl-wrap td.stick{position:sticky;right:0;z-index:2;
   box-shadow:-6px 0 6px -6px rgba(20,30,40,.18)}
 .tbl-wrap th.stick{background:#dce7fb}
 .tbl-wrap td.stick{background:var(--panel)}
 .tbl-wrap tr:hover td.stick{background:#f2f6ff}
-/* 紧凑单元格：长文本 3 行截断 + title 悬停全文（问题③表格比例）。
+/* 紧凑单元格：长文本 3 行截断 + title 悬停全文。
    截断必须挂内层 div：line-clamp 依赖 display:-webkit-box，若直接加在 td 上
-   会覆盖 display:table-cell 破坏表格网格布局（AG1 二轮反馈③异常：内容纵叠、
-   表头错位——注入自测只查数量不查布局的盲区） */
+   会覆盖 display:table-cell 破坏表格网格布局（内容纵叠、表头错位） */
 .tbl-wrap .clip{max-width:230px;overflow:hidden;display:-webkit-box;
   -webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-all}
-/* 长表折叠：默认前 N 行，展开按钮切换（问题③——评估后选折叠而非分页：
+/* 长表折叠：默认前 N 行，展开按钮切换（选折叠而非分页：
    审阅常需上下行对照，分页切断对照；折叠不丢信息且可打印全量） */
 .tbl-wrap tr.folded{display:none}
 .tbl-fold{margin:4px 0 10px}
-/* 类分组：按继承根分组，组内按层级缩进（父类→子类）——AG1 第二轮问题②
+/* 类分组：按继承根分组，组内按层级缩进（父类→子类）
    缩进加大到 30px/层 + 左侧层级色条 + 标题树杈符号，层级一眼可辨 */
 .cgroup{margin:18px 0 6px;padding:8px 12px;background:var(--accent-soft);
   border-radius:8px;font-weight:600;font-size:14px;display:flex;gap:8px;align-items:baseline}
 .cgroup small{color:var(--muted);font-weight:400;font-size:12px}
 /* 选择器带 .rulecard 提权（0,2,0）：否则被后方 .rulecard{margin:10px 0}
-   同特异性覆盖——旧版 18px 缩进即因此从未生效（AG1 二轮注入自测捕获） */
+   同特异性覆盖 */
 .rulecard.depth-1{margin-left:30px;border-left:3px solid #93b4f5}
 .rulecard.depth-2{margin-left:60px;border-left:3px solid #b9cdf9}
 .rulecard.depth-3{margin-left:90px;border-left:3px solid #d5e0fb}
 .rulecard.depth-4{margin-left:120px;border-left:3px solid #e6ecfd}
 .rulecard .depth-hint{font-size:11px;color:var(--muted)}
 .rulecard .tw{color:var(--accent);font-weight:700;margin-right:2px}
-/* 已批注构件：按钮变绿并显示条数（问题⑦反显） */
+/* 已批注构件：按钮变绿并显示条数（反显） */
 button.annot.has-op{background:#dcfce7;color:#15803d;font-weight:600}
 .def-missing{color:var(--sev-mid);font-size:12px}
 .variant{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
 .variant .vhead{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:baseline}
 .variant .vhead b{color:var(--ink)}
-/* 规则通俗逻辑层（AG1 第二轮问题④：业务专家默认只看这层，SWRL 折叠） */
+/* 规则通俗逻辑层（业务专家默认只看这层，SWRL 折叠） */
 .plain{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
   padding:10px 12px;margin:8px 0;font-size:13.5px}
 .plain .pl-head{font-weight:600;color:#15803d;font-size:12.5px;margin-bottom:4px}
@@ -91,7 +90,7 @@ details.swrl-det{margin:6px 0}
 details.swrl-det summary{cursor:pointer;font-size:12.5px;color:var(--muted);
   padding:4px 0;user-select:none}
 details.swrl-det summary:hover{color:var(--accent)}
-/* modal 内既有批注列表（AG1 第二轮问题①：同一构件支持多条批注） */
+/* modal 内既有批注列表（同一构件支持多条批注） */
 #m-existing{margin:6px 0 4px}
 .m-ex-item{border:1px solid var(--line);border-left:3px solid var(--accent);
   border-radius:6px;padding:6px 10px;margin:6px 0;font-size:12.5px;background:#fafbfd}
@@ -147,7 +146,64 @@ button.annot:hover,button.primary:hover{filter:brightness(1.06)}
 footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 .derived{opacity:.92}
 .cy-note{font-size:12px;color:var(--muted);margin-top:8px}
-@media print{nav,.side,#cy{display:none}}
+/* ===== D2 图示容器（六板块；1.3.0）===== */
+.graph-box{margin:10px 0;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}
+.graph-cy{width:100%;height:420px}
+.graph-cy.tall{height:520px}
+.graph-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:6px 10px;
+  border-bottom:1px solid var(--line);background:#fafbfd;font-size:12px;align-items:center}
+.graph-toolbar .gt-title{font-weight:600;color:var(--ink);margin-right:auto}
+.graph-toolbar button{padding:2px 9px;font-size:11.5px}
+.graph-hint{font-size:11.5px;color:var(--muted);padding:5px 10px;margin:0}
+.graph-legend{display:flex;gap:12px;flex-wrap:wrap;padding:4px 10px 8px;font-size:11px;color:var(--muted)}
+.graph-legend .lg{display:inline-flex;align-items:center;gap:4px}
+.graph-legend .sw{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.graph-empty{color:var(--muted);font-style:italic;padding:14px 12px;font-size:12.5px}
+/* print 回退边表/层级列表（渲染期生成，信息不丢；硬约束） */
+.print-only{display:none}
+.print-only table{font-size:11px}
+.print-only h4{margin:8px 0 2px;font-size:12px}
+/* ===== D4 拖拽编辑（L1-L2 TBox；1.3.0）===== */
+.d4-ui{display:none}
+body.d4-mode .d4-ui{display:block}
+body.d4-mode .d4-browse-only{display:none}
+.d4-toggle{background:var(--chip);border:1px solid var(--line);color:var(--muted);
+  border-radius:6px;padding:3px 12px;font-size:12.5px;cursor:pointer}
+body.d4-mode .d4-toggle{background:#fef3c7;border-color:#f59e0b;color:#b45309;font-weight:600}
+.d4-toggle:disabled{opacity:.45;cursor:not-allowed}
+.d4-banner{display:none;background:#fffbeb;border:1px solid #fde68a;color:#92400e;
+  border-radius:8px;padding:8px 14px;margin:0 0 14px;font-size:12.5px}
+body.d4-mode .d4-banner{display:block}
+.d4-badge{background:#fef3c7;color:#b45309;border-radius:8px;padding:0 8px;font-size:11px;font-weight:600}
+.d4-pending{outline:2px dashed #f59e0b;outline-offset:2px;border-radius:6px}
+.d4-chip{display:inline-flex;align-items:center;gap:4px;background:var(--chip);
+  border:1px solid var(--line);border-radius:12px;padding:1px 10px;font-size:12px;margin:2px}
+.d4-chip button{border:0;background:none;color:var(--accent);cursor:pointer;font-size:11px;padding:0 2px}
+.d4-chip.disabled{opacity:.5;cursor:not-allowed;background:#f3f4f6}
+.d4-chip.disabled button{display:none}
+.d4-field{margin:8px 0}
+.d4-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.d4-field input,.d4-field textarea,.d4-field select{width:100%;border:1px solid var(--line);
+  border-radius:6px;padding:6px 8px;font-family:inherit;font-size:13px}
+.d4-field textarea{min-height:64px}
+.d4-drawer{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0;background:#fcfdff}
+.d4-drawer h3{margin:0 0 8px;font-size:14px}
+.d4-edit-item{border:1px solid var(--line);border-left:3px solid #f59e0b;border-radius:6px;
+  padding:6px 10px;margin:6px 0;font-size:12.5px;background:#fffdf5}
+.d4-edit-item .eh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
+.d4-edit-item .ek{font-weight:600;color:#b45309}
+.d4-edit-item .ed{color:#333;white-space:pre-wrap}
+.d4-edit-item.exported{border-left-color:#15803d;background:#f0fdf4}
+.d4-edit-item.exported .ek{color:#15803d}
+.d4-report{font-size:12.5px}
+.d4-report .rv{font-weight:700;padding:1px 10px;border-radius:8px;color:#fff}
+.d4-report .rv.released{background:#15803d}
+.d4-report .rv.blocked{background:#c62828}
+.d4-report pre{background:#f4f6f9;border:1px dashed var(--line);border-radius:6px;
+  padding:8px;font-size:11.5px;overflow-x:auto;white-space:pre-wrap}
+.d4-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media print{nav,.side,#cy,.graph-box,.d4-ui,.d4-toggle,.d4-banner{display:none}
+  .print-only{display:block}}
 </style>
 <script>__CYTOSCAPE_JS__</script>
 <script>__DAGRE_JS__</script>
@@ -155,7 +211,10 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 </head>
 <body>
 <header>
-  <h1>本体审阅页 · __RUN_NAME__</h1>
+  <h1>本体审阅页 · __RUN_NAME__
+    <button class="d4-toggle" id="d4-toggle" style="float:right" disabled
+      title="D4 拖拽编辑（L1-L2 TBox）——需 schema 1.1 数据层">✎ 编辑模式</button>
+  </h1>
   <div class="sub" id="meta"></div>
   <div class="badges" id="badges"></div>
 </header>
@@ -167,13 +226,26 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
   <a href="#sec-rules">⑤ 规则</a>
   <a href="#sec-skos">⑥ 术语</a>
   <a href="#sec-opinions">⑦ 审阅意见（<span id="op-count">0</span>）</a>
+  <a href="#sec-d4" class="d4-ui">✎ D4 编辑（<span id="d4-count">0</span>）</a>
 </nav>
 <main>
+  <div class="d4-banner" id="d4-banner">✎ <b>编辑模式（D4 · L1-L2 TBox）</b>：侧面板改 label/comment/受控值（L1）；拖类节点改继承归属、点属性边改域/值域（L2 双下拉）。
+    编辑产 <b>patch JSON 草稿（非权威）</b>，交编排器跑 R2 CLI 机械校验→入口 (c) S4 审计晋升。浏览态批注/导出意见不受影响。
+    <b>真实载体 patch 不出本地</b>（含字面量值，同意见分级）。</div>
   <section id="sec-graph">
     <h2>① 类图（点击节点看详情）</h2>
-    <p class="hint">实线=继承（子类→父类）；带标签蓝线=对象属性（域→值域）；虚框=规则结论类（衍生）。</p>
-    <div id="cy"></div>
-    <p class="cy-note" id="cy-note"></p>
+    <p class="hint">实线=继承（子类→父类）；带标签蓝线=对象属性（域→值域）；虚框=规则结论类（衍生）。<span class="d4-ui">编辑态可拖类节点改继承（parents_guard 守卫）。</span></p>
+    <div class="graph-box">
+      <div class="graph-toolbar">
+        <span class="gt-title">类继承树（①b 可折叠）</span>
+        <button class="annot" id="cls-expand-all">全部展开</button>
+        <button class="annot" id="cls-collapse-all">收起到根</button>
+        <button class="annot" id="cls-relayout">重布局</button>
+      </div>
+      <div id="cy" class="graph-cy tall"></div>
+      <p class="graph-hint" id="cy-note"></p>
+    </div>
+    <div class="print-only" id="print-classes"></div>
   </section>
 
   <section id="sec-classes">
@@ -184,23 +256,72 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 
   <section id="sec-relations">
     <h2>③ 关系（对象属性）</h2>
+    <div class="graph-box d2-graph" id="gbox-props">
+      <div class="graph-toolbar"><span class="gt-title">属性域值域图（③c · union 收编）</span>
+        <button class="annot" data-relayout="props">重布局</button></div>
+      <div id="cy-props" class="graph-cy"></div>
+      <div class="graph-legend">
+        <span class="lg"><span class="sw" style="background:#2563eb"></span>类</span>
+        <span class="lg"><span class="sw" style="background:#f59e0b;border-radius:2px"></span>属性</span>
+        <span class="lg"><span class="sw" style="background:#a78bfa"></span>union 枢纽</span>
+      </div>
+      <p class="graph-hint">类→属性→值域；union 域/值域经枢纽节点收编（匿名集合成员展开）。<span class="d4-ui">编辑态点属性边可改域/值域（仅具名边；union 边禁用转入口 (c)）。</span></p>
+    </div>
+    <div class="print-only" id="print-props"></div>
     <div id="relations"></div>
   </section>
 
   <section id="sec-axioms">
-    <h2>④ 公理（七族）</h2>
-    <p class="hint">约束的行为语义：违反处置列=业务专家核心审阅点。</p>
+    <h2>④ 公理（约束六族）</h2>
+    <p class="hint">约束的行为语义：违反处置列=业务专家核心审阅点。R 推导族见⑤区（规则流图）。</p>
+    <div class="graph-box d2-graph" id="gbox-axioms">
+      <div class="graph-toolbar"><span class="gt-title">公理族约束图（④b · TTL 构件）</span>
+        <button class="annot" data-relayout="axioms">重布局</button></div>
+      <div id="cy-axioms" class="graph-cy tall"></div>
+      <div class="graph-legend">
+        <span class="lg"><span class="sw" style="background:#2563eb"></span>类</span>
+        <span class="lg"><span class="sw" style="background:#f59e0b"></span>属性</span>
+        <span class="lg"><span class="sw" style="background:#10b981"></span>约束构件</span>
+        <span class="lg"><span class="sw" style="background:#94a3b8"></span>datatype</span>
+      </div>
+      <p class="graph-hint">从 TTL OWL 公理构件提取（Restriction/等价/互斥/hasKey/特征/逆/datatype facet/受控值）；点约束节点看 md 公理行 overlay。<b>表仍权威</b>，md_only（应用层/md 承载无 TTL 构件）显式列出。</p>
+    </div>
+    <div class="print-only" id="print-axioms"></div>
     <div id="axioms"></div>
   </section>
 
   <section id="sec-rules">
     <h2>⑤ 推导规则（三层呈现）</h2>
     <p class="hint">业务审阅只看前两层：①业务陈述（建模方案原文）→ ②通俗逻辑（SWRL 自动翻译：「如果…⇒ 那么…」+ 变量图例）；③技术细节（SWRL 结构）默认折叠，供工程师核对。</p>
+    <div class="graph-box d2-graph" id="gbox-rules">
+      <div class="graph-toolbar"><span class="gt-title">规则流图（⑤c · body→head）</span>
+        <button class="annot" data-relayout="rules">重布局</button></div>
+      <div id="cy-rules" class="graph-cy tall"></div>
+      <div class="graph-legend">
+        <span class="lg"><span class="sw" style="background:#7c3aed"></span>规则枢纽</span>
+        <span class="lg"><span class="sw" style="background:#3b82f6"></span>条件 atom（body）</span>
+        <span class="lg"><span class="sw" style="background:#10b981"></span>结论 atom（head）</span>
+        <span class="lg"><span class="sw" style="background:#f59e0b;border-radius:50%"></span>变量</span>
+      </div>
+      <p class="graph-hint">规则枢纽→条件 atom（①②③序）/→结论 atom；atom→变量绑定边（跨规则同名变量合并）；字面量实参内联 atom 标签。点 atom 看通俗翻译+批注。</p>
+    </div>
+    <div class="print-only" id="print-rules"></div>
     <div id="rules"></div>
   </section>
 
   <section id="sec-skos">
     <h2>⑥ 术语（SKOS）</h2>
+    <div class="graph-box d2-graph" id="gbox-skos">
+      <div class="graph-toolbar"><span class="gt-title">SKOS 概念层级图（⑥b · 多父）</span>
+        <button class="annot" data-relayout="skos">重布局</button></div>
+      <div id="cy-skos" class="graph-cy"></div>
+      <div class="graph-legend">
+        <span class="lg"><span class="sw" style="background:#0ea5e9"></span>概念</span>
+        <span class="lg"><span class="sw" style="background:#fbbf24;border:1px dashed #b45309"></span>词典未定义</span>
+      </div>
+      <p class="graph-hint">child→parent（broader）多父边；虚框琥珀=词典未定义（结构节点）。点概念看定义+批注。</p>
+    </div>
+    <div class="print-only" id="print-skos"></div>
     <div id="skos"></div>
   </section>
 
@@ -209,6 +330,39 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <p class="hint">点任意构件的「批注」记录意见；同一构件可提交多条（弹窗顶部列既有批注，逐条可编辑/删除）；时间均为北京时间。完成后「导出意见 JSON」交回工程师（回流入口 (c) 或下轮 G1/S2）。</p>
     <button class="primary" id="export">导出意见 JSON</button>
     <div id="opinions"></div>
+  </section>
+
+  <section id="sec-d4" class="d4-ui">
+    <h2>✎ D4 编辑草稿（L1-L2 TBox · patch 导出）</h2>
+    <p class="hint">编辑态在①②③区做的轻量形式化编辑暂存于此（独立 localStorage，与意见零碰撞）。
+      <b>串行纪律</b>：一次一个待导出 patch；导出后锁定（exported），基线刷新后开新会话。
+      patch 交编排器跑 <code>ontology_cli.py model patch</code> 机械校验（浏览器不跑 CLI）。</p>
+    <div class="d4-drawer">
+      <h3>待导出编辑（<span id="d4-staged-count">0</span>）</h3>
+      <div id="d4-edit-list"></div>
+      <div class="d4-actions">
+        <button class="primary" id="d4-export">导出 patch JSON</button>
+        <button class="annot" id="d4-clear-staged">清空待导出</button>
+        <button class="annot" id="d4-new-session">基线刷新·新会话</button>
+      </div>
+    </div>
+    <div class="d4-drawer">
+      <h3>patch-report 回读（离线闭环）</h3>
+      <p class="hint" style="padding-left:0">选 <b>patch-report.json</b>（R2 引擎报告，<b>不是</b>导出的 d4-patch.json）——读回检视 verdict/bump/diff/校验/回归/零回写。
+        此报告须先由编排器跑 R2 CLI 产出（浏览器不跑 CLI）；blocked（exit 1）仍产 report→修复指引+入口 (c) 提示。误选补丁会提示并预览操作。</p>
+      <input type="file" id="d4-report-file" accept=".json,application/json">
+      <div class="d4-report" id="d4-report-view"></div>
+    </div>
+    <div class="d4-drawer">
+      <h3>编排器序列（浏览器不跑 CLI · G6）</h3>
+      <pre style="font-size:11.5px;background:#f4f6f9;border:1px dashed var(--line);border-radius:6px;padding:10px;overflow-x:auto">review extract → review page → 专家 D4 编辑 → export patch.json
+→ ontology_cli.py model patch &lt;run&gt;/ontology.ttl patch.json \
+    --golden &lt;run&gt;/golden-cases.json [--with-l3] \
+    --output-draft &lt;工作区&gt;/draft.ttl --report &lt;工作区&gt;/patch-report.json
+→ 晋升前终检 --regression-full → report 回读检视
+→ 入口 (c) S4 审计 → G2/G3 → 人工晋升 → 重跑 review extract/page 复核</pre>
+      <p class="hint" style="padding-left:0">输出落工作区 cwd 不进 run 目录（R2 零回写）；sha256 错配→引擎 exit 2→重审提示（铁律 5）。ingest_opinions 零改动（D4 patch 不经 ingest）。</p>
+    </div>
   </section>
 </main>
 
@@ -247,6 +401,170 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 const DATA = __DATA_JSON__;
 const STORE_KEY = "onto-review-opinions-" + (DATA.meta.run_dir || "").replace(/[^a-z0-9]/gi,"");
 
+// ========== D2/D4 基础层（1.3.0；schema 1.1 守卫，legacy 降级）==========
+// 数据层升级判定：legacy review.json（无 supply/iri_map）→D2 图显 hint、D4 禁用。
+const HAS_SUPPLY = (DATA.schema_version === "1.1") && DATA.iri_map
+  && Object.keys(DATA.iri_map).length > 0;
+const SUPPLY_META = DATA.supply_meta || {};
+const BASE_NS = SUPPLY_META.base_ns || "";
+const TTL_SHA_FULL = (DATA.meta.sources && DATA.meta.sources.ttl
+  && DATA.meta.sources.ttl.sha256_full) || "";
+
+// GRAPHS 注册表：六板块 cy 句柄集中（① classes / ③ props / ④ axioms / ⑤ rules / ⑥ skos）。
+// 锚点 {graph,element} 经此解析（⑦d）；cy 作用域从 IIFE 局部提升为全局注册。
+const GRAPHS = {};
+const FLASH_STYLE = [
+  {selector:"node.anchor-flash", style:{"border-width":4,"border-color":"#15803d",
+    "overlay-color":"#15803d","overlay-opacity":0.18,"overlay-padding":6}},
+  {selector:"edge.anchor-flash", style:{"line-color":"#15803d","target-arrow-color":"#15803d",
+    width:4,"overlay-color":"#15803d","overlay-opacity":0.12,"overlay-padding":4}}
+];
+const ANNOT_STYLE = [
+  {selector:"node.annotated", style:{"border-width":3,"border-color":"#15803d"}},
+  {selector:"edge.annotated", style:{"line-color":"#15803d","target-arrow-color":"#15803d",width:3}}
+];
+// D4 待导出编辑徽标（六图通用；①类图另有 overlay 强化）
+const PENDING_STYLE = [
+  {selector:"node.pending", style:{"border-width":3,"border-style":"dashed","border-color":"#f59e0b"}},
+  {selector:"edge[?pending]", style:{"line-color":"#f59e0b","target-arrow-color":"#f59e0b","line-style":"dashed",width:2.4}}
+];
+function makeGraph(key, containerId, elements, style, layout){
+  const el = document.getElementById(containerId);
+  if(!el || typeof cytoscape === "undefined") return null;
+  const cy = cytoscape({
+    container: el, elements: elements,
+    style: style.concat(FLASH_STYLE, ANNOT_STYLE, PENDING_STYLE),
+    layout: layout, wheelSensitivity: 0.2, minZoom: 0.15, maxZoom: 3.5
+  });
+  GRAPHS[key] = cy;
+  return cy;
+}
+function relayout(key, rankDir){
+  const cy = GRAPHS[key];
+  if(!cy) return;
+  cy.layout({name:"dagre", rankDir:rankDir||"LR", nodeSep:46, rankSep:70,
+    animate:true, animationDuration:300}).run();
+}
+// print 回退表（渲染期生成，信息不丢；@media print 显示）
+function printTable(title, cols, rows){
+  if(!rows.length) return "<h4>"+esc(title)+"</h4><p class='empty'>（空）</p>";
+  return "<h4>"+esc(title)+"</h4><table><tr>"+
+    cols.map(c=>"<th>"+esc(c)+"</th>").join("")+"</tr>"+
+    rows.map(r=>"<tr>"+r.map(c=>"<td>"+esc(c==null?"":c)+"</td>").join("")+"</tr>").join("")+
+    "</table>";
+}
+function setPrint(id, html){ const el=document.getElementById(id); if(el) el.innerHTML=html; }
+function graphEmpty(boxId, msg){
+  const box=document.getElementById(boxId);
+  if(box) box.innerHTML='<div class="graph-empty">'+esc(msg)+'</div>';
+}
+
+// ---------- D4 草稿态（独立 localStorage，与意见零碰撞；⑦e）----------
+const D4_STORE_KEY = STORE_KEY + "-d4";
+const D4 = {mode:false, edits:[], session_id:"", base_sha:""};
+function d4Load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(D4_STORE_KEY) || "null");
+    if(s && Array.isArray(s.edits)){
+      D4.edits = s.edits; D4.session_id = s.session_id || ""; D4.base_sha = s.base_sha || "";
+    }
+  }catch(e){}
+}
+function d4Save(){
+  try{
+    localStorage.setItem(D4_STORE_KEY, JSON.stringify(
+      {session_id:D4.session_id, base_sha:D4.base_sha, edits:D4.edits}));
+  }catch(e){ alert("D4 草稿存储失败（localStorage 配额？）："+e.message); }
+}
+function d4SessionId(){
+  const sha12 = (TTL_SHA_FULL || "").slice(0,12);
+  const run = (DATA.meta.run_dir || "").replace(/[^a-z0-9]/gi,"").slice(-16);
+  return "d4-" + run + "-" + sha12;
+}
+
+// ---------- 内容哈希（patch_id；与 self_test.d4_patch_id 逐字段对齐）----------
+// canonicalJSON：递归排序键 + 紧凑无空白 + Unicode 字面量
+// （等价 python json.dumps(sort_keys=True, ensure_ascii=False, separators=(',',':'))）。
+function canonicalJSON(obj){
+  if(obj === null || typeof obj !== "object") return JSON.stringify(obj);
+  if(Array.isArray(obj)) return "[" + obj.map(canonicalJSON).join(",") + "]";
+  const keys = Object.keys(obj).sort();
+  return "{" + keys.map(k=>JSON.stringify(k)+":"+canonicalJSON(obj[k])).join(",") + "}";
+}
+function _rotr(x,n){ return (x>>>n) | (x<<(32-n)); }
+const _SHA_K = [
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function sha256Hex(bytes){
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const l=bytes.length, bitLen=l*8;
+  const paddedLen=Math.ceil((l+1+8)/64)*64;
+  const buf=new Uint8Array(paddedLen);
+  buf.set(bytes); buf[l]=0x80;
+  const dv=new DataView(buf.buffer);
+  dv.setUint32(paddedLen-4, bitLen>>>0, false);
+  dv.setUint32(paddedLen-8, Math.floor(bitLen/0x100000000), false);
+  const w=new Uint32Array(64);
+  for(let off=0; off<paddedLen; off+=64){
+    for(let i=0;i<16;i++) w[i]=dv.getUint32(off+i*4,false);
+    for(let i=16;i<64;i++){
+      const s0=_rotr(w[i-15],7)^_rotr(w[i-15],18)^(w[i-15]>>>3);
+      const s1=_rotr(w[i-2],17)^_rotr(w[i-2],19)^(w[i-2]>>>10);
+      w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;
+    }
+    let a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(let i=0;i<64;i++){
+      const S1=_rotr(e,6)^_rotr(e,11)^_rotr(e,25);
+      const ch=(e&f)^(~e&g);
+      const t1=(h+S1+ch+_SHA_K[i]+w[i])>>>0;
+      const S0=_rotr(a,2)^_rotr(a,13)^_rotr(a,22);
+      const maj=(a&b)^(a&c)^(b&c);
+      const t2=(S0+maj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;
+    }
+    H=[(H[0]+a)>>>0,(H[1]+b)>>>0,(H[2]+c)>>>0,(H[3]+d)>>>0,
+       (H[4]+e)>>>0,(H[5]+f)>>>0,(H[6]+g)>>>0,(H[7]+h)>>>0];
+  }
+  return H.map(x=>x.toString(16).padStart(8,"0")).join("");
+}
+function d4PatchId(baseShaFull, operations){
+  const canon = canonicalJSON({baseline:baseShaFull, operations:operations});
+  const bytes = new TextEncoder().encode(canon);
+  return "P-d4-" + sha256Hex(bytes).slice(0,12);
+}
+
+// ---------- 批注图锚点（⑦d）----------
+const GRAPH_SEC = {classes:"sec-graph", props:"sec-relations", axioms:"sec-axioms",
+  rules:"sec-rules", skos:"sec-skos"};
+function jumpToGraph(graph, element){
+  const sec = document.getElementById(GRAPH_SEC[graph] || "");
+  if(sec) sec.scrollIntoView({behavior:"smooth", block:"start"});
+  const cy = GRAPHS[graph];
+  if(!cy) return false;
+  const ele = cy.getElementById(element);
+  if(!ele || ele.empty()) return false;
+  cy.animate({center:{eles:ele}, zoom:Math.min(cy.zoom()*1.5, 2.2)}, {duration:300});
+  ele.addClass("anchor-flash");
+  setTimeout(()=>{ try{ ele.removeClass("anchor-flash"); }catch(e){} }, 1600);
+  return true;
+}
+function markGraphAnnotated(){
+  Object.keys(GRAPHS).forEach(k=>{ const cy=GRAPHS[k]; if(cy) cy.elements().removeClass("annotated"); });
+  opinions.forEach(o=>{
+    if(o.anchor && o.anchor.graph && o.anchor.element){
+      const cy = GRAPHS[o.anchor.graph];
+      if(cy){ const ele=cy.getElementById(o.anchor.element);
+        if(ele && !ele.empty()) ele.addClass("annotated"); }
+    }
+  });
+}
+
 // ---------- 渲染头部 ----------
 (function(){
   const m = DATA.meta, c = DATA.counts;
@@ -267,7 +585,7 @@ const esc = s => String(s==null?"":s).replace(/[&<>"]/g,
 let opinions = [];
 try { opinions = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e) {}
 
-// 北京时间（AG1 第二轮问题①：原 toISOString 为 UTC，专家读不懂）——
+// 北京时间（专家本地时区可读）——
 // ts 仍存 ISO（机器消费），新增 ts_local 北京时间字符串（人读）；
 // sv-SE locale 输出 "YYYY-MM-DD HH:mm:ss" 形态。旧数据无 ts_local 用 fmtBJ 现算。
 function fmtBJ(iso){
@@ -287,11 +605,11 @@ function refreshOpCount(){
   document.getElementById("op-count").textContent = opinions.length;
   renderOpinions();
   markAnnotated();
+  markGraphAnnotated();  // ⑦d 图元素 .annotated 绿框反显
 }
 function targetKey(kind, id, extra){ return kind + ":" + id + (extra?":"+extra:""); }
 
-// 多条批注（AG1 第二轮问题①：原实现每构件单条「编辑覆盖」，同一构件无法
-// 提交多条意见）——modal 顶部列该构件全部既有批注（逐条可编辑/删除），
+// 多条批注——modal 顶部列该构件全部既有批注（逐条可编辑/删除），
 // 下方表单默认新增态；editingIndex 指向被编辑条，null=新增
 let editingIndex = null;
 function ctxTarget(){ const c = window._m_ctx; return targetKey(c.kind, c.id, c.sub); }
@@ -329,8 +647,8 @@ function clearForm(){
   document.getElementById("m-suggest").value = "";
   document.querySelectorAll('input[name=sev]').forEach((r,i)=>{ r.checked = (i===0); });
 }
-function openModal(kind, id, label, sub){
-  window._m_ctx = {kind, id, label, sub};
+function openModal(kind, id, label, sub, anchor){
+  window._m_ctx = {kind, id, label, sub, anchor: anchor || null};
   editingIndex = null;
   document.getElementById("m-target").innerHTML =
     `<dt>构件</dt><dd>${esc(label)}</dd>` +
@@ -365,6 +683,7 @@ function saveOpinion(){
     opinion: txt, suggest: document.getElementById("m-suggest").value.trim(),
     severity: sev,
   }, nowStamps());
+  if(c.anchor && c.anchor.graph) rec.anchor = c.anchor;  // ⑦d 图锚点（可选，legacy 无）
   const old = (editingIndex !== null && editingIndex < opinions.length
                && opinions[editingIndex].target === rec.target)
               ? opinions[editingIndex] : null;
@@ -410,19 +729,24 @@ function jumpTo(anchor){
 }
 // 事件委托：所有批注按钮统一走 data-* 属性（避免内联 onclick 的引号转义风险）
 document.addEventListener("click", e=>{
+  // ⑦d 图锚点定位（⑦区意见列表「定位」按钮，优先图锚点）
+  const j = e.target.closest("[data-jump-graph]");
+  if(j){ jumpToGraph(j.dataset.jumpGraph, j.dataset.jumpElement); return; }
   const b = e.target.closest("[data-annot]");
   if(!b) return;
-  openModal(b.dataset.kind, b.dataset.id, b.dataset.label, b.dataset.sub || "");
+  const anchor = b.dataset.anchorGraph
+    ? {graph:b.dataset.anchorGraph, element:b.dataset.anchorElement || ""} : null;
+  openModal(b.dataset.kind, b.dataset.id, b.dataset.label, b.dataset.sub || "", anchor);
 });
 function sevColor(s){
   return s==="严重" ? "var(--sev-high)" : s==="重要" ? "var(--sev-mid)" : "var(--sev-low)";
 }
 
-// ---------- 通用宽表构建器（AG1 第二轮问题③） ----------
-// 三项体验修复：
+// ---------- 通用宽表构建器 ----------
+// 三项体验设计：
 //  1. 批注列 sticky 右置——无需横向拖到最右即可点「批注」
 //  2. 长文本列 3 行截断（CSS clip）+ title 悬停全文——表格比例紧凑
-//  3. 超过 foldN 行默认折叠 + 展开按钮——评估后选折叠而非分页：
+//  3. 超过 foldN 行默认折叠 + 展开按钮——选折叠而非分页：
 //     审阅常需上下行对照，分页切断对照；折叠不丢信息、可打印全量
 // cols: 表头字符串数组；rows: 每行 = cell 数组（字符串或 {h:html, t:title全文}）
 let tblSeq = 0;
@@ -472,8 +796,13 @@ function renderOpinions(){
     return;
   }
   box.innerHTML = opinions.map((o,i)=>{
-    const anchor = o.kind==="class" ? "cls-"+(o.id||"")
+    // ⑦d：图锚点优先（jumpToGraph）；legacy 无 anchor 回退 DOM cls-/rule-（jumpTo）
+    const ga = o.anchor && o.anchor.graph && o.anchor.element;
+    const domAnchor = o.kind==="class" ? "cls-"+(o.id||"")
       : o.kind==="rule" ? "rule-"+(o.id||"") : "";
+    const locateBtn = ga
+      ? `<button class="annot" data-jump-graph="${esc(o.anchor.graph)}" data-jump-element="${esc(o.anchor.element)}">定位</button>`
+      : (domAnchor ? `<button class="annot" onclick="jumpTo('${domAnchor}')">定位</button>` : "");
     return `
     <div class="op-item">
       <span class="target">${esc(o.kind)} / ${esc(o.id)}${o.locate? " · "+esc(o.locate):""}</span>
@@ -482,7 +811,7 @@ function renderOpinions(){
       <div>${esc(o.opinion)}</div>
       ${o.suggest? `<div style="color:var(--muted)">建议：${esc(o.suggest)}</div>`:""}
       <div style="margin-top:4px">
-        ${anchor? `<button class="annot" onclick="jumpTo('${anchor}')">定位</button>`:""}
+        ${locateBtn}
         <button class="annot" onclick="editFromList(${i})">编辑</button>
         <button class="annot" onclick="delOpinion(${i})">删除</button>
       </div>
@@ -501,7 +830,7 @@ document.getElementById("export").onclick = function(){
   a.click();
 };
 
-// ---------- ① 类图 ----------
+// ---------- ① 类图（①b 可折叠继承树 + ①c D4 拖节点改继承）----------
 (function(){
   const nodes = [], edges = [];
   DATA.classes.forEach(c=>{
@@ -521,33 +850,102 @@ document.getElementById("export").onclick = function(){
     edges.push({data:{id:"e-op-"+t.id, source:"c:"+t.domain, target:"c:"+t.range,
       label:(t.label||t.id)+(t.functional?"（N:1）":""), kind:"prop"}});
   });
-  const cy = cytoscape({
-    container: document.getElementById("cy"),
-    elements: nodes.concat(edges),
-    style: [
-      {selector:"node", style:{label:"data(label)", "text-valign":"bottom",
-        "background-color":"#2563eb", color:"#1c2733",
-        "font-size":11, width:34, height:34,
-        "border-width":1.5, "border-color":"#1d4ed8"}},
-      {selector:"node[derived = true]", style:{"border-style":"dashed",
-        "background-color":"#93b4f5", "border-color":"#6d8bd9"}},
-      {selector:"edge[kind = 'sub']", style:{width:1.6, "line-color":"#8899a8",
-        "target-arrow-color":"#8899a8", "target-arrow-shape":"triangle",
-        "curve-style":"bezier", label:"data(label)", "font-size":9,
-        color:"#66788a", "text-rotation":"autorotate"}},
-      {selector:"edge[kind = 'prop']", style:{width:2, "line-color":"#2563eb",
-        "target-arrow-color":"#2563eb", "target-arrow-shape":"triangle",
-        "curve-style":"bezier", label:"data(label)", "font-size":9.5,
-        color:"#2563eb", "text-rotation":"autorotate"}},
-    ],
-    layout:{name:"dagre", rankDir:"TB", nodeSep:56, rankSep:64},
+  const style = [
+    {selector:"node", style:{label:"data(label)", "text-valign":"bottom",
+      "background-color":"#2563eb", color:"#1c2733",
+      "font-size":11, width:34, height:34,
+      "border-width":1.5, "border-color":"#1d4ed8"}},
+    {selector:"node[derived = true]", style:{"border-style":"dashed",
+      "background-color":"#93b4f5", "border-color":"#6d8bd9"}},
+    {selector:"node.pending", style:{"border-style":"dashed","border-width":3,
+      "border-color":"#f59e0b","overlay-color":"#f59e0b","overlay-opacity":0.12,"overlay-padding":5}},
+    {selector:"edge[kind = 'sub']", style:{width:1.6, "line-color":"#8899a8",
+      "target-arrow-color":"#8899a8", "target-arrow-shape":"triangle",
+      "curve-style":"bezier", label:"data(label)", "font-size":9,
+      color:"#66788a", "text-rotation":"autorotate"}},
+    {selector:"edge[kind = 'prop']", style:{width:2, "line-color":"#2563eb",
+      "target-arrow-color":"#2563eb", "target-arrow-shape":"triangle",
+      "curve-style":"bezier", label:"data(label)", "font-size":9.5,
+      color:"#2563eb", "text-rotation":"autorotate"}},
+    {selector:"edge[?pending]", style:{"line-color":"#f59e0b","target-arrow-color":"#f59e0b",
+      "line-style":"dashed", width:2.4}},
+  ];
+  const cy = makeGraph("classes", "cy", nodes.concat(edges), style,
+    {name:"dagre", rankDir:"TB", nodeSep:56, rankSep:64});
+  if(!cy){ document.getElementById("cy-note").textContent="cytoscape 未加载——图示不可用（表格层仍权威）"; return; }
+
+  // ①b 子树折叠：childrenMap（parent→children）+ collapsed 集合 + 后代 BFS 隐藏
+  const childrenMap = {};
+  edges.forEach(e=>{ if(e.data.kind==="sub")
+    (childrenMap[e.data.target]=childrenMap[e.data.target]||[]).push(e.data.source); });
+  const rootSet = new Set(nodes.map(n=>n.data.id));
+  edges.forEach(e=>{ if(e.data.kind==="sub") rootSet.delete(e.data.source); });
+  const collapsed = new Set();
+  function descendants(id){
+    const out=new Set(), stack=(childrenMap[id]||[]).slice();
+    while(stack.length){ const x=stack.pop(); if(out.has(x))continue; out.add(x);
+      (childrenMap[x]||[]).forEach(y=>stack.push(y)); }
+    return out;
+  }
+  function applyCollapse(){
+    const hidden=new Set();
+    collapsed.forEach(id=>descendants(id).forEach(d=>hidden.add(d)));
+    cy.batch(()=>{
+      cy.nodes().forEach(n=>n.style("display", hidden.has(n.id())?"none":"element"));
+      cy.edges().forEach(e=>e.style("display",
+        (hidden.has(e.source().id())||hidden.has(e.target().id()))?"none":"element"));
+    });
+    cy.elements().filter(ele=>ele.style("display")!=="none")
+      .layout({name:"dagre",rankDir:"TB",nodeSep:56,rankSep:64,animate:false}).run();
+  }
+  cy.on("tap","node", function(ev){ showClassDetail(ev.target.id().replace(/^c:/,"")); });
+  cy.on("dbltap","node", function(ev){
+    const id=ev.target.id();
+    if(!(childrenMap[id]||[]).length) return;
+    if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id);
+    applyCollapse();
   });
-  cy.on("tap","node", function(ev){
-    const id = ev.target.id().replace(/^c:/,"");
-    showClassDetail(id);
+  document.getElementById("cls-expand-all").onclick=()=>{ collapsed.clear(); applyCollapse(); };
+  document.getElementById("cls-collapse-all").onclick=()=>{
+    collapsed.clear();
+    rootSet.forEach(id=>{ if((childrenMap[id]||[]).length) collapsed.add(id); });
+    applyCollapse();
+  };
+  document.getElementById("cls-relayout").onclick=()=>relayout("classes","TB");
+
+  // ①c D4 拖节点改继承（编辑态 grabify；dragfree 命中测试→parents_guard→stage）
+  cy.on("dragfree","node", function(ev){
+    if(!D4.mode) return;
+    const dragged=ev.target, cid=dragged.id().replace(/^c:/,"");
+    const pos=dragged.renderedPosition();
+    let target=null;
+    cy.nodes().forEach(n=>{
+      if(n.id()===dragged.id() || n.style("display")==="none") return;
+      const bb=n.renderedBoundingBox();
+      if(pos.x>=bb.x1 && pos.x<=bb.x2 && pos.y>=bb.y1 && pos.y<=bb.y2) target=n;
+    });
+    if(!target) return;
+    stageSubclassEdit(cid, target.id().replace(/^c:/,""));
   });
+  window._d4ClassesGrab=function(on){ if(on) cy.nodes().grabify(); else cy.nodes().ungrabify(); };
+  window._d4ClassesPreview=function(cid, oldP, newP){
+    if(oldP){ const oe=cy.getElementById("e-sub-"+cid+"-"+oldP); if(oe && !oe.empty()) oe.remove(); }
+    const nid="e-sub-"+cid+"-"+newP;
+    if(cy.getElementById(nid).empty())
+      cy.add({data:{id:nid, source:"c:"+cid, target:"c:"+newP, label:"⊑", kind:"sub", pending:true}});
+    cy.getElementById("c:"+cid).addClass("pending");
+    applyCollapse();
+  };
+
+  // print 回退（继承层级 + 对象属性边表，信息不丢）
+  setPrint("print-classes",
+    printTable("类继承（子类→父类）", ["类","父类"],
+      DATA.classes.map(c=>[c.ttl.label||c.ttl.id, c.ttl.superclasses.join("、")||"—"])) +
+    printTable("对象属性（域→值域）", ["属性","域","值域"],
+      DATA.object_properties.filter(p=>p.ttl.domain&&p.ttl.range)
+        .map(p=>[p.ttl.label||p.ttl.id, p.ttl.domain, p.ttl.range])));
   document.getElementById("cy-note").textContent =
-    nodes.length + " 节点 / " + edges.length + " 边 · dagre 布局";
+    nodes.length + " 节点 / " + edges.length + " 边 · dagre 布局 · 双击节点折叠/展开子树";
 })();
 
 function showClassDetail(cid){
@@ -580,8 +978,14 @@ function showClassDetail(cid){
     html += "</table></div>";
   }
   html += `<div style="margin-top:10px">
-    <button class="primary" data-annot data-kind="class" data-id="${esc(cid)}" data-label="${esc(t.label||cid)}" data-sub="类">批注此构件</button>
+    <button class="primary" data-annot data-kind="class" data-id="${esc(cid)}" data-label="${esc(t.label||cid)}" data-sub="类" data-anchor-graph="classes" data-anchor-element="c:${esc(cid)}">批注此构件</button>
   </div>`;
+  // ②c D4 L1 侧面板编辑（编辑态）：类 label/comment + 所属数据属性受控值
+  if(D4.mode && HAS_SUPPLY){
+    html += d4L1Panel("class", cid);
+    dprops.filter(p=>p.ttl.oneOf_enum && p.ttl.oneOf_enum.length)
+      .forEach(p=>{ html += d4L1Panel("data_property", p.ttl.id); });
+  }
   const side = document.getElementById("side");
   document.getElementById("side-body").innerHTML = html;
   side.classList.add("open");
@@ -589,9 +993,9 @@ function showClassDetail(cid){
 function closeSide(){ document.getElementById("side").classList.remove("open"); }
 
 // ---------- ② 类与属性 ----------
-// 按继承根分组、组内先序（父类在前、子类紧随）并缩进——原实现平铺 52 张卡
-// 无层次（问题②）。class_groups 由 review_extract.class_hierarchy 计算。
-// AG1 第二轮问题②：缩进加大 30px/层 + 左层级色条 + 标题 ↳ 前缀 + 父类中文名。
+// 按继承根分组、组内先序（父类在前、子类紧随）并缩进。
+// class_groups 由 review_extract.class_hierarchy 计算。
+// 缩进加大 30px/层 + 左层级色条 + 标题 ↳ 前缀 + 父类中文名。
 const CLS_LABEL = {};
 DATA.classes.forEach(c=>{ CLS_LABEL[c.ttl.id] = c.ttl.label || c.ttl.id; });
 function clsLabel(id){ return CLS_LABEL[id] || id || "—"; }
@@ -646,7 +1050,7 @@ function renderClassCard(c){
 
 // ---------- ③ 关系 ----------
 // 列不写死：md 表头跨 run 漂移（各 run 列数不同），按实际行键动态出列。
-// wrapTable：批注列 sticky + 长文本截断 + 超 12 行折叠（问题③）。
+// wrapTable：批注列 sticky + 长文本截断 + 超 12 行折叠。
 (function(){
   const box = document.getElementById("relations");
   const cols = [];
@@ -671,7 +1075,7 @@ function renderClassCard(c){
 })();
 
 // ---------- ④ 公理七族 ----------
-// wrapTable：批注列 sticky + 长文本截断 + 每族超 8 行折叠（问题③④）
+// wrapTable：批注列 sticky + 长文本截断 + 每族超 8 行折叠
 (function(){
   const box = document.getElementById("axioms");
   const famNames = {F:"格式族", L:"逻辑族", C:"治理族", P:"完整性族",
@@ -699,7 +1103,7 @@ function renderClassCard(c){
   box.innerHTML = html;
 })();
 
-// ---------- ⑤ 规则三层呈现（AG1 第二轮问题④） ----------
+// ---------- ⑤ 规则三层呈现 ----------
 // 业务专家视角：SWRL 结构看不懂、TTL 注释有门槛 → 三层：
 //  第 1 层「业务陈述」= 建模方案 md 自然语言（专家原文，有则置顶）
 //  第 2 层「通俗逻辑」= plain 字段（review_extract.plain_swrl 从 SWRL 原子
@@ -711,7 +1115,7 @@ function renderAtom(a){
   return pred + "(" + args + ")";
 }
 // 同一业务规则的多个编译变体（引用通道 ruleR1 与字面量展开通道 ruleR1c，
-// 以及拆分变体 ruleR15a/b…）共享 md 行，原实现逐 TTL imp 出卡 → 多张同名卡片（问题⑤）。
+// 以及拆分变体 ruleR15a/b…）共享 md 行。
 // 按 md_key 分组成一张卡，变体在卡内逐条列出并标通道。
 function swrlOf(t){
   const body=(t.body_atoms||[]).map(renderAtom).join("  ∧  ");
@@ -781,7 +1185,7 @@ function plainOf(p){
 
 // ---------- ⑥ SKOS 术语 ----------
 // 定义三源：TTL skos:definition → 术语词典回填 → 都没有则显式标注
-// 「词典未定义」（问题⑥：原实现静默显示「—」，专家无法区分「漏解析」与「真缺」）
+// 「词典未定义」（显式标注而非静默「—」，使专家可区分「漏解析」与「真缺」）
 (function(){
   const box = document.getElementById("skos");
   if(!DATA.skos.length){ box.innerHTML = '<p class="empty">无 SKOS 概念</p>'; return; }
@@ -813,6 +1217,652 @@ function plainOf(p){
   });
   box.innerHTML = note + wrapTable(["术语","定义","上位","批注"], rows,
                                    {stickLast:true, fold:20});
+})();
+
+// ---------- ③c 属性域值域图（union 收编；D4 L2 拖边入口）----------
+(function(){
+  if(!HAS_SUPPLY){ graphEmpty("gbox-props","数据层未升级（schema 1.0）——属性图需 review extract 1.3.0+（supply）"); return; }
+  const nodes=[], edges=[], seen={};
+  function cls(id){ const nid="c:"+id; if(!seen[nid]){seen[nid]=1;
+    nodes.push({data:{id:nid,label:clsLabel(id),kind:"class"}});} return nid; }
+  DATA.object_properties.forEach(p=>{
+    const t=p.ttl, pid=t.id, pn="p:"+pid;
+    nodes.push({data:{id:pn,label:t.label||pid,kind:"property",propKind:"object_property"}});
+    if(t.domain && DATA.classes.some(c=>c.ttl.id===t.domain)){
+      edges.push({data:{id:"e-dom-"+pid,source:cls(t.domain),target:pn,kind:"domain",
+        label:"域",prop:pid,side:"domain"}});
+    } else if(t.domain_union && t.domain_union.length){
+      const hub="u:"+pid+":domain"; nodes.push({data:{id:hub,label:"域∪",kind:"union"}});
+      edges.push({data:{id:"e-domhub-"+pid,source:hub,target:pn,kind:"domain",label:"域",prop:pid,side:"domain",union:true}});
+      t.domain_union.forEach(m=>{ if(DATA.classes.some(c=>c.ttl.id===m))
+        edges.push({data:{id:"e-dommem-"+pid+"-"+m,source:cls(m),target:hub,kind:"member",label:"∈"}}); });
+    }
+    if(t.range && DATA.classes.some(c=>c.ttl.id===t.range)){
+      edges.push({data:{id:"e-rng-"+pid,source:pn,target:cls(t.range),kind:"range",
+        label:"值域",prop:pid,side:"range"}});
+    } else if(t.range_union && t.range_union.length){
+      const hub="u:"+pid+":range"; nodes.push({data:{id:hub,label:"值域∪",kind:"union"}});
+      edges.push({data:{id:"e-rnghub-"+pid,source:pn,target:hub,kind:"range",label:"值域",prop:pid,side:"range",union:true}});
+      t.range_union.forEach(m=>{ if(DATA.classes.some(c=>c.ttl.id===m))
+        edges.push({data:{id:"e-rngmem-"+pid+"-"+m,source:hub,target:cls(m),kind:"member",label:"∈"}}); });
+    }
+  });
+  const style=[
+    {selector:"node",style:{label:"data(label)","text-valign":"bottom","font-size":10,width:30,height:30,
+      "background-color":"#2563eb","border-width":1.5,"border-color":"#1d4ed8",color:"#1c2733"}},
+    {selector:"node[kind='property']",style:{shape:"rectangle","background-color":"#f59e0b","border-color":"#b45309",
+      width:54,height:26,"text-valign":"center","text-halign":"center",color:"#fff","font-size":9.5}},
+    {selector:"node[kind='union']",style:{shape:"roundrectangle","background-color":"#a78bfa","border-color":"#7c3aed",
+      width:42,height:24,"text-valign":"center",color:"#fff","font-size":9}},
+    {selector:"edge",style:{width:1.6,"curve-style":"bezier","target-arrow-shape":"triangle",
+      "font-size":9,color:"#66788a",label:"data(label)","text-rotation":"autorotate"}},
+    {selector:"edge[kind='domain']",style:{"line-color":"#0ea5e9","target-arrow-color":"#0ea5e9"}},
+    {selector:"edge[kind='range']",style:{"line-color":"#10b981","target-arrow-color":"#10b981"}},
+    {selector:"edge[kind='member']",style:{"line-color":"#a78bfa","target-arrow-color":"#a78bfa","line-style":"dashed",width:1.2}},
+    {selector:"edge[?pending]",style:{"line-color":"#f59e0b","target-arrow-color":"#f59e0b","line-style":"dashed",width:2.4}},
+    {selector:"node.handle",style:{shape:"rectangle","background-color":"#f59e0b","border-color":"#b45309",
+      width:18,height:18,"border-width":2,"border-style":"dashed",label:"","text-valign":"center"}},
+  ];
+  const cy=makeGraph("props","cy-props",nodes.concat(edges),style,{name:"dagre",rankDir:"LR",nodeSep:40,rankSep:85});
+  if(!cy) return;
+  cy.on("tap","node[kind='property']",ev=>showPropertyDetail(ev.target.id().replace(/^p:/,""),"object_property"));
+  cy.on("tap","node[kind='class']",ev=>showClassDetail(ev.target.id().replace(/^c:/,"")));
+  cy.on("tap","edge",ev=>{ if(D4.mode && !ev.target.data().union) d4EdgeEdit(ev.target); });
+  const rl=document.querySelector("[data-relayout='props']"); if(rl) rl.onclick=()=>relayout("props","LR");
+  setPrint("print-props", printTable("对象属性域值域",["属性","域","值域"],
+    DATA.object_properties.map(p=>[p.ttl.label||p.ttl.id,
+      p.ttl.domain||(p.ttl.domain_union||[]).join(" ∪ ")||"—",
+      p.ttl.range||(p.ttl.range_union||[]).join(" ∪ ")||"—"])));
+})();
+
+// ---------- ④b 公理族约束图（TTL 构件 + md overlay）----------
+(function(){
+  if(!HAS_SUPPLY || !DATA.axiom_graph){ graphEmpty("gbox-axioms","数据层未升级——公理图需 schema 1.1（supply.axiom_graph）"); return; }
+  const ag=DATA.axiom_graph;
+  const nodes=ag.nodes.map(n=>({data:Object.assign({id:n.id,label:n.label,kind:n.kind},n)}));
+  const edges=ag.edges.map((e,i)=>({data:{id:"ax-e-"+i,source:e.source,target:e.target,kind:e.kind,label:e.kind}}));
+  const constraintStyle={"background-color":"#10b981","border-color":"#047857",shape:"roundrectangle",
+    width:50,height:24,"text-valign":"center",color:"#fff","font-size":8,"text-wrap":"wrap","text-max-width":90};
+  const style=[
+    {selector:"node",style:{label:"data(label)","text-valign":"bottom","font-size":9,width:26,height:26,
+      "background-color":"#94a3b8",color:"#1c2733","border-width":1,"border-color":"#64748b"}},
+    {selector:"node[kind='class']",style:{"background-color":"#2563eb","border-color":"#1d4ed8",width:30,height:30}},
+    {selector:"node[kind='property']",style:{shape:"rectangle","background-color":"#f59e0b","border-color":"#b45309",
+      width:46,height:22,"text-valign":"center",color:"#fff","font-size":8.5}},
+    {selector:"node[kind='datatype']",style:{shape:"roundrectangle","background-color":"#94a3b8","border-color":"#64748b",
+      width:42,height:20,"text-valign":"center",color:"#fff","font-size":8}},
+    {selector:"node[kind='restriction']",style:constraintStyle},
+    {selector:"node[kind='equivalent']",style:constraintStyle},
+    {selector:"node[kind='hasKey']",style:Object.assign({},constraintStyle,{"background-color":"#8b5cf6","border-color":"#6d28d9"})},
+    {selector:"node[kind='disjoint']",style:Object.assign({},constraintStyle,{"background-color":"#ef4444","border-color":"#b91c1c"})},
+    {selector:"node[kind='inverse']",style:constraintStyle},
+    {selector:"node[kind='datatypeFacet']",style:constraintStyle},
+    {selector:"node[kind='oneOf']",style:constraintStyle},
+    {selector:"node[kind='characteristic']",style:Object.assign({},constraintStyle,{shape:"ellipse",width:34,height:34})},
+    {selector:"edge",style:{width:1.2,"curve-style":"bezier","target-arrow-shape":"triangle",
+      "line-color":"#94a3b8","target-arrow-color":"#94a3b8","font-size":7.5,color:"#94a3b8",
+      label:"data(label)","text-rotation":"autorotate"}},
+  ];
+  const cy=makeGraph("axioms","cy-axioms",nodes.concat(edges),style,{name:"dagre",rankDir:"LR",nodeSep:30,rankSep:75});
+  if(!cy) return;
+  cy.on("tap","node",ev=>{
+    const k=ev.target.data().kind, id=ev.target.id();
+    if(k==="class") showClassDetail(id.replace(/^c:/,""));
+    else if(k==="property") showPropertyDetail(id.replace(/^p:/,""));
+    else showAxiomDetail(id);
+  });
+  const rl=document.querySelector("[data-relayout='axioms']"); if(rl) rl.onclick=()=>relayout("axioms","LR");
+  const mdOnly=ag.md_only||[];
+  if(mdOnly.length){ const hint=document.querySelector("#gbox-axioms .graph-hint");
+    if(hint) hint.innerHTML+=' <b style="color:var(--sev-mid)">md_only（应用层/md 承载，无 TTL 构件）：'+esc(mdOnly.join("、"))+'</b>'; }
+  setPrint("print-axioms",
+    printTable("公理约束构件（TTL）",["构件","类型","标签"],
+      ag.nodes.filter(n=>["class","property","datatype"].indexOf(n.kind)<0).map(n=>[n.id,n.kind,n.label])) +
+    (mdOnly.length?printTable("md_only（无 TTL 构件）",["编号"],mdOnly.map(x=>[x])):""));
+})();
+
+// ---------- ⑤c 规则流图（body→head + 变量绑定）----------
+(function(){
+  if(!HAS_SUPPLY){ graphEmpty("gbox-rules","数据层未升级——规则流图需 schema 1.1（supply.atom_meta）"); return; }
+  const nodes=[], edges=[], seen={};
+  function add(nid,label,kind,extra){ if(!seen[nid]){seen[nid]=1;
+    nodes.push({data:Object.assign({id:nid,label:label,kind:kind},extra||{})});} }
+  const CIRC="①②③④⑤⑥⑦⑧⑨⑩";
+  DATA.rules.forEach(r=>{
+    const rid=r.ttl.id, am=r.atom_meta||{body:[],head:[]}, mdKey=r.md_key||rid;
+    add("r:"+rid,(r.md&&r.md["名称"])||r.ttl.label||rid,"hub",{mdKey:mdKey});
+    ["body","head"].forEach(side=>{
+      const ttlAtoms=side==="body"?r.ttl.body_atoms:r.ttl.head_atoms;
+      (am[side]||[]).forEach((entry,idx)=>{
+        const aid=entry.atom_id, atom=ttlAtoms[idx]||{};
+        add("a:"+aid,renderAtom(atom),side==="body"?"body":"head",{rule:rid,mdKey:mdKey,side:side,idx:idx});
+        edges.push({data:{id:"e-rh-"+aid,source:"r:"+rid,target:"a:"+aid,
+          kind:side==="body"?"cond":"concl",label:side==="body"?(CIRC[idx]||"·"):"⇒"}});
+        (entry.arg_kinds||[]).forEach(ak=>{
+          if(ak.kind==="var"){ const vn="v:"+ak.name; add(vn,ak.name,"var");
+            edges.push({data:{id:"e-bind-"+aid+"-"+ak.name,source:"a:"+aid,target:vn,kind:"bind",label:""}}); }
+        });
+      });
+    });
+  });
+  const style=[
+    {selector:"node",style:{label:"data(label)","text-valign":"center","text-halign":"center","font-size":9,
+      width:40,height:40,"background-color":"#3b82f6",color:"#fff","border-width":1,"border-color":"#1d4ed8",
+      "text-wrap":"wrap","text-max-width":80}},
+    {selector:"node[kind='hub']",style:{shape:"roundrectangle","background-color":"#7c3aed","border-color":"#5b21b6",width:56,height:30,"font-size":10}},
+    {selector:"node[kind='body']",style:{"background-color":"#3b82f6","border-color":"#1d4ed8",shape:"roundrectangle",width:64,height:30,"font-size":8.5}},
+    {selector:"node[kind='head']",style:{"background-color":"#10b981","border-color":"#047857",shape:"roundrectangle",width:64,height:30,"font-size":8.5}},
+    {selector:"node[kind='var']",style:{shape:"ellipse","background-color":"#f59e0b","border-color":"#b45309",width:26,height:26,color:"#fff","font-size":9}},
+    {selector:"edge",style:{width:1.3,"curve-style":"bezier","target-arrow-shape":"triangle","font-size":9,color:"#66788a",label:"data(label)","text-rotation":"autorotate"}},
+    {selector:"edge[kind='cond']",style:{"line-color":"#3b82f6","target-arrow-color":"#3b82f6"}},
+    {selector:"edge[kind='concl']",style:{"line-color":"#10b981","target-arrow-color":"#10b981",width:2}},
+    {selector:"edge[kind='bind']",style:{"line-color":"#f59e0b","target-arrow-color":"#f59e0b","line-style":"dashed",width:1,"target-arrow-shape":"none"}},
+  ];
+  const cy=makeGraph("rules","cy-rules",nodes.concat(edges),style,{name:"dagre",rankDir:"LR",nodeSep:28,rankSep:85});
+  if(!cy) return;
+  cy.on("tap","node[kind='hub']",ev=>jumpTo("rule-"+ev.target.data().mdKey));
+  cy.on("tap","node",ev=>{ const d=ev.target.data();
+    if(d.kind==="body"||d.kind==="head") showAtomDetail(d.rule,d.mdKey,d.side,d.idx); });
+  const rl=document.querySelector("[data-relayout='rules']"); if(rl) rl.onclick=()=>relayout("rules","LR");
+  setPrint("print-rules", printTable("规则流（body→head）",["规则","条件","结论"],
+    DATA.rules.map(r=>[r.md_key||r.ttl.id,(r.ttl.body_atoms||[]).map(renderAtom).join(" ∧ "),
+      (r.ttl.head_atoms||[]).map(renderAtom).join(" ∧ ")])));
+})();
+
+// ---------- ⑥b SKOS 概念层级图（多父）----------
+(function(){
+  if(!HAS_SUPPLY){ graphEmpty("gbox-skos","数据层未升级——SKOS 图需 schema 1.1（supply.broader_list）"); return; }
+  const nodes=[], edges=[], seen={};
+  DATA.skos.forEach(c=>{ const nid="s:"+c.id; seen[nid]=1;
+    nodes.push({data:{id:nid,label:c.prefLabel||c.id,kind:"concept",missing:!!c.definition_missing}}); });
+  DATA.skos.forEach(c=>{
+    (c.broader_list||[]).forEach(p=>{
+      const pn="s:"+p;
+      if(!seen[pn]){ seen[pn]=1; nodes.push({data:{id:pn,label:p,kind:"concept",missing:true}}); }
+      edges.push({data:{id:"e-br-"+c.id+"-"+p,source:"s:"+c.id,target:pn,kind:"broader",label:"↑"}});
+    });
+  });
+  const style=[
+    {selector:"node",style:{label:"data(label)","text-valign":"bottom","font-size":10,width:30,height:30,
+      "background-color":"#0ea5e9","border-width":1.5,"border-color":"#0369a1",color:"#1c2733"}},
+    {selector:"node[?missing]",style:{"border-style":"dashed","background-color":"#fbbf24","border-color":"#b45309"}},
+    {selector:"edge[kind='broader']",style:{width:1.5,"curve-style":"bezier","target-arrow-shape":"triangle",
+      "line-color":"#0ea5e9","target-arrow-color":"#0ea5e9","font-size":9,color:"#66788a",label:"data(label)","text-rotation":"autorotate"}},
+  ];
+  const cy=makeGraph("skos","cy-skos",nodes.concat(edges),style,{name:"dagre",rankDir:"TB",nodeSep:40,rankSep:60});
+  if(!cy) return;
+  cy.on("tap","node",ev=>showSkosDetail(ev.target.id().replace(/^s:/,"")));
+  const rl=document.querySelector("[data-relayout='skos']"); if(rl) rl.onclick=()=>relayout("skos","TB");
+  setPrint("print-skos", printTable("SKOS 层级（child→parent）",["概念","上位"],
+    DATA.skos.map(c=>[c.prefLabel||c.id,(c.broader_list||[]).join("、")||"—"])));
+})();
+
+// ---------- 图节点详情侧面板（③c/④b/⑤c/⑥b tap 入口）----------
+function showPropertyDetail(pid, kindHint){
+  let kind=kindHint, p=DATA.object_properties.find(x=>x.ttl.id===pid);
+  if(p) kind="object_property";
+  else { p=DATA.data_properties.find(x=>x.ttl.id===pid); if(p) kind="data_property"; }
+  if(!p) return;
+  const t=p.ttl;
+  let html='<h3>'+esc(t.label||pid)+' <small style="color:var(--muted)">:'+esc(pid)+'</small></h3>';
+  if(t.comment) html+='<p style="font-size:12.5px;color:#334">'+esc(t.comment)+'</p>';
+  html+='<dl class="kv"><dt>类型</dt><dd>'+(kind==="object_property"?"对象属性":"数据属性")+'</dd>';
+  if(kind==="object_property"){
+    html+='<dt>域</dt><dd>'+esc(t.domain||(t.domain_union||[]).join(" ∪ ")||"—")+'</dd>';
+    html+='<dt>值域</dt><dd>'+esc(t.range||(t.range_union||[]).join(" ∪ ")||"—")+'</dd>';
+    const feats=[t.functional?"Functional":"",t.transitive?"Transitive":"",t.inverseOf?"inverseOf "+t.inverseOf:""].filter(Boolean).join("、");
+    html+='<dt>特征</dt><dd>'+esc(feats||"—")+'</dd>';
+  } else {
+    html+='<dt>值域</dt><dd>'+esc(t.range||"—")+'</dd>';
+    html+='<dt>受控值</dt><dd>'+esc((t.oneOf_enum||[]).join(" / ")||"—")+'</dd>';
+  }
+  html+='</dl>';
+  if(p.md){ const ks=Object.keys(p.md);
+    html+='<div class="tbl-wrap"><table><tr>'+ks.map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr><tr>'+
+      ks.map(k=>'<td>'+esc(p.md[k])+'</td>').join('')+'</tr></table></div>'; }
+  const aGraph=kind==="object_property"?"props":"axioms";
+  html+='<div style="margin-top:10px"><button class="primary" data-annot data-kind="'+kind+'" data-id="'+esc(pid)+
+    '" data-label="'+esc(t.label||pid)+'" data-sub="属性" data-anchor-graph="'+aGraph+'" data-anchor-element="p:'+esc(pid)+'">批注此构件</button></div>';
+  if(D4.mode && HAS_SUPPLY){
+    html+=d4L1Panel(kind,pid);
+    if(kind==="object_property") html+=d4DomainRangePanel(pid,t);
+  }
+  document.getElementById("side-body").innerHTML=html;
+  document.getElementById("side").classList.add("open");
+}
+function showAxiomDetail(nid){
+  const ag=DATA.axiom_graph||{nodes:[],md_overlay:{}};
+  const n=(ag.nodes||[]).find(x=>x.id===nid);
+  if(!n) return;
+  let html='<h3>'+esc(n.label)+' <small style="color:var(--muted)">'+esc(n.kind)+'</small></h3>';
+  html+='<dl class="kv"><dt>构件 id</dt><dd style="font-family:monospace;font-size:11px">'+esc(n.id)+'</dd>';
+  if(n.owner) html+='<dt>承载类</dt><dd>'+esc(n.owner)+'</dd>';
+  if(n.onProperty) html+='<dt>onProperty</dt><dd>'+esc(n.onProperty)+'</dd>';
+  if(n.filler) html+='<dt>filler</dt><dd>'+esc(n.fillerKind||"")+': '+esc(n.filler)+'</dd>';
+  if(n.values) html+='<dt>受控值</dt><dd>'+esc(n.values.join(" / "))+'</dd>';
+  if(n.facets) html+='<dt>facets</dt><dd>'+esc(n.facets.join(", "))+'</dd>';
+  html+='</dl>';
+  const ov=(ag.md_overlay||{})[nid]||[];
+  if(ov.length){
+    html+='<div class="fam">md 公理行 overlay <small>（表权威，best-effort 匹配）</small></div>';
+    ov.forEach(ref=>{
+      const ax=(DATA.axioms||[]).find(a=>(a.md||{})["编号"]===ref["编号"]);
+      const md=ax?ax.md:{};
+      html+='<div class="m-ex-item"><div class="ex-head"><b>'+esc(ref["编号"]||"")+'</b> '+esc(ref["名称"]||"")+
+        ' <span class="tag">'+esc(ref.family||"")+' 族</span></div>';
+      if(md["自然语言陈述"]) html+='<div class="ex-op">'+esc(md["自然语言陈述"])+'</div>';
+      if(md["违反处置"]) html+='<div class="ex-sug">违反处置：'+esc(md["违反处置"])+'</div>';
+      html+='<button class="annot" data-annot data-kind="axiom" data-id="'+esc(ref["编号"]||nid)+
+        '" data-label="'+esc(ref["名称"]||nid)+'" data-sub="公理 '+esc(ref.family||"")+' 族" data-anchor-graph="axioms" data-anchor-element="'+esc(nid)+'">批注</button></div>';
+    });
+  } else {
+    html+='<p class="empty">无 md overlay（TTL 构件，建模方案表未直接承载）</p>';
+  }
+  html+='<div style="margin-top:10px"><button class="primary" data-annot data-kind="axiom" data-id="'+esc(nid)+
+    '" data-label="'+esc(n.label)+'" data-sub="公理构件" data-anchor-graph="axioms" data-anchor-element="'+esc(nid)+'">批注此构件</button></div>';
+  document.getElementById("side-body").innerHTML=html;
+  document.getElementById("side").classList.add("open");
+}
+function showAtomDetail(rid, mdKey, side, idx){
+  const r=DATA.rules.find(x=>x.ttl.id===rid);
+  if(!r) return;
+  const ttlAtoms=side==="body"?r.ttl.body_atoms:r.ttl.head_atoms;
+  const atom=ttlAtoms[idx]||{};
+  const am=(r.atom_meta||{})[side]||[];
+  const entry=am[idx]||{atom_id:rid+"."+side[0]+idx,arg_kinds:[]};
+  const plain=r.plain||{};
+  const plainLine=(side==="body"?(plain.body||[])[idx]:(plain.head||[])[idx])||"";
+  let html='<h3>'+esc(renderAtom(atom))+' <small style="color:var(--muted)">'+(side==="body"?"条件":"结论")+'</small></h3>';
+  html+='<dl class="kv"><dt>规则</dt><dd>'+esc(mdKey)+'（'+esc(rid)+'）</dd>';
+  html+='<dt>atom id</dt><dd style="font-family:monospace;font-size:11px">'+esc(entry.atom_id)+'</dd>';
+  html+='<dt>通俗翻译</dt><dd>'+esc(plainLine||"—")+'</dd></dl>';
+  if((entry.arg_kinds||[]).length){
+    html+='<div class="tbl-wrap"><table><tr><th>实参</th><th>类型</th><th>值/名</th></tr>';
+    entry.arg_kinds.forEach(ak=>{
+      html+='<tr><td>'+esc(ak.kind==="var"?"变量":ak.kind==="iri"?"IRI":"字面量")+'</td><td>'+
+        esc(ak.kind==="literal"?(ak.datatype||ak.lang||"plain"):ak.kind)+'</td><td>'+
+        esc(ak.name||ak.iri||ak.value||"")+'</td></tr>';
+    });
+    html+='</table></div>';
+  }
+  html+='<div style="margin-top:10px"><button class="primary" data-annot data-kind="rule" data-id="'+esc(mdKey)+
+    '" data-label="'+esc((r.md&&r.md["名称"])||mdKey)+'" data-sub="规则 '+esc(entry.atom_id)+'" data-anchor-graph="rules" data-anchor-element="a:'+esc(entry.atom_id)+'">批注此规则</button></div>';
+  html+='<p class="hint" style="padding-left:0">规则级批注（id=md_key 业务规则级）；anchor 定位到 atom。规则编辑（L3）defer 中期——MAJOR 须 golden 守护。</p>';
+  document.getElementById("side-body").innerHTML=html;
+  document.getElementById("side").classList.add("open");
+}
+function showSkosDetail(cid){
+  const c=DATA.skos.find(x=>x.id===cid);
+  if(!c) return;
+  let html='<h3>'+esc(c.prefLabel||cid)+' <small style="color:var(--muted)">'+esc(cid)+'</small></h3>';
+  if(c.definition) html+='<p style="font-size:12.5px;color:#334">'+esc(c.definition)+
+    (c.definition_source==="term_dict"?' <small style="color:var(--muted)">（源：术语词典）</small>':'')+'</p>';
+  else html+='<p class="def-missing">⚠ 词典未定义（结构节点）'+(c.comment?'：'+esc(c.comment):'')+'</p>';
+  html+='<dl class="kv"><dt>上位</dt><dd>'+esc((c.broader_list||[]).join("、")||c.broader||"—")+'</dd></dl>';
+  html+='<div style="margin-top:10px"><button class="primary" data-annot data-kind="skos" data-id="'+esc(cid)+
+    '" data-label="'+esc(c.prefLabel||cid)+'" data-sub="术语" data-anchor-graph="skos" data-anchor-element="s:'+esc(cid)+'">批注此构件</button></div>';
+  document.getElementById("side-body").innerHTML=html;
+  document.getElementById("side").classList.add("open");
+}
+
+// ========== D4 编辑全链（②c L1 / ①c L2 拖节点 / ③d L2 域值域 / ⑦e 导出+回读）==========
+// 数据访问 helper（iri_map / literal_meta 键格式见 review_extract.build_supply）
+function d4Iri(kind, id){
+  const m={class:"classes", object_property:"object_properties", data_property:"data_properties"};
+  return ((DATA.iri_map||{})[m[kind]]||{})[id] || "";
+}
+function d4Lit(kind, id, field){
+  return ((DATA.literal_meta||{})[kind+":"+id]||{})[field] || null;
+}
+function d4Ancestors(cid){
+  const out=new Set(), stack=[cid];
+  while(stack.length){ const x=stack.pop();
+    const c=DATA.classes.find(y=>y.ttl.id===x); if(!c) continue;
+    (c.ttl.superclasses||[]).forEach(s=>{ if(!out.has(s)){out.add(s); stack.push(s);} });
+  }
+  return out;
+}
+// 中央 staging：edit_id 序号 + before/after + 映射 ops（导出按 staged 顺序 flatMap，确定性）
+function d4Stage(kind, targetKind, targetId, before, after, ops){
+  if(!D4.session_id) D4.session_id=d4SessionId();
+  D4.base_sha=TTL_SHA_FULL;
+  const st=nowStamps();
+  D4.edits.push({edit_id:"e"+(D4.edits.length+1), kind:kind, target_kind:targetKind,
+    target_id:targetId, target_iri:d4Iri(targetKind,targetId), before:before, after:after,
+    ops:ops, ts:st.ts, ts_local:st.ts_local, status:"staged"});
+  d4Save(); d4RenderEditList(); d4RefreshBadges();
+}
+// L1 改 label（modify_label，lang 省略引擎继承旧 @zh；PATCH annotation-only）
+function d4StageLabel(kind, id, newVal){
+  const iri=d4Iri(kind,id);
+  if(!iri){ alert("无 IRI 映射（数据层未升级？请重跑 review extract）"); return; }
+  const old=d4Lit(kind,id,"label"), before=old?old.value:"";
+  if(!newVal){ alert("label 不可为空"); return; }
+  if(newVal===before){ alert("label 未变更"); return; }
+  d4Stage("label",kind,id,before,newVal,[{op:"modify_label",target:iri,label:newVal}]);
+}
+// L1 改 comment（存在→replace_literal 全等编码保 lang/datatype；缺失→add_triple；PATCH）
+function d4StageComment(kind, id, newVal){
+  const iri=d4Iri(kind,id); if(!iri){ alert("无 IRI 映射"); return; }
+  const old=d4Lit(kind,id,"comment"), before=old?old.value:"";
+  if(newVal===before){ alert("comment 未变更"); return; }
+  let ops;
+  if(old){
+    const newLit={value:newVal};
+    if(old.lang) newLit.lang=old.lang; else if(old.datatype) newLit.datatype=old.datatype;
+    ops=[{op:"replace_literal",s:iri,p:"rdfs:comment",old:old,new:newLit}];
+  } else {
+    ops=[{op:"add_triple",s:iri,p:"rdfs:comment",o:{value:newVal}}];
+  }
+  d4Stage("comment",kind,id,before,newVal,ops);
+}
+// L1 改 oneOf 受控值（replace_literal p:rdf:first s 省略；G8 旧值唯一 + 新值重名预检；MINOR）
+function d4StageEnum(propId, oldVal, newVal){
+  const enums=DATA.enum_literals[propId]||[], ed=DATA.enum_editable[propId]||[];
+  const oldMeta=enums.find(e=>e.value===oldVal), edMeta=ed.find(e=>e.value===oldVal);
+  if(edMeta && !edMeta.editable){ alert("G8 守卫："+edMeta.reason); return; }
+  if(!oldMeta){ alert("受控值未找到（数据层未升级？）"); return; }
+  if(!newVal){ alert("受控值不可为空"); return; }
+  if(newVal===oldVal){ alert("受控值未变更"); return; }
+  let dup=false;
+  Object.keys(DATA.enum_literals).forEach(pid=>{
+    (DATA.enum_literals[pid]||[]).forEach(e=>{
+      if(e.value===newVal && !(pid===propId && e.value===oldVal)) dup=true; });
+  });
+  if(dup){ alert("新值「"+newVal+"」与其他受控值重名（G8 不可消歧），转入口 (c)"); return; }
+  const newLit={value:newVal};
+  if(oldMeta.lang) newLit.lang=oldMeta.lang; else if(oldMeta.datatype) newLit.datatype=oldMeta.datatype;
+  d4Stage("enum","data_property",propId,oldVal,newVal,
+    [{op:"replace_literal",p:"rdf:first",old:oldMeta,new:newLit}]);
+}
+// L2 拖节点改继承（①c；parents_guard：恰 1 具名父 reparent / 0 具名父 add-only / 余禁用；环检查）
+function stageSubclassEdit(cid, newParent){
+  if(!D4.mode) return;
+  const c=DATA.classes.find(x=>x.ttl.id===cid); if(!c) return;
+  const pg=c.parents_guard||{named:[],anon:0};
+  if(!DATA.classes.some(x=>x.ttl.id===newParent)){ alert("目标非具名类，不可作父"); return; }
+  if(newParent===cid){ alert("不能以自身为父"); return; }
+  if(d4Ancestors(newParent).has(cid)){ alert("环检查：新父祖先含自身，拒绝（防继承环）"); return; }
+  const childIri=d4Iri("class",cid), newIri=d4Iri("class",newParent);
+  if(!childIri||!newIri){ alert("无 IRI 映射"); return; }
+  let ops, before, oldP=null;
+  if(pg.named.length===0){
+    before="(根类)";
+    ops=[{op:"add_triple",s:childIri,p:"rdfs:subClassOf",o:newIri}];
+  } else if(pg.named.length===1 && pg.anon===0){
+    oldP=pg.named[0];
+    if(oldP===newParent){ alert("父类未变更"); return; }
+    before=oldP;
+    const oldIri=d4Iri("class",oldP);
+    if(!oldIri){ alert("旧父无 IRI 映射"); return; }
+    ops=[{op:"remove_triple",s:childIri,p:"rdfs:subClassOf",o:oldIri},
+         {op:"add_triple",s:childIri,p:"rdfs:subClassOf",o:newIri}];
+  } else {
+    alert("parents_guard：多具名父或匿名父（G4 匿名 Restriction 不可寻址），不可拖拽改继承——转入口 (c)");
+    return;
+  }
+  const desc=oldP?("reparent "+clsLabel(oldP)+" → "+clsLabel(newParent)):("加父 "+clsLabel(newParent));
+  if(!confirm("改继承："+clsLabel(cid)+" "+desc+"？\n（产 patch 草稿，非权威，须编排器校验+入口 (c) 晋升）")) return;
+  d4Stage("subclass","class",cid,before,newParent,ops);
+  if(window._d4ClassesPreview) window._d4ClassesPreview(cid, oldP, newParent);
+}
+// L2 改 domain/range（③d；remove+add 对；union/匿名禁用转入口 (c)；MINOR）
+function d4StageDomainRange(propId, side, newClass){
+  const p=DATA.object_properties.find(x=>x.ttl.id===propId);
+  if(!p){ alert("非对象属性（L2 域值域编辑限对象属性）"); return; }
+  const t=p.ttl;
+  const oldClass=side==="domain"?t.domain:t.range;
+  const union=side==="domain"?t.domain_union:t.range_union;
+  if(union && union.length){ alert("匿名 union "+side+"（G4），转入口 (c)"); return; }
+  if(!oldClass){ alert("无具名 "+side+"，转入口 (c)"); return; }
+  if(newClass===oldClass){ alert(side+" 未变更"); return; }
+  if(!DATA.classes.some(x=>x.ttl.id===newClass)){ alert("目标非具名类"); return; }
+  const propIri=d4Iri("object_property",propId), oldIri=d4Iri("class",oldClass), newIri=d4Iri("class",newClass);
+  if(!propIri||!oldIri||!newIri){ alert("无 IRI 映射"); return; }
+  const pred=side==="domain"?"rdfs:domain":"rdfs:range";
+  const ops=[{op:"remove_triple",s:propIri,p:pred,o:oldIri},
+             {op:"add_triple",s:propIri,p:pred,o:newIri}];
+  d4Stage(side,"object_property",propId,oldClass,newClass,ops);
+  d4PropsPreview(propId,side,newClass);
+}
+function d4PropsPreview(propId, side, newClass){
+  const cy=GRAPHS.props; if(!cy) return;
+  const eid=side==="domain"?"e-dom-"+propId:"e-rng-"+propId;
+  const e=cy.getElementById(eid);
+  if(e && !e.empty()){
+    e.remove();
+    cy.add({data:{id:eid, source:side==="domain"?"c:"+newClass:"p:"+propId,
+      target:side==="domain"?"p:"+propId:"c:"+newClass, kind:side,
+      label:side==="domain"?"域":"值域", prop:propId, side:side, pending:true}});
+  }
+}
+// ③d 点属性边→侧面板 domain/range 双下拉（无障碍回退路径，同语义同 ops；
+// handle 节点拖拽重连为 post-MVP 增强——cytoscape 3.30 核心无边端点重连，下拉更稳健）
+function d4EdgeEdit(edge){
+  const d=edge.data();
+  if(d.union){ alert("匿名 union 边（G4），转入口 (c)"); return; }
+  if(!d.prop||!d.side) return;
+  showPropertyDetail(d.prop,"object_property");
+}
+
+// ---------- D4 L1/L2 侧面板编辑器（②c，复用 aside#side）----------
+function d4L1Panel(kind, id){
+  const lab=d4Lit(kind,id,"label"), com=d4Lit(kind,id,"comment");
+  const labVal=lab?lab.value:"", comVal=com?com.value:"";
+  const uid=kind+"-"+id;
+  let h='<div class="d4-field"><div class="fam">D4 编辑（L1）<small> '+esc(kind)+' :'+esc(id)+'</small></div>';
+  h+='<label style="display:block">label<input type="text" id="d4-label-'+esc(uid)+'" value="'+esc(labVal)+'" style="width:100%;margin-top:2px"></label>';
+  h+='<button class="annot" data-d4-save-label="'+esc(uid)+'" data-kind="'+esc(kind)+'" data-id="'+esc(id)+'">保存 label</button>';
+  h+='<label style="display:block;margin-top:6px">comment<textarea id="d4-comment-'+esc(uid)+'" rows="2" style="width:100%;margin-top:2px">'+esc(comVal)+'</textarea></label>';
+  h+='<button class="annot" data-d4-save-comment="'+esc(uid)+'" data-kind="'+esc(kind)+'" data-id="'+esc(id)+'">保存 comment</button>';
+  if(kind==="data_property"){
+    const enums=DATA.enum_literals[id]||[], ed=DATA.enum_editable[id]||[];
+    if(enums.length){
+      h+='<div style="margin-top:8px"><b>受控值（oneOf）</b> <small style="color:var(--muted)">点值改（G8 重名锁禁）</small></div><div>';
+      enums.forEach((e,i)=>{
+        const editable=!ed[i]||ed[i].editable, reason=ed[i]?ed[i].reason:"";
+        h+='<button class="d4-chip'+(editable?"":" disabled")+'" '+
+          (editable?'data-d4-enum="'+esc(id)+'" data-old="'+esc(e.value)+'"':'disabled title="'+esc(reason)+'"')+
+          '>'+esc(e.value)+(editable?"":" 🔒")+'</button>';
+      });
+      h+='</div>';
+    }
+  }
+  h+='</div>';
+  return h;
+}
+function d4DomainRangePanel(pid, t){
+  let h='<div class="d4-field"><div class="fam">D4 编辑（L2 域/值域）<small> 双下拉（同拖边语义）</small></div>';
+  ["domain","range"].forEach(side=>{
+    const cur=side==="domain"?t.domain:t.range;
+    const union=side==="domain"?t.domain_union:t.range_union;
+    const label=side==="domain"?"域 domain":"值域 range";
+    if(union && union.length){
+      h+='<div style="margin-top:4px">'+label+'：<span class="d4-chip disabled" title="匿名 union（G4）转入口 (c)">∪ '+esc(union.join(", "))+' 🔒</span></div>';
+    } else {
+      const opts=DATA.classes.map(c=>'<option value="'+esc(c.ttl.id)+'"'+(c.ttl.id===cur?" selected":"")+'>'+esc(c.ttl.label||c.ttl.id)+'</option>').join("");
+      h+='<label style="display:block;margin-top:4px">'+label+'<select id="d4-dr-'+esc(pid)+'-'+side+'" style="width:100%;margin-top:2px">'+opts+'</select></label>';
+      h+='<button class="annot" data-d4-save-dr="'+esc(pid)+'" data-side="'+side+'">保存 '+side+'</button>';
+    }
+  });
+  h+='</div>';
+  return h;
+}
+
+// ---------- D4 模式 toggle / 草稿列表 / 徽标 ----------
+function d4SetMode(on){
+  D4.mode=on && HAS_SUPPLY;
+  document.body.classList.toggle("d4-mode", D4.mode);
+  const btn=document.getElementById("d4-toggle");
+  if(btn){ btn.textContent=D4.mode?"✎ 编辑中（点击退出）":"✎ 编辑模式"; btn.classList.toggle("active",D4.mode); }
+  if(window._d4ClassesGrab) window._d4ClassesGrab(D4.mode);
+  closeSide();  // 关侧面板避 stale（重 tap 构件渲染 D4 入口）
+  if(D4.mode) d4RenderEditList();
+}
+function d4RenderEditList(){
+  const staged=D4.edits.filter(e=>e.status==="staged");
+  ["d4-count","d4-staged-count"].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=staged.length; });
+  const box=document.getElementById("d4-edit-list"); if(!box) return;
+  if(!D4.edits.length){ box.innerHTML='<p class="empty">暂无编辑——开启编辑模式后在①区拖类节点改继承、③区点属性边改域值域、侧面板改 label/comment/受控值。</p>'; return; }
+  box.innerHTML=D4.edits.map((e,i)=>{
+    const locked=e.status==="exported";
+    return '<div class="d4-edit-item'+(locked?" exported":"")+'">'+
+      '<b>'+esc(e.kind)+'</b> '+esc(e.target_kind)+':'+esc(e.target_id)+
+      ' <span class="d4-badge">'+esc(e.status)+'</span>'+
+      '<div style="font-size:12px;color:var(--muted)">'+esc(String(e.before))+' → '+esc(String(e.after))+'</div>'+
+      '<small style="color:var(--muted)">'+esc(e.ts_local||"")+'</small>'+
+      (locked?'':' <button class="annot" data-d4-revoke="'+i+'">撤销</button>')+'</div>';
+  }).join("");
+}
+function d4RefreshBadges(){
+  Object.keys(GRAPHS).forEach(k=>{ const cy=GRAPHS[k]; if(cy) cy.nodes().removeClass("pending"); });
+  D4.edits.filter(e=>e.status==="staged").forEach(e=>{
+    const prefix={class:"c:",object_property:"p:",data_property:"p:"}[e.target_kind]||"";
+    if(!prefix) return;
+    Object.keys(GRAPHS).forEach(gk=>{ const cy=GRAPHS[gk]; if(!cy) return;
+      const ele=cy.getElementById(prefix+e.target_id);
+      if(ele && !ele.empty()) ele.addClass("pending"); });
+  });
+}
+
+// ---------- ⑦e patch 导出（内容哈希 patch_id + Blob，复用 export 先例）----------
+function d4Export(){
+  const staged=D4.edits.filter(e=>e.status==="staged");
+  if(!staged.length){ alert("无待导出编辑"); return; }
+  if(!TTL_SHA_FULL || TTL_SHA_FULL.length!==64){
+    alert("基线 sha256_full 缺失/非 64 位——请重跑 review extract 1.3.0+（schema 1.1）"); return; }
+  const operations=[];
+  staged.forEach(e=>{ (e.ops||[]).forEach(o=>operations.push(o)); });
+  const patch={
+    schema_version:"1.0",
+    patch_id:d4PatchId(TTL_SHA_FULL, operations),
+    baseline:{path:"ontology.ttl", sha256:TTL_SHA_FULL},
+    source:{channel:"d4", ref:D4.session_id||d4SessionId()},
+    base_version:SUPPLY_META.ontology_version||null,
+    bump:"auto",
+    operations:operations
+  };
+  const blob=new Blob([JSON.stringify(patch,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="d4-patch.json"; a.click();
+  D4.edits.forEach(e=>{ if(e.status==="staged") e.status="exported"; });
+  d4Save(); d4RenderEditList(); d4RefreshBadges();
+  alert("已导出 d4-patch.json（"+operations.length+" 操作，patch_id="+patch.patch_id+"）。\n"+
+    "编排器跑 R2 CLI 校验后，用「patch-report 回读」检视。draft 非权威，晋升走入口 (c)。\n"+
+    "真实载体 patch 含字面量值——不出本地（同意见分级）。");
+}
+function d4ClearStaged(){
+  if(!confirm("撤销全部待导出编辑？（已导出锁定项保留）")) return;
+  D4.edits=D4.edits.filter(e=>e.status==="exported");
+  d4Save(); d4RenderEditList(); d4RefreshBadges();
+}
+function d4NewSession(){
+  if(!confirm("开新会话？清空全部草稿（含已导出锁定项）。基线刷新后重新编辑。")) return;
+  D4.edits=[]; D4.session_id=d4SessionId(); D4.base_sha=TTL_SHA_FULL;
+  d4Save(); d4RenderEditList(); d4RefreshBadges();
+}
+
+// ---------- ⑦e report 回读（FileReader 离线检视，不上传）----------
+function d4ReadReport(file){
+  const reader=new FileReader();
+  reader.onload=function(){
+    let rep; try{ rep=JSON.parse(reader.result); }catch(e){ alert("report JSON 解析失败："+e.message); return; }
+    const box=document.getElementById("d4-report-view"); if(!box) return;
+    // 文件类型守卫：报告（有 verdict）→渲染；补丁（operations+patch_id 无 verdict）→预览+CLI 指引；其余→无法识别
+    if(typeof rep.verdict!=="string"){
+      const bns=(DATA.supply_meta&&DATA.supply_meta.base_ns)||"";
+      const short=t=>typeof t==="string"?(t.indexOf(bns)===0?t.slice(bns.length):t):t;
+      const lv=x=>(x&&typeof x==="object")?(x.value!=null?x.value:JSON.stringify(x)):x;
+      const opDesc=o=>{
+        if(o.op==="modify_label") return "modify_label · "+short(o.target)+" → 「"+lv(o.label)+"」";
+        if(o.op==="replace_literal") return "replace_literal · "+short(o.p)+"：「"+lv(o.old)+"」→「"+lv(o.new)+"」";
+        if(o.op==="add_triple") return "add_triple · "+short(o.s)+" "+short(o.p)+" "+short(lv(o.o));
+        if(o.op==="remove_triple") return "remove_triple · "+short(o.s)+" "+short(o.p)+" "+short(lv(o.o));
+        return (o.op||"?")+" · "+JSON.stringify(o);
+      };
+      if(Array.isArray(rep.operations)&&rep.patch_id){
+        let p='<div class="d4-report blocked">';
+        p+='<h4>⚠ 这是导出的补丁 d4-patch.json，不是引擎报告 patch-report.json</h4>';
+        p+='<div>回读区只读「引擎报告」（含 verdict/校验/回归）；补丁本身不含这些字段，故此前显示全是 ?。</div>';
+        p+='<div class="fam">你的补丁 '+esc(rep.patch_id)+' 含 '+rep.operations.length+' 条操作：</div><ul>';
+        p+=rep.operations.map(o=>'<li>'+esc(opDesc(o))+'</li>').join("")+'</ul>';
+        p+='<div class="fam">下一步（浏览器不跑 CLI · 路径甲）——交编排器机械校验产报告：</div>';
+        p+='<pre>ontology_cli.py model patch &lt;run&gt;/ontology.ttl d4-patch.json --golden &lt;run&gt;/golden-cases.json --output-draft &lt;工作区&gt;/draft.ttl --report &lt;工作区&gt;/patch-report.json</pre>';
+        p+='<div class="d4-pending">跑完后在此选 <b>patch-report.json</b> → 看 verdict/bump/回归/零回写（完整序列见下方「编排器序列」）。draft 非权威，晋升走入口 (c)。</div></div>';
+        box.innerHTML=p; return;
+      }
+      box.innerHTML='<div class="d4-report blocked"><h4>⚠ 无法识别的 JSON</h4><div>既不是引擎报告（缺 verdict）也不是导出补丁（缺 operations/patch_id）。请选 R2 CLI 产出的 <b>patch-report.json</b>。</div></div>';
+      return;
+    }
+    const verdict=rep.verdict||"?", released=verdict==="released";
+    const j=x=>typeof x==="string"?x:JSON.stringify(x);
+    let h='<div class="d4-report '+(released?"released":"blocked")+'">';
+    h+='<h4>verdict：'+esc(verdict)+(released?" ✓（exit 0 released）":" ✗（exit 1 blocked / exit 2 输入错）")+'</h4>';
+    const v=rep.version||{};
+    h+='<div>版本：'+esc(v.base||"?")+' → '+esc(v.new||"?")+' <span class="d4-badge">'+esc(v.bump_applied||"?")+'</span>'+
+      (v.rule_touched?' <b style="color:var(--sev-high)">rule_touched（MAJOR 须 golden 守护）</b>':'')+'</div>';
+    const diff=rep.diff||{};
+    if(diff.named_summary) h+='<div>变更：'+esc(j(diff.named_summary))+'</div>';
+    if(diff.added_n!=null) h+='<div>三元组 +'+esc(diff.added_n)+' / −'+esc(diff.removed_n)+'</div>';
+    const br=rep.blocked_reasons||[];
+    if(br.length) h+='<div class="fam">blocked_reasons（修复指引）</div><ul>'+br.map(x=>'<li>'+esc(j(x))+' → 修编辑或转入口 (c)</li>').join("")+'</ul>';
+    const val=(rep.validation||{}).l1_l2||{};
+    if((val.new_errors||[]).length) h+='<div class="fam">L1/L2 新增 error</div><ul>'+val.new_errors.map(x=>'<li>'+esc(j(x))+'</li>').join("")+'</ul>';
+    const reg=rep.regression||{};
+    if(reg.verdict) h+='<div>回归：'+esc(reg.verdict)+((reg.newly_failed||[]).length?' <b style="color:var(--sev-high)">newly_failed: '+esc(reg.newly_failed.join(", "))+'（业务语义须复核）</b>':'')+'</div>';
+    const zw=rep.zero_writeback||{};
+    if(zw.assert_ok!=null) h+='<div>零回写断言：'+(zw.assert_ok?"✓":"✗")+'</div>';
+    const ec=rep.entry_c||{};
+    h+='<div class="d4-pending">entry_c：'+esc(ec.status||"pending_audit")+'（draft 非权威，晋升走入口 (c) S4 审计→G2/G3→人工）</div>';
+    h+='</div>';
+    box.innerHTML=h;
+  };
+  reader.readAsText(file);
+}
+
+// ---------- D4 动作事件委托（data-d4-*，与批注委托并行）----------
+document.addEventListener("click", e=>{
+  const sl=e.target.closest("[data-d4-save-label]");
+  if(sl){ const inp=document.getElementById("d4-label-"+sl.dataset.d4SaveLabel);
+    if(inp) d4StageLabel(sl.dataset.kind, sl.dataset.id, inp.value.trim()); return; }
+  const sc=e.target.closest("[data-d4-save-comment]");
+  if(sc){ const ta=document.getElementById("d4-comment-"+sc.dataset.d4SaveComment);
+    if(ta) d4StageComment(sc.dataset.kind, sc.dataset.id, ta.value.trim()); return; }
+  const en=e.target.closest("[data-d4-enum]");
+  if(en){ const old=en.dataset.old, nv=prompt("新受控值（原："+old+"）", old);
+    if(nv!=null) d4StageEnum(en.dataset.d4Enum, old, nv.trim()); return; }
+  const dr=e.target.closest("[data-d4-save-dr]");
+  if(dr){ const sel=document.getElementById("d4-dr-"+dr.dataset.d4SaveDr+"-"+dr.dataset.side);
+    if(sel && sel.value) d4StageDomainRange(dr.dataset.d4SaveDr, dr.dataset.side, sel.value);
+    else alert("请选择新类"); return; }
+  const rv=e.target.closest("[data-d4-revoke]");
+  if(rv){ const i=parseInt(rv.dataset.d4Revoke,10);
+    if(D4.edits[i] && D4.edits[i].status==="staged"){
+      D4.edits.splice(i,1); d4Save(); d4RenderEditList(); d4RefreshBadges(); } return; }
+});
+
+// ---------- D4 init（草稿加载 + toggle 启用 + 基线漂移守卫 + 抽屉接线）----------
+(function(){
+  d4Load();
+  const storedSha=D4.base_sha;
+  const btn=document.getElementById("d4-toggle");
+  if(!HAS_SUPPLY){
+    if(btn){ btn.disabled=true; btn.title="数据层未升级（schema 1.0）——请重跑 review extract 1.3.0+（supply）"; }
+    return;
+  }
+  if(btn){ btn.disabled=false; btn.onclick=()=>d4SetMode(!D4.mode); }
+  if(!D4.session_id) D4.session_id=d4SessionId();
+  if(D4.edits.length && storedSha && TTL_SHA_FULL && storedSha!==TTL_SHA_FULL){
+    const banner=document.getElementById("d4-banner");
+    if(banner) banner.innerHTML+='<div style="color:var(--sev-high);margin-top:4px">⚠ 旧草稿基线 sha 与当前页面不一致——基线已刷新，旧编辑可能失效（铁律 5）。建议「基线刷新·新会话」清空后重新编辑。</div>';
+  }
+  D4.base_sha=TTL_SHA_FULL;
+  const ex=document.getElementById("d4-export"); if(ex) ex.onclick=d4Export;
+  const cl=document.getElementById("d4-clear-staged"); if(cl) cl.onclick=d4ClearStaged;
+  const ns=document.getElementById("d4-new-session"); if(ns) ns.onclick=d4NewSession;
+  const rf=document.getElementById("d4-report-file");
+  if(rf) rf.onchange=function(){ if(rf.files && rf.files[0]) d4ReadReport(rf.files[0]); };
+  d4RenderEditList();
 })();
 
 // ---------- nav 高亮 ----------

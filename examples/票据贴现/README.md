@@ -27,6 +27,6 @@ python3 $SUITE/skills/ontology-simulate/scripts/check_instance.py "$EX/模拟dem
 python3 $SUITE/skills/ontology-simulate/scripts/simulate_reason.py --instance "$EX/模拟demo/demo1-instance.json" --ttl "$EX/建模run/ontology.ttl" --json-output /tmp/demo1.json
 ```
 
-## A/B 实验材料说明
+## A/B 实验协议
 
-票据贴现 A/B run（12 题三层 × 三臂 36 次应答 + 机械判据）位于 vault `runs/ab-实验_票据贴现_20261105/`（git 追踪区），**未纳入本快照**——其机械判据数字可对外引用，引用时必须披露「专家盲评在真实业务载体执行、盲评数字不可外发」（双轨定位裁定 2026-11-09）。课题 1 开源时再定 A/B 材料的发行形态。
+A/B 三臂实验协议（本体臂/描述集臂/裸臂 + 机械判据 + 专家盲评）见 `skills/ontology-simulate/references/ab-protocol.md`。本示例聚焦建模 → 审阅 → 模拟三件套端到端；A/B 实验材料按敏感纪律另行管理（真实业务载体盲评数字不可外发）。

@@ -42,7 +42,7 @@ FND  基础层（Agreements/Parties/DatesAndTimes/Law/Quantities…——任何�
 | IRI 规范格式 | `https://spec.edmcouncil.org/fibo/ontology/<域>/<模块>/<类名>` | `.../FBC/DebtAndEquities/Debt/CreditAgreement` |
 | 版本引用 | Production=季度版（经 SME 审查+hygiene 测试），Development=随 commit 实时；版本化浏览加 `?version=2026Q2` 类查询参数 | 建模方案登记所用版本号 |
 
-**分层落位建议**（配合 KC-20261013-015 公共-领域-实例三层）：FIBO 对齐物放**公共层**（金融通用概念）；场景特异概念放**领域层**（subClassOf 或 skos 映射挂接 FIBO）；具体产品/客户放**实例层**（新增产品只实例化）。
+**分层落位建议**（公共-领域-实例三层）：FIBO 对齐物放**公共层**（金融通用概念）；场景特异概念放**领域层**（subClassOf 或 skos 映射挂接 FIBO）；具体产品/客户放**实例层**（新增产品只实例化）。
 
 ## 四、其他金融域的检索方法
 

@@ -166,9 +166,9 @@ def canonicalize_base(base_text, do_strip=True):
     n_stripped = strip_named_datatypes(g) if do_strip else 0
     gc = to_canonical_graph(g)
     nt = gc.serialize(format="nt")
-    # GC_CANON_ORDER=实验档开关（限制⑭定位期遗留）：asc/desc 三元组排序已实测
+    # GC_CANON_ORDER=实验档开关：asc/desc 三元组排序已实测
     # 证伪（镜像翻转，不可用作规避），raw=canonical 原生序为定版默认——仅调试
-    # 复现定位期实验时使用，生产验收勿设
+    # 复现时使用，生产验收勿设
     order = os.environ.get("GC_CANON_ORDER", "raw")
     if order == "asc":
         nt = "".join(sorted(nt.splitlines(keepends=True)))

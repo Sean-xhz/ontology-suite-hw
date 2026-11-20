@@ -1,7 +1,7 @@
 # what-if 模拟验证报告：票据贴现 demo1（多手背书·承兑人 A 级）
 
 > 票据贴现 demo1 ｜ 生成：2026-11-04 ｜ ontology-simulate T5
-> 本体基线：`票据贴现_20261026/（本示例快照）ontology.ttl` ｜ sha=ec85ca9598b4 ｜ 实例：`demo1-instance.json` ｜ 物化结果：同目录 `demo1-sim-result.json`
+> 本体基线：`票据贴现_20261026/（本示例快照）ontology.ttl` ｜ sha=5ff9b19917bb ｜ 实例：`demo1-instance.json` ｜ 物化结果：同目录 `demo1-sim-result.json`
 
 ## 一、画像与诉求
 
@@ -93,7 +93,7 @@
 | 画像未编译概念 | 无 | instance.json 无 compiler 未编译概念登记 |
 | 归因降级（none/auto-degraded） | 无 | attribution_mode=rules，逐规则归因完整，非大本体降级 |
 | label_map 覆盖缺口 | 无 | 本次涉及的类/属性/规则（ValidApplication／NonDiscountable／isUpstreamOf／ruleR1／ruleR3／ruleR7）均有业务名映射。附注：label_map 不含 ruleR2/ruleR6——R2 应用层降级无 SWRL 规则、R6 为 DL 公理，属设计而非缺口，本次亦未触发。个体名（indApp1 等）为实例标识符非词汇表项，报告中以「个体名＋业务角色」并列标注 |
-| **W08 facet 校验缺口 ×4** | **有（值已合规）** | 票号 'PJ202604010012'、票面金额 500000、申请编号 'ZX202604200001'、期望贴现金额 495000 四值未在模拟侧做 pattern/facet 校验（具名 datatype BillNumberFormat／ApplicationNumberFormat／PositiveAmount，L2 承接）。人工比对 ttl pattern 原文（`PJ[0-9]{12}`／`ZX[0-9]{12}`／minExclusive 0）：四值均合规。**流程价值登记**：首版 fixture 票号 13 位、申请编号 APP 前缀两处违例被本报告 W08 登记项人工比对捕获（模拟侧不拦 facet 的设计下，登记+比对即兜底）——fixture 已修正重跑；本体侧「建模方案 §2.1⑧ 示例值同为超长形态」的系统性出入（编译缺口-2，编号位数假设待 G2 确认）仍为遗留，下轮 G1/S2 复核 |
+| **W08 facet 校验缺口 ×4** | **有（值已合规）** | 票号 'PJ202604010012'、票面金额 500000、申请编号 'ZX202604200001'、期望贴现金额 495000 四值未在模拟侧做 pattern/facet 校验（具名 datatype BillNumberFormat／ApplicationNumberFormat／PositiveAmount，L2 承接）。人工比对 ttl pattern 原文（`PJ[0-9]{12}`／`ZX[0-9]{12}`／minExclusive 0）：四值均合规（模拟侧不拦 facet 的设计下，W08 登记+人工比对即兜底）。遗留：本体侧「建模方案 §2.1⑧ 示例值同为超长形态」的系统性出入（编译缺口-2，编号位数假设待 G2 确认），下轮 G1/S2 复核 |
 
 ## 六、推理机原语数据（机械转录，防漂移）
 
@@ -172,7 +172,7 @@
    "code": "W08",
    "message": "属性 expectedDiscountAmount 为具名 datatype PositiveAmount（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 495000 未验证"
   },
-  "canonicalize 缓存命中（sha=ec85ca9598b4）"
+  "canonicalize 缓存命中（sha=5ff9b19917bb）"
  ]
 }
 ```

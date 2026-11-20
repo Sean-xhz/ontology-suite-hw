@@ -1,6 +1,6 @@
 {
  "source_ttl": "ontology.ttl",
- "ttl_sha": "ec85ca9598b4",
+ "ttl_sha": "5ff9b19917bb",
  "classes": [
   {
    "id": "AcceptableApplication",

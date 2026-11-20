@@ -4,7 +4,7 @@
  "query": "评估该 AAA 承兑人票据的贴现资格：R1 持票核对是否通过？R4 是否推导可贴现？给出逐条规则依据。",
  "ontology": {
   "ttl": "../建模run/ontology.ttl",
-  "sha": "ec85ca9598b4"
+  "sha": "5ff9b19917bb"
  },
  "consistency": "consistent",
  "inconsistency_detail": null,
@@ -107,7 +107,7 @@
    "code": "W08",
    "message": "属性 expectedDiscountAmount 为具名 datatype PositiveAmount（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 1188000 未验证"
   },
-  "canonicalize 缓存命中（sha=ec85ca9598b4）"
+  "canonicalize 缓存命中（sha=5ff9b19917bb）"
  ],
  "cache": {
   "dir": ".sim-cache",

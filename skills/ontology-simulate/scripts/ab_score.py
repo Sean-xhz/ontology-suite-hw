@@ -23,7 +23,7 @@ LLM-as-judge 在结构化知识上不可靠 → 机械判据只做确定性核�
                             [--carrier 载体名 --form-note 表单头部纪律行]
   python3 ab_score.py aggregate --scores 盲评分数.json --key 评分/key.json [--output 聚合报告.md]
 
-载体中立（2026-11-09 泛化修订）：表单标题载体名经 --carrier 传入（缺省=虚构示例载体；
+载体中立：表单标题载体名经 --carrier 传入（缺省=虚构示例载体；
 复现历史 run 表单时显式传入原载体名）；真实载体 run 必须传 --form-note 声明内部流转纪律。
 exit 0 正常；1 数据错误（缺应答/题库 schema 错）；2 环境/参数错。
 """
@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "..", "ontology-review", "scripts"))
 import review_extract as RX  # noqa: E402
 
 CAMEL = re.compile(r"\b[A-Z][a-zA-Z0-9]{2,}\b")
-# 族号口径（2026-11-09 修复）：不带尾 \b——「R15a/R18k」等后缀分支编号
+# 族号口径：不带尾 \b——「R15a/R18k」等后缀分支编号
 # 取前导数字为族号（与 build_vocab 的 ruleR(\d+) 口径一致；无后缀 gold 不受影响）
 RNUM = re.compile(r"\bR(\d+)")
 # 本体词汇白名单外的常见英文误报词（应答纪律允许的普通词）

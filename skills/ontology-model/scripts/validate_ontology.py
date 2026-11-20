@@ -18,7 +18,7 @@ validate_ontology.py —— 本体 TTL 机械校验（L1 语法 + L2 结构矛�
     L2-DATATYPE      具名枚举 datatype（owl:oneOf）——Pellet 值空间判空/拒跑陷阱
     L2-IMPORTS       owl:imports IRI 格式（不联网解析）
     L2-SWRL          swrl:Imp 结构统计（body/head 存在且非空、谓词/类声明情况）
-    L2-SWRL-FORM     SWRL 编译形态启发式（Pellet 2.3.1 限制⑪⑫，2026-11-02 真实载体 run 实证）：
+    L2-SWRL-FORM     SWRL 编译形态启发式（Pellet 2.3.1 限制⑪⑫，2026-11-02 实证）：
                      head 多原子（部分物化，结论静默丢失）+ body 同构（alpha 规范化
                      比对，判重丢弃其一）——均 warning 级，双通道标准形态见 prompt-generator.md
 
@@ -220,9 +220,9 @@ class Validator(object):
             ({"Asymmetric", "Symmetric"},
              "Asymmetric+Symmetric 共存：对称性要求 xPy→yPx，非对称性禁止之，直接矛盾"),
         ]
-        # 合法组合降 warning（2026-11-02 真实载体 run S4 轮 1 裁定：F+IFP=1:1 编码模式，
-        # 原 error 为误报——OWL 语义下仅当属性全域多于一个个体时才矛盾，业务中
-        # 「一一对应」声明是合法且常见的编码意图；降级后仍提示人工确认业务意图）
+        # 合法组合降 warning（F+IFP=1:1 编码模式——OWL 语义下仅当属性全域多于一个
+        # 个体时才矛盾，业务中「一一对应」声明是合法且常见的编码意图；降级后仍
+        # 提示人工确认业务意图）
         soft_conflicts = [
             ({"Functional", "InverseFunctional"},
              "Functional+InverseFunctional 共存：1:1 编码模式（合法用法）——OWL 语义下"
@@ -428,7 +428,7 @@ class Validator(object):
                                      "SWRL 规则 #%d 引用的谓词/类 %s 未在本体中声明（无 rdf:type）"
                                      % (idx, local_name(ref)), rule_loc)
 
-    # ---------- L2 SWRL 编译形态启发式（Pellet 限制⑪⑫，2026-11-02 真实载体 run 实证） ----------
+    # ---------- L2 SWRL 编译形态启发式（Pellet 限制⑪⑫，2026-11-02 实证） ----------
 
     def _atom_signature(self, atom, var_map):
         """SWRL 原子 → alpha 规范化签名：变量按首次出现序重命名（v0/v1/...），

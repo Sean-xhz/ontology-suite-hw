@@ -99,8 +99,7 @@ def compile_instance_ttl(inst, sig, prefix_header_text):
                 # 数值编码为数值字面量（swrlb 数值比较可用；具名 datatype
                 # 的 facet 约束本就由 SHACL 层〔R4〕承接——限制⑩对偶，模拟侧不做）。
                 # float 必须用引号词法形态 "0.7"^^xsd:decimal——数值短记法
-                # 带 ^^ 非法 Turtle（2026-11-09 真实载体 A/B run 首现修复；
-                # 引号形态与短记法 RDF term 等价）
+                # 带 ^^ 非法 Turtle（引号形态与短记法 RDF term 等价）
                 lit = str(val) if isinstance(val, int) else (
                     '"%s"^^<http://www.w3.org/2001/XMLSchema#decimal>' % val)
             else:
@@ -264,8 +263,8 @@ def humanize_diff(diff_lines, individual_names):
             "object": localname(o) if o.strip().startswith("<")
                       else o.strip().split("^^")[0].rsplit('"@', 1)[0].strip('"'),
             # 字面量词法提取：先切 ^^datatype 再切 " @lang 尾，最后去引号
-            # （2026-11-09 A/B run 修复：原顺序 strip('"') 在 split 前，
-            # 带 datatype 的字面量尾引号剥不掉——"不可准入"^^… → 不可准入"）
+            # （顺序纪律：带 datatype 的字面量须先切 datatype 再剥引号，
+            # 否则尾引号残留）
             "raw": line.strip()[:200],
             "instance_level": inst_level,
             "attribution": [],

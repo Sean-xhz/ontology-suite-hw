@@ -1,6 +1,6 @@
 # S3 生成 Prompt（ontology-generator 专用，四段式）
 
-> **用途**：S3 生成阶段——主会话委托 ontology-generator agent 时随任务下发的 Prompt 骨架；S4 辩护轮（配合 prompt-defense.md）复用同一角色设定。四段式=`【角色与任务】【输入】【输出格式】【质量规范】`（规范来源见 `CHANGELOG.md` 实证证据登记 D 节）。
+> **用途**：S3 生成阶段——主会话委托 ontology-generator agent 时随任务下发的 Prompt 骨架；S4 辩护轮（配合 prompt-defense.md）复用同一角色设定。四段式=`【角色与任务】【输入】【输出格式】【质量规范】`。
 > **消费方式**：`【角色与任务】【输入】【输出格式】【质量规范】`四段全文注入 agent 任务指令；`{{...}}` 占位符由主会话替换为 run 目录实际文件路径或内容。
 
 ---
@@ -33,7 +33,7 @@
 5. SKOS 概念（`skos:Concept` + prefLabel/altLabel/definition/broader）对应术语词典
 6. 扩展位三类（流程/权限/CRUD）不产出形式化构件——保留在建模方案 md 中
 
-**SWRL 硬规范 v2**（违反即规则不可执行；旧「bnode 包装层」规范已废止）：
+**SWRL 硬规范 v2**（违反即规则不可执行）：
 
 变量身份=节点身份。每条规则的变量声明为**具名** `swrl:Variable` 个体（每规则独立命名空间前缀防串扰，如 `:vR1_x`），body/head 各 atom 的 `swrl:argument1/2` **直接引用同一变量 IRI** 实现跨 atom 共享；head 中变量必须已在 body 绑定（安全性）。
 
@@ -95,7 +95,7 @@ swrl:argument1 [ rdf:type swrl:Variable ; swrl:argument1 :x ]
 1. **三层架构**：公共层概念对齐 FIBO（`owl:imports` 模块 IRI + `rdfs:subClassOf` 挂接；无对齐表则全部落领域层）；领域层承载场景概念；实例层仅放示例个体（虚构或脱敏，每个体注明 source）
 2. **反博物馆**：每个类/属性/规则在 `rdfs:comment` 中登记消费链路（哪个场景切片、哪条查询、哪步推理消费它）；描述集中无消费点的构件不编译
 3. **命名规范**：类名 PascalCase、属性名 camelCase、个体名 PascalCase 加实例前缀；IRI 统一 `{{base_iri}}` 前缀；中英文 label 均可，同一构件 label 语言一致
-4. **溯源**：由控制规则类描述句编译的每条 SWRL 规则，`rdfs:comment` 引用源描述句编号（如「源：4.1-规则3」）
+4. **溯源 annotation（s1-handoff-contract §五.2）**：描述集每条描述句的「来源」列（`doc_id / section_id / locator`）经编译挂 TTL annotation，使**每个构件可回溯到源单元**——类/属性/规则/SKOS Concept 附 `rdfs:isDefinedBy` 指向源文档/节（登记来源 IRI，如 `urn:source:<doc_id>#<section_id>`，非外部真实 IRI）+ `skos:note`（或 `rdfs:comment`）登记溯源字符串（源描述句编号 + doc_id/section_id/locator）。SWRL 规则 `rdfs:comment` 引用源描述句编号（如「源：4.1-规则3 / 票据贴现制度 / s004 / para:1」）。跨文档合并句挂多来源；无源句（专家口述新增）登记「专家口述/待确认」非留空。消费方：G1 回溯源页核验 / S4 审计引源 / S6 黄金用例溯源 / **产品参数变更时定位受影响 TTL 公理**（可持续维护命门）
 5. **W3C 语义精准**：区分组合/聚合等语境差异选择精准谓词；数值阈值保留原样（禁模糊化）；量化关系显式建模
 6. 输出顺序：prefixes → Ontology 声明 → 类层级 → 对象属性 → 数据属性 → disjoint 公理 → SWRL 规则 → SKOS 概念 → 示例个体 → 编译缺口登记（注释块）
 

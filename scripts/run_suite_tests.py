@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""run_suite_tests.py —— 本体能力套件统一验收入口（N5）。
+"""run_suite_tests.py —— 本体能力套件统一验收入口。
 
-以 examples/ 虚构载体为 fixture，编排套件 README 验收表 T1-T12 + py_compile，
+以 examples/ 虚构载体为 fixture，编排套件 README 验收表 T1-T15 + py_compile，
 替代分散的手工命令组合；CI（.github/workflows/tests.yml）消费本入口。
 
 设计纪律：
   - 零副作用：一切输出落临时目录（签名/校验报告/物化结果/缓存/closeout 报告）；
     子进程统一 PYTHONPYCACHEPREFIX 指向临时目录；examples/ 只读。
   - T4 全量一致口径：冻结 signature 与当前引擎输出 JSON 全量相等 + 双跑字节确定性
-    （2026-11-11 引擎维护批次修复 parse_ttl bnode 非确定性后，由计数口径升级；
-    历史三类漂移〔union 字段/bnode 域标签/? 前缀〕已经冻结件重生成消除）。
+    （确定性纪律：输出禁含 bnode 随机标签，跨进程零漂移）。
   - T8 需 Java（Pellet ≥25）：--skip-java 强制跳过；引擎 exit 2（环境不可用）自动
     登记 SKIP——两者均不计 FAIL。
   - exit 0 = 全过（SKIP 已登记）；exit 1 = 存在 FAIL；exit 2 = 用法/fixture 错。
@@ -32,6 +31,56 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SUITE = os.path.dirname(HERE)
 BRAND_RE = re.compile(r"万[业]贷|微[业]贷|万[连]融|货[通]宝|车[主]融")
+
+# T14 fixture 生成器（虚构票据中性，一次生成于 tmp；子进程执行，py3.9 兼容）。
+# Office 保存字节跨次不稳是源件属性——契约=同源字节→同包字节，故 fixture 一次生成解析两次。
+T14_FIXTURE_GEN = r'''
+import os, sys
+fix = sys.argv[1]
+import docx, openpyxl
+from pptx import Presentation
+from pptx.util import Inches
+from PIL import Image
+d = docx.Document()
+d.add_heading("票据定义", level=1)
+d.add_paragraph("票据是指由出票人签发的、约定无条件支付确定金额的有价证券，包括汇票与本票。")
+d.add_heading("贴现准入规则", level=1)
+d.add_paragraph("若持票人信用评级不低于 AA，则允许贴现；贴现率阈值照录为 0.035，不得上浮。")
+t = d.add_table(rows=3, cols=2)
+t.cell(0,0).text="产品"; t.cell(0,1).text="费率"
+t.cell(1,0).text="银票贴现"; t.cell(1,1).text="0.035"
+t.cell(2,0).text="商票贴现"; t.cell(2,1).text="0.058"
+d.save(os.path.join(fix,"票据贴现制度.docx"))
+wb=openpyxl.Workbook(); ws=wb.active; ws.title="费率表"
+ws["A1"]="产品"; ws["B1"]="费率"; ws["A2"]="银票贴现"; ws["B2"]=0.035
+ws["A3"]="商票贴现"; ws["B3"]=0.058; ws["C1"]="上浮后"; ws["C2"]="=B2*1.1"
+ws.merge_cells("A5:B5"); ws["A5"]="合计说明"
+wb.save(os.path.join(fix,"票据费率表.xlsx"))
+prs=Presentation(); slide=prs.slides.add_slide(prs.slide_layouts[5])
+slide.shapes.title.text="票据贴现流程"
+tb=slide.shapes.add_textbox(Inches(1),Inches(2),Inches(6),Inches(1))
+tb.text_frame.text="贴现流程分为申请、审核、放款三个环节，须先审核后放款。"
+tbl=slide.shapes.add_table(2,2,Inches(1),Inches(3),Inches(5),Inches(1)).table
+tbl.cell(0,0).text="环节"; tbl.cell(0,1).text="权限"; tbl.cell(1,0).text="审核"; tbl.cell(1,1).text="须确认"
+slide.notes_slide.notes_text_frame.text="专家口述：审核环节须双人复核，此为权威制度补充。"
+prs.save(os.path.join(fix,"票据流程.pptx"))
+objs=[b"<< /Type /Catalog /Pages 2 0 R >>",
+ b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+ b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>"]
+stream=b"BT /F1 12 Tf 72 720 Td (Bill Discount Rule: rate threshold 0.035) Tj ET"
+objs.append(b"<< /Length "+str(len(stream)).encode()+b" >>\nstream\n"+stream+b"\nendstream")
+objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+out=b"%PDF-1.4\n"; offsets=[]
+for i,o in enumerate(objs):
+    offsets.append(len(out)); out+=str(i+1).encode()+b" 0 obj\n"+o+b"\nendobj\n"
+xref=len(out); out+=b"xref\n0 "+str(len(objs)+1).encode()+b"\n0000000000 65535 f \n"
+for off in offsets: out+=("%010d 00000 n \n"%off).encode()
+out+=b"trailer\n<< /Size "+str(len(objs)+1).encode()+b" /Root 1 0 R >>\nstartxref\n"+str(xref).encode()+b"\n%%EOF\n"
+open(os.path.join(fix,"bill_rule.pdf"),"wb").write(out)
+im=Image.new("RGB",(200,100),(240,240,255)); im.save(os.path.join(fix,"票据样本.png"))
+Image.open(os.path.join(fix,"票据样本.png")).save(os.path.join(fix,"票据扫描件.pdf"),"PDF",resolution=100.0)
+print("fixtures ok")
+'''
 
 
 def sha256(path):
@@ -86,7 +135,7 @@ class SuiteTests:
     # ---- T0 py_compile（全部 skill 脚本，编译产物落临时目录）----
     def t0_py_compile(self):
         n, errs = 0, []
-        for sk in ("ontology-model", "ontology-review", "ontology-simulate"):
+        for sk in ("ontology-model", "ontology-review", "ontology-simulate", "ontology-ingest"):
             d = os.path.join(self.skills, sk, "scripts")
             for f in sorted(os.listdir(d)):
                 if not f.endswith(".py"):
@@ -109,7 +158,7 @@ class SuiteTests:
         m = re.search(r"PASS (\d+) / FAIL (\d+)", p.stdout)
         ok = (p.returncode == 0 and m and m.group(2) == "0"
               and int(m.group(1)) >= 10)
-        self.record("T1", "review self_test（E1-E10）",
+        self.record("T1", "review self_test（E1-E14）",
                     "PASS" if ok else "FAIL",
                     m.group(0) if m else (p.stderr or p.stdout)[-200:])
 
@@ -536,6 +585,596 @@ class SuiteTests:
                     "PASS" if ok else "FAIL",
                     "｜".join(details) + ("｜零回写 ✓" if zero_writeback else "｜零回写 ✗"))
 
+    # ---- T13 D2/D4 审阅页图形化+拖拽编辑端到端（6 子例，supply→产页→patch→引擎，tmp 零副作用）----
+    def t13_d2d4(self):
+        before = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        rx = self.script("ontology-review", "review_extract.py")
+        bp = self.script("ontology-review", "build_review_page.py")
+        engine = self.script("ontology-model", "incremental_patch.py")
+        base_sha = sha256(self.ttl)
+        details, fails = [], []
+        rj = os.path.join(self.tmp, "t13.review.json")
+        page = os.path.join(self.tmp, "t13.page.html")
+
+        # T13a supply→产页：extract schema 1.1 + build exit0 + D2/D4 token + app 块 node --check 逐块
+        pa = self.py(rx, self.run, "--output", rj)
+        pb = self.py(bp, rj, "--output", page)
+        D = json.load(open(rj, encoding="utf-8")) if os.path.exists(rj) else {}
+        a_ok = (pa.returncode == 0 and pb.returncode == 0 and os.path.exists(page)
+                and D.get("schema_version") == "1.1" and bool(D.get("iri_map")))
+        if a_ok:
+            html = open(page, encoding="utf-8").read()
+            toks = ["GRAPHS", "print-only", "data-anchor-graph", "d4-toggle", "axiom_graph"]
+            blocks = re.findall(r"<script>(.*?)</script>", html, re.S)
+            a_ok = (all(t in html for t in toks) and "__DATA_JSON__" not in html
+                    and len(blocks) == 4)
+            if a_ok:
+                appf = os.path.join(self.tmp, "t13.app.js")
+                with open(appf, "w", encoding="utf-8") as fh:
+                    fh.write(blocks[-1])
+                nc = subprocess.run(["node", "--check", appf], capture_output=True, text=True)
+                a_ok = nc.returncode == 0
+        details.append("a=supply1.1/产页token/node逐块" if a_ok else "a FAIL")
+        if not a_ok:
+            fails.append("a")
+
+        # patch 构造器（从 supply 镜像前端映射；patch_id 内容哈希同 self_test.d4_patch_id）
+        def canon(o):
+            return json.dumps(o, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+        def pid(ops):
+            return "P-d4-" + hashlib.sha256(
+                canon({"baseline": base_sha, "operations": ops}).encode("utf-8")).hexdigest()[:12]
+
+        iris = D.get("iri_map", {})
+        lit = D.get("literal_meta", {})
+        enums = D.get("enum_literals", {})
+        ci = iris.get("classes", {})
+        opi = iris.get("object_properties", {})
+
+        def mkpatch(ops, tag):
+            p = {"schema_version": "1.0", "patch_id": pid(ops),
+                 "baseline": {"path": "ontology.ttl", "sha256": base_sha},
+                 "source": {"channel": "d4", "ref": "t13-" + tag},
+                 "base_version": D.get("supply_meta", {}).get("ontology_version"),
+                 "bump": "auto", "operations": ops}
+            f = os.path.join(self.tmp, tag + ".patch.json")
+            with open(f, "w", encoding="utf-8") as fh:
+                json.dump(p, fh, ensure_ascii=False)
+            return f
+
+        def run_engine(pf, tag, golden=True):
+            d = os.path.join(self.tmp, tag + ".draft.ttl")
+            rep = os.path.join(self.tmp, tag + ".report.json")
+            args = [engine, self.ttl, pf, "--output-draft", d, "--report", rep]
+            if golden:
+                args += ["--golden", self.cases]
+            pr = self.py(*args)
+            r = json.load(open(rep, encoding="utf-8")) if os.path.exists(rep) else None
+            return pr.returncode, r, d
+
+        # T13b 5 类 patch 正例（label/comment=PATCH annotation；enum/subclass/range=MINOR）
+        bill = ci.get("Bill", "")
+        b_ok = True
+        b_detail = []
+        # label（modify_label，lang 省略引擎继承）
+        pf = mkpatch([{"op": "modify_label", "target": bill, "label": "票据（T13 验收）"}], "t13b_label")
+        rc, r, d = run_engine(pf, "t13b_label")
+        ok = rc == 0 and r and r["version"]["bump_applied"] == "patch" and os.path.exists(d)
+        b_ok &= ok
+        b_detail.append("label" if ok else "label✗")
+        # comment（存在→replace_literal 全等保 lang；缺失→add_triple）
+        com = (lit.get("class:Bill", {}) or {}).get("comment")
+        if com:
+            newc = {"value": "T13 端到端注释"}
+            if com.get("lang"):
+                newc["lang"] = com["lang"]
+            elif com.get("datatype"):
+                newc["datatype"] = com["datatype"]
+            cops = [{"op": "replace_literal", "s": bill, "p": "rdfs:comment", "old": com, "new": newc}]
+        else:
+            cops = [{"op": "add_triple", "s": bill, "p": "rdfs:comment", "o": {"value": "T13 端到端注释"}}]
+        pf = mkpatch(cops, "t13b_comment")
+        rc, r, d = run_engine(pf, "t13b_comment")
+        ok = rc == 0 and r and r["version"]["bump_applied"] == "patch" and os.path.exists(d)
+        b_ok &= ok
+        b_detail.append("comment" if ok else "comment✗")
+        # MINOR 三例（skip-java 档不带 --golden→not-requested，照 T11b 体例）
+        minor_golden = not self.skip_java
+        # enum 已划款→已付款（golden 引用 0 次回归中性）
+        ast = enums.get("applicationStatus", [])
+        oldv = next((e for e in ast if e["value"] == "已划款"), None)
+        if oldv:
+            newv = {"value": "已付款"}
+            if oldv.get("lang"):
+                newv["lang"] = oldv["lang"]
+            elif oldv.get("datatype"):
+                newv["datatype"] = oldv["datatype"]
+            eops = [{"op": "replace_literal", "p": "rdf:first", "old": oldv, "new": newv}]
+            pf = mkpatch(eops, "t13b_enum")
+            rc, r, d = run_engine(pf, "t13b_enum", golden=minor_golden)
+            ok = rc == 0 and r and r["version"]["bump_applied"] == "minor" and os.path.exists(d)
+        else:
+            ok = False
+        b_ok &= ok
+        b_detail.append("enum" if ok else "enum✗")
+        # subclass Discountable reparent Bill→Holder（恰 1 具名父）
+        sops = [{"op": "remove_triple", "s": ci.get("Discountable", ""), "p": "rdfs:subClassOf", "o": bill},
+                {"op": "add_triple", "s": ci.get("Discountable", ""), "p": "rdfs:subClassOf", "o": ci.get("Holder", "")}]
+        pf = mkpatch(sops, "t13b_subclass")
+        rc, r, d = run_engine(pf, "t13b_subclass", golden=minor_golden)
+        ok = rc == 0 and r and r["version"]["bump_applied"] == "minor" and os.path.exists(d)
+        b_ok &= ok
+        b_detail.append("subclass" if ok else "subclass✗")
+        # range hasAcceptor Acceptor→Holder
+        ha = next((p for p in D.get("object_properties", []) if p["ttl"]["id"] == "hasAcceptor"), None)
+        old_range = ha["ttl"].get("range") if ha else None
+        rops = [{"op": "remove_triple", "s": opi.get("hasAcceptor", ""), "p": "rdfs:range", "o": ci.get(old_range, "")},
+                {"op": "add_triple", "s": opi.get("hasAcceptor", ""), "p": "rdfs:range", "o": ci.get("Holder", "")}]
+        pf = mkpatch(rops, "t13b_range")
+        rc, r, d = run_engine(pf, "t13b_range", golden=minor_golden)
+        ok = rc == 0 and r and r["version"]["bump_applied"] == "minor" and os.path.exists(d)
+        b_ok &= ok
+        b_detail.append("range" if ok else "range✗")
+        details.append("b=" + "/".join(b_detail) + ("(skip-java)" if self.skip_java else ""))
+        if not b_ok:
+            fails.append("b")
+
+        # T13c 负例：G1 12 位 sha→exit2 不产 draft；G2 裸文本 old→exit2（0 匹配）
+        pf = mkpatch([{"op": "modify_label", "target": bill, "label": "x"}], "t13c_sha12")
+        p = json.load(open(pf, encoding="utf-8"))
+        p["baseline"]["sha256"] = base_sha[:12]
+        json.dump(p, open(pf, "w", encoding="utf-8"), ensure_ascii=False)
+        rc, r, d = run_engine(pf, "t13c_sha12", golden=False)
+        c1 = rc == 2 and not os.path.exists(d)
+        neg2 = {"schema_version": "1.0", "patch_id": "P-d4-negg2",
+                "baseline": {"path": "ontology.ttl", "sha256": base_sha},
+                "source": {"channel": "d4", "ref": "t13c"}, "bump": "auto",
+                "operations": [{"op": "replace_literal", "s": bill, "p": "rdfs:comment",
+                                "old": "裸文本无编码", "new": {"value": "x"}}]}
+        pf2 = os.path.join(self.tmp, "t13c_g2.patch.json")
+        json.dump(neg2, open(pf2, "w", encoding="utf-8"), ensure_ascii=False)
+        rc2, r2, d2 = run_engine(pf2, "t13c_g2", golden=False)
+        c_ok = c1 and rc2 == 2
+        details.append("c=sha12/G2 exit2" if c_ok else "c FAIL")
+        if not c_ok:
+            fails.append("c")
+
+        # T13d 回归翻转：已提交→已递交 --golden→exit1 newly_failed G1（skip-java/无 Java→SKIP 登记）
+        if self.skip_java:
+            d_ok, d_detail = True, "d=SKIP(skip-java，翻转检出需 Java)"
+        else:
+            fops = [{"op": "replace_literal", "p": "rdf:first",
+                     "old": {"value": "已提交"}, "new": {"value": "已递交"}}]
+            pf = mkpatch(fops, "t13d_flip")
+            rc, r, d = run_engine(pf, "t13d_flip")
+            if r and r["regression"]["verdict"] == "downgraded":
+                d_ok, d_detail = True, "d=SKIP(Java 不可用，MINOR 降级)"
+            else:
+                d_ok = rc == 1 and r and "G1" in r["regression"].get("newly_failed", [])
+                d_detail = "d=回归翻转 G1" if d_ok else "d FAIL"
+        details.append(d_detail)
+        if not d_ok:
+            fails.append("d")
+
+        # T13e 确定性：同 label patch（内容哈希 patch_id）跨进程双跑 draft 字节一致
+        pf = mkpatch([{"op": "modify_label", "target": bill, "label": "票据（T13 确定性）"}], "t13e_a")
+        rc1, r1, da = run_engine(pf, "t13e_a")
+        rc2, r2, db = run_engine(pf, "t13e_b")
+        e_ok = os.path.exists(da) and os.path.exists(db) and open(da, "rb").read() == open(db, "rb").read()
+        details.append("e=双跑字节一致" if e_ok else "e FAIL")
+        if not e_ok:
+            fails.append("e")
+
+        # T13f merge 输出隔离：进程内 parse_ttl+supply+merge 后 build_signature==冻结件（T4 补充）
+        review_dir = os.path.dirname(rx)
+        sim_dir = os.path.dirname(self.script("ontology-simulate", "extract_signature.py"))
+        scheme = os.path.join(self.run, "建模方案.md")
+        code = (
+            "import sys,json; sys.path.insert(0,r'%s'); sys.path.insert(0,r'%s');"
+            "import review_extract as RX; import extract_signature as ES;"
+            "ttl=RX.parse_ttl(r'%s'); assert 'supply' in ttl;"
+            "md=RX.parse_scheme_md(r'%s'); merged=RX.merge(ttl,md,r'%s');"
+            "assert merged.get('schema_version')=='1.1';"
+            "sig=ES.build_signature(r'%s'); frozen=json.load(open(r'%s',encoding='utf-8'));"
+            "assert sig==frozen,'T4 drift'; print('merge+supply isolation ok')"
+        ) % (review_dir, sim_dir, self.ttl, scheme, self.run, self.ttl, self.sig)
+        pf = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+        f_ok = pf.returncode == 0
+        details.append("f=merge隔离T4零漂移" if f_ok else "f FAIL:" + (pf.stderr or pf.stdout)[-100:])
+        if not f_ok:
+            fails.append("f")
+
+        after = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        zero_writeback = before == after
+        if not zero_writeback:
+            fails.append("zero-writeback")
+        ok = not fails
+        self.record("T13", "D2/D4 审阅页图形化+拖拽编辑端到端（6 子例）",
+                    "PASS" if ok else "FAIL",
+                    "｜".join(details) + ("｜零回写 ✓" if zero_writeback else "｜零回写 ✗"))
+
+    # ---- T14 ingest 2.1 保真进料机械层（纯 pip，入口库探测缺→整条 SKIP，照 T8 java SKIP 先例）----
+    def t14_ingest(self):
+        probe = self.py("-c", "import pypdf, pypdfium2, docx, openpyxl, pptx, PIL")
+        if probe.returncode != 0:
+            self.record("T14", "ingest 2.1 保真进料机械层（10 子例）", "SKIP",
+                        "解析渲染库未装（pypdf/pypdfium2/python-docx/openpyxl/python-pptx/Pillow），pip install 后重跑")
+            return
+        before = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        details, fails = [], []
+        fix = os.path.join(self.tmp, "t14_fix")
+        os.makedirs(fix, exist_ok=True)
+        gen = self.py("-c", T14_FIXTURE_GEN, fix)
+        if gen.returncode != 0:
+            self.record("T14", "ingest 2.1 保真进料机械层（10 子例）", "FAIL",
+                        "fixture 生成失败：" + (gen.stderr or gen.stdout)[-200:])
+            return
+        names = ["票据贴现制度.docx", "票据费率表.xlsx", "票据流程.pptx",
+                 "bill_rule.pdf", "票据样本.png", "票据扫描件.pdf"]
+        srcs = [os.path.join(fix, n) for n in names]
+        src_before = {p: sha256(p) for p in srcs}
+        docx_p, xlsx_p, pptx_p, pdf_p, png_p, scan_p = srcs
+        parser = self.script("ontology-ingest", "parse_documents.py")
+
+        def parse(inputs, out, extra=None):
+            # --no-office-render 强制 substrate-only canonical 档：T14 环境无关（CI 装 LibreOffice 亦同）
+            return self.py(parser, *(inputs + ["--output-dir", out, "--no-office-render"] + (extra or [])))
+
+        def load(out, did):
+            return json.load(open(os.path.join(out, did, "manifest.json"), encoding="utf-8"))
+
+        def md_text(out, did):
+            return open(os.path.join(out, did, did + ".md"), encoding="utf-8").read()
+
+        # a 四文本格式 schema 2.1（DOCX/XLSX/PPTX substrate + PDF rendered_image，全 prepared）
+        out_a = os.path.join(self.tmp, "t14_a")
+        pa = parse([docx_p, xlsx_p, pptx_p, pdf_p], out_a,
+                   ["--authority", "正式制度", "--sensitivity", "虚构通用"])
+        a_ok = pa.returncode == 0
+        if a_ok:
+            md_ = load(out_a, "票据贴现制度"); mx = load(out_a, "票据费率表")
+            mp = load(out_a, "票据流程"); mf = load(out_a, "bill_rule")
+            blob = json.dumps([md_, mx, mp, mf], ensure_ascii=False)
+            a_ok = (all(m["schema_version"] == "2.1" for m in [md_, mx, mp, mf])
+                    and all(s["extraction"] == "prepared" for m in [md_, mx, mp, mf] for s in m["sections"])
+                    and md_["source"]["sha256"] == src_before[docx_p]
+                    and md_["sections"][0]["substrate"] is not None  # DOCX 结构化 substrate
+                    and mx["sections"][0]["substrate"] is not None    # XLSX 网格 substrate
+                    and mp["sections"][0]["substrate"] is not None    # PPTX 位置 substrate
+                    and mf["sections"][0]["rendered_image"] is not None  # PDF 渲染页图
+                    and mf["sections"][0]["substrate"] is None
+                    and "0.035" in blob
+                    and any("商务参数" in s["sensitive_flags"] for s in md_["sections"])
+                    and any(t["term"] == "票据定义" for t in md_["term_candidates"])
+                    and any(s["locator"].get("sheet") == "费率表" for s in mx["sections"])
+                    and any(s["locator"].get("kind") == "slide" for s in mp["sections"])
+                    and "| 产品 | 费率 |" in md_text(out_a, "票据贴现制度")
+                    and md_["parser"]["libreoffice_render"] is False  # --no-office-render 生效
+                    and len(md_["sections"]) == 1)                    # substrate-only DOCX 单节
+        details.append("a=四格式schema2.1" if a_ok else "a FAIL")
+        if not a_ok:
+            fails.append("a")
+
+        # b 图片 rendered_image 直供（prepared，inventory items=[]，零 LLM 结构断言）
+        out_b = os.path.join(self.tmp, "t14_b")
+        pb = parse([png_p], out_b)
+        b_ok = pb.returncode == 0
+        if b_ok:
+            mb = load(out_b, "票据样本"); s0 = mb["sections"][0]; att = mb["attachments"][0]
+            att_path = os.path.join(out_b, "票据样本", "attachments", att["name"])
+            b_ok = (s0["text"] is None and s0["extraction"] == "prepared"
+                    and s0["rendered_image"] is not None
+                    and s0["inventory"]["items"] == []
+                    and att["sha256"] == src_before[png_p]
+                    and sha256(att_path) == src_before[png_p])
+        details.append("b=图片rendered直供" if b_ok else "b FAIL")
+        if not b_ok:
+            fails.append("b")
+
+        # c 契约错四连 + 坏文件（各 exit2 不产包；--force 覆盖 exit0）
+        rc1 = parse([os.path.join(fix, "不存在.docx")], os.path.join(self.tmp, "t14_c1")).returncode
+        xyz = os.path.join(fix, "x.xyz")
+        open(xyz, "w").write("x")
+        rc2 = parse([xyz], os.path.join(self.tmp, "t14_c2")).returncode
+        rc3 = parse([docx_p], out_a).returncode  # 再解析守卫（out_a 非空）
+        rc4 = parse([docx_p], out_a, ["--force"]).returncode
+        bad = os.path.join(fix, "坏.pdf")
+        open(bad, "wb").write(b"%PDF-1.4 garbage")
+        rc5 = parse([bad], os.path.join(self.tmp, "t14_c5")).returncode
+        c_ok = (rc1 == 2 and rc2 == 2 and rc3 == 2 and rc4 == 0 and rc5 == 2)
+        details.append("c=契约错exit2" if c_ok else "c FAIL%s" % [rc1, rc2, rc3, rc4, rc5])
+        if not c_ok:
+            fails.append("c")
+
+        # d 扫描页整页渲染（2.0 反转：image-only-page gap + rendered_image PNG + inventory items=[]）
+        out_d = os.path.join(self.tmp, "t14_d")
+        pd_ = parse([scan_p], out_d)
+        d_ok = pd_.returncode == 0
+        if d_ok:
+            ms = load(out_d, "票据扫描件"); s0 = ms["sections"][0]
+            ri = s0["rendered_image"]
+            att_path = os.path.join(out_d, "票据扫描件", "attachments", ri["name"])
+            d_ok = (any(g["kind"] == "image-only-page" for g in ms["gaps"])
+                    and s0["extraction"] == "prepared" and s0["text"] is None
+                    and ri is not None and s0["inventory"]["items"] == []
+                    and os.path.isfile(att_path) and sha256(att_path) == ri["sha256"]
+                    and ri["bytes"] > 0)
+        details.append("d=扫描页整页渲染" if d_ok else "d FAIL")
+        if not d_ok:
+            fails.append("d")
+
+        # e 双跑全量字节等（无豁免条款，MD+manifest+attachments 含 PDF→PNG 渲染）
+        out_e1 = os.path.join(self.tmp, "t14_e1"); out_e2 = os.path.join(self.tmp, "t14_e2")
+        parse(srcs, out_e1); parse(srcs, out_e2)
+        e_ok = True
+        for did in os.listdir(out_e1):
+            d1 = os.path.join(out_e1, did); d2 = os.path.join(out_e2, did)
+            for root_, _, files in os.walk(d1):
+                for fn in files:
+                    p1 = os.path.join(root_, fn)
+                    p2 = os.path.join(d2, os.path.relpath(p1, d1))
+                    if not os.path.exists(p2) or open(p1, "rb").read() != open(p2, "rb").read():
+                        e_ok = False
+        details.append("e=双跑字节等含渲染" if e_ok else "e FAIL")
+        if not e_ok:
+            fails.append("e")
+
+        # f 零回写（tmp 源件 + 冻结三件 ttl/cases/sig）
+        after = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        src_after = {p: sha256(p) for p in srcs}
+        f_ok = before == after and src_before == src_after
+        details.append("f=零回写" if f_ok else "f FAIL")
+        if not f_ok:
+            fails.append("f")
+
+        # g 边界矩阵（xlsx 公式无缓存/合并单元格 + pptx 备注进 inventory/substrate）
+        mx = load(out_a, "票据费率表"); mp = load(out_a, "票据流程")
+        mp_blob = json.dumps(mp, ensure_ascii=False)
+        g_ok = (any(g["kind"] == "formula-no-cache" for g in mx["gaps"])
+                and "=B2*1.1" in json.dumps(mx, ensure_ascii=False)
+                and "合计说明" in json.dumps(mx, ensure_ascii=False)
+                and "专家口述" in mp_blob  # 备注进 substrate/inventory（非 1.0 heading 子节）
+                and "bbox=" in mp_blob)    # PPTX 位置 substrate bbox 坐标
+        details.append("g=边界矩阵" if g_ok else "g FAIL")
+        if not g_ok:
+            fails.append("g")
+
+        # h 清洁 md 零机器锚（全格式正文 grep 机器锚零命中）
+        import re as _re
+        anchor_pat = _re.compile(r"locator:|extraction:|## \[s|<!--|text_sha256|sensitive_flags")
+        h_ok = True
+        for did in ("票据贴现制度", "票据费率表", "票据流程", "bill_rule"):
+            if anchor_pat.search(md_text(out_a, did)):
+                h_ok = False
+        if anchor_pat.search(md_text(out_b, "票据样本")):
+            h_ok = False
+        details.append("h=清洁md零机器锚" if h_ok else "h FAIL")
+        if not h_ok:
+            fails.append("h")
+
+        # i inventory ground truth（PDF 文本层/XLSX 单元格/DOCX 段落，I3 交叉校验防漏字依据）
+        mf = load(out_a, "bill_rule"); mx = load(out_a, "票据费率表"); md_ = load(out_a, "票据贴现制度")
+        i_ok = (mf["sections"][0]["inventory"]["kind"] == "pdf-text-layer"
+                and any("0.035" in it for it in mf["sections"][0]["inventory"]["items"])
+                and mx["sections"][0]["inventory"]["kind"] == "xlsx-cell"
+                and any("银票贴现" in it for it in mx["sections"][0]["inventory"]["items"])
+                and md_["sections"][0]["inventory"]["kind"] == "docx-paragraph"
+                and md_["sections"][0]["inventory"]["count"] > 0)
+        details.append("i=inventory-ground-truth" if i_ok else "i FAIL")
+        if not i_ok:
+            fails.append("i")
+
+        # j 接缝 affordance 准备态（2.1：unit_type/verification_status/md_heading=null，
+        #   personal_info_regions=[]，机械层初始化、I2 LLM 回填前恒为准备态，s1-handoff-contract）
+        j_ok = True
+        for out_, dids in ((out_a, ("票据贴现制度", "票据费率表", "票据流程", "bill_rule")),
+                           (out_b, ("票据样本",)), (out_d, ("票据扫描件",))):
+            for did in dids:
+                for s in load(out_, did)["sections"]:
+                    if not (s["unit_type"] is None and s["verification_status"] is None
+                            and s["personal_info_regions"] == [] and s["md_heading"] is None):
+                        j_ok = False
+        details.append("j=接缝affordance准备态" if j_ok else "j FAIL")
+        if not j_ok:
+            fails.append("j")
+
+        ok = not fails
+        self.record("T14", "ingest 2.1 保真进料机械层（10 子例）", "PASS" if ok else "FAIL",
+                    "｜".join(details))
+
+    # ---- T15 D3c SPARQL Read 查询模板派生（7 子例，纯 rdflib 内置 SPARQL 1.1，无 Java 无 SKIP）----
+    def t15_sparql(self):
+        from rdflib import Graph, Literal
+        from rdflib.plugins.sparql import prepareQuery
+        before = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        derive = self.script("ontology-model", "derive_sparql.py")
+        details, fails = [], []
+
+        # 虚构票据 T15 fixture（运行时 tmp 生成，examples 零改动；base bill-discount-test；
+        # 6 类〔5 非 derived + Discountable derived ⊑ Bill〕/3 对象/5 数据/1 SWRL/2 hasKey/2 facet + 6 ABox）
+        FIX = r'''@prefix : <http://example.org/bill-discount-test#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix swrl: <http://www.w3.org/2003/11/swrl#> .
+@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
+
+:Bill a owl:Class ; rdfs:label "票据"@zh .
+:Acceptor a owl:Class ; rdfs:label "承兑人"@zh .
+:Holder a owl:Class ; rdfs:label "持票人"@zh .
+:EndorsementRecord a owl:Class ; rdfs:label "背书记录"@zh .
+:DiscountApplication a owl:Class ; rdfs:label "贴现申请"@zh .
+:Discountable a owl:Class ; rdfs:subClassOf :Bill ; rdfs:label "可贴现票据"@zh .
+
+:currentHolder a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain :Bill ; rdfs:range :Holder .
+:hasEndorser a owl:ObjectProperty ; rdfs:domain :EndorsementRecord ; rdfs:range :Holder .
+:targetsBill a owl:ObjectProperty ; rdfs:domain :DiscountApplication ; rdfs:range :Bill .
+
+:BillNumberFormat a rdfs:Datatype ; owl:onDatatype xsd:string ; owl:withRestrictions ( [ xsd:pattern "PJ[0-9]{12}" ] ) .
+:PositiveAmount a rdfs:Datatype ; owl:onDatatype xsd:decimal ; owl:withRestrictions ( [ xsd:minExclusive "0"^^xsd:decimal ] ) .
+
+:billNumber a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain :Bill ; rdfs:range :BillNumberFormat .
+:faceAmount a owl:DatatypeProperty ; rdfs:domain :Bill ; rdfs:range :PositiveAmount .
+:applicationStatus a owl:DatatypeProperty ; rdfs:domain :DiscountApplication ; rdfs:range [ rdf:type rdfs:Datatype ; owl:oneOf ( "已提交" "审核中" "已通过" ) ] .
+:creditRating a owl:DatatypeProperty ; rdfs:domain :Acceptor ; rdfs:range [ rdf:type rdfs:Datatype ; owl:oneOf ( "AAA" "AA" "A" ) ] .
+:unifiedSocialCreditCode a owl:DatatypeProperty ; rdfs:domain :Acceptor ; rdfs:range xsd:string .
+
+:Bill owl:hasKey ( :billNumber ) .
+:Acceptor owl:hasKey ( :unifiedSocialCreditCode ) .
+
+:vR1_b a swrl:Variable .
+:vR1_m a swrl:Variable .
+:ruleR1 a swrl:Imp ;
+    swrl:body (
+        [ a swrl:ClassAtom ; swrl:classPredicate :Bill ; swrl:argument1 :vR1_b ]
+        [ a swrl:DatavaluedPropertyAtom ; swrl:propertyPredicate :faceAmount ; swrl:argument1 :vR1_b ; swrl:argument2 :vR1_m ]
+        [ a swrl:BuiltinAtom ; swrl:builtin swrlb:greaterThan ; swrl:arguments ( :vR1_m 100000 ) ]
+    ) ;
+    swrl:head (
+        [ a swrl:ClassAtom ; swrl:classPredicate :Discountable ; swrl:argument1 :vR1_b ]
+    ) .
+
+:bill1 a :Bill ; :billNumber "PJ000000000001" ; :faceAmount 150000 ; :currentHolder :holder1 .
+:bill2 a :Discountable ; :billNumber "PJ000000000002" ; :faceAmount 80000 ; :currentHolder :holder1 .
+:holder1 a :Holder .
+:acceptor1 a :Acceptor ; :unifiedSocialCreditCode "91110000TEST0001XX" ; :creditRating "AAA" .
+:app1 a :DiscountApplication ; :applicationStatus "审核中" ; :targetsBill :bill1 .
+:endorsement1 a :EndorsementRecord ; :hasEndorser :holder1 .
+'''
+        fix = os.path.join(self.tmp, "t15.fixture.ttl")
+        with open(fix, "w", encoding="utf-8") as fh:
+            fh.write(FIX)
+        src_before = sha256(fix)
+        B = "http://example.org/bill-discount-test#"
+
+        # T15a 派生双跑字节一致（json+md+report）+ 19 计数锚（纯 rdflib 无 Java）
+        j1 = os.path.join(self.tmp, "t15a.json")
+        m1 = os.path.join(self.tmp, "t15a.md")
+        r1 = os.path.join(self.tmp, "t15a.report.json")
+        j2 = os.path.join(self.tmp, "t15a2.json")
+        m2 = os.path.join(self.tmp, "t15a2.md")
+        r2 = os.path.join(self.tmp, "t15a2.report.json")
+        pa1 = self.py(derive, fix, "--output-json", j1, "--output-md", m1, "--report", r1)
+        pa2 = self.py(derive, fix, "--output-json", j2, "--output-md", m2, "--report", r2)
+        a_ok = (pa1.returncode == 0 and pa2.returncode == 0 and os.path.exists(j2)
+                and open(j1, "rb").read() == open(j2, "rb").read()
+                and open(m1, "rb").read() == open(m2, "rb").read()
+                and open(r1, "rb").read() == open(r2, "rb").read())
+        lib = json.load(open(j1, encoding="utf-8")) if os.path.exists(j1) else None
+        if a_ok and lib:
+            c = lib["counts"]
+            bk = c["by_kind"]
+            gaps = lib["coverage"]["gaps"]
+            a_ok = (c["classes"] == 6 and c["object_properties"] == 3
+                    and c["data_properties"] == 5 and c["templates_total"] == 19
+                    and bk.get("class-list") == 5 and bk.get("derived-query") == 1
+                    and bk.get("key-lookup") == 2 and bk.get("property-get") == 5
+                    and bk.get("enum-filter") == 2 and bk.get("facet-filter") == 1
+                    and bk.get("op-join") == 3 and len(gaps) == 1
+                    and gaps[0]["kind"] == "pattern-facet-no-regex")
+        details.append("a=派生双跑字节一致/19计数锚" if a_ok else "a FAIL")
+        if not a_ok:
+            fails.append("a")
+        tpls = {t["template_id"]: t for t in lib["templates"]} if lib else {}
+
+        # T15b prepareQuery 语法 validity（全 19 模板，套件首个直接 SPARQL 语法消费）
+        b_ok = bool(lib)
+        if lib:
+            try:
+                for t in lib["templates"]:
+                    prepareQuery(t["sparql"])
+            except Exception:
+                b_ok = False
+        details.append("b=prepareQuery 19/19 valid" if b_ok else "b FAIL")
+        if not b_ok:
+            fails.append("b")
+
+        # T15c graph.query 执行 5 正例（套件首个直接 graph.query 执行实证）
+        #      class-list 闭包 2 / key-lookup 精查 1 / op-join 直接 domain 1 / enum 1 / facet 1
+        g = Graph()
+        g.parse(fix, format="turtle")
+
+        def run(tid, binds=None):
+            res = g.query(tpls[tid]["sparql"], initBindings=binds or {})
+            return [tuple(str(v) for v in row) for row in res]
+
+        c_ok = False
+        try:
+            cl = sorted(x[0] for x in run("q-class-list-Bill"))
+            kl = [x[0] for x in run("q-key-lookup-Bill-billNumber",
+                                    {"id": Literal("PJ000000000001")})]
+            oj = sorted(run("q-op-join-currentHolder"))
+            ef = [x[0] for x in run("q-enum-filter-applicationStatus",
+                                    {"val": Literal("审核中")})]
+            ff = [x[0] for x in run("q-facet-filter-faceAmount",
+                                    {"min": Literal(100000), "max": Literal(200000)})]
+            c_ok = (cl == [B + "bill1", B + "bill2"] and kl == [B + "bill1"]
+                    and oj == [(B + "bill1", B + "holder1")]
+                    and ef == [B + "app1"] and ff == [B + "bill1"])
+        except Exception:
+            c_ok = False
+        details.append("c=graph.query执行5正例(闭包2/精查1/traversal1/枚举1/数值1)"
+                       if c_ok else "c FAIL")
+        if not c_ok:
+            fails.append("c")
+
+        # T15d derived-query 注记 + flag + derived 类不产 class-list（执行需 Pellet 不在 T15 断言）
+        d_ok = False
+        if "q-derived-query-Discountable" in tpls:
+            dq = tpls["q-derived-query-Discountable"]
+            d_ok = (dq["derived_flag"] is True and "物化" in dq["notes"]
+                    and "q-class-list-Discountable" not in tpls)
+        details.append("d=derived_flag+需先物化+不产class-list" if d_ok else "d FAIL")
+        if not d_ok:
+            fails.append("d")
+
+        # T15e 参数化（数据值永不进 sparql 文本）+ IRI 守卫 + enum_values 排序
+        IRI_UNSAFE = re.compile(r'''[\s"'<>]''')
+        DATA_VALUES = ["PJ000000000001", "PJ000000000002", "审核中", "已提交",
+                       "已通过", "AAA", "91110000TEST0001XX", "150000", "80000"]
+        e_ok = bool(lib)
+        if lib:
+            for t in lib["templates"]:
+                sp = t["sparql"]
+                if any(dv in sp for dv in DATA_VALUES):
+                    e_ok = False
+                if any(IRI_UNSAFE.search(i) for i in re.findall(r"<([^>]+)>", sp)):
+                    e_ok = False
+                for p in t.get("params", []):
+                    if "enum_values" in p and p["enum_values"] != sorted(p["enum_values"]):
+                        e_ok = False
+        details.append("e=参数化零泄漏/IRI守卫/enum排序" if e_ok else "e FAIL")
+        if not e_ok:
+            fails.append("e")
+
+        # T15f 契约错三连：缺文件 / 坏 TTL / 输出 realpath==源 → 各 exit 2 且不产包
+        missing = os.path.join(self.tmp, "t15f-missing.ttl")
+        bad = os.path.join(self.tmp, "t15f-bad.ttl")
+        with open(bad, "w", encoding="utf-8") as fh:
+            fh.write("this is not valid turtle <<< @@@\n")
+        xout = os.path.join(self.tmp, "t15f-x.json")
+        pf1 = self.py(derive, missing, "--output-json", xout)
+        pf2 = self.py(derive, bad, "--output-json", xout)
+        pf3 = self.py(derive, fix, "--output-json", fix)
+        f_ok = (pf1.returncode == 2 and pf2.returncode == 2 and pf3.returncode == 2
+                and not os.path.exists(xout))
+        details.append("f=缺文件/坏TTL/输出==源 exit2" if f_ok else "f FAIL")
+        if not f_ok:
+            fails.append("f")
+
+        # T15g 零回写（tmp fixture + 冻结三件 ttl/cases/sig）
+        after = {p: sha256(p) for p in (self.ttl, self.cases, self.sig)}
+        g_ok = before == after and sha256(fix) == src_before
+        details.append("g=零回写" if g_ok else "g FAIL")
+        if not g_ok:
+            fails.append("g")
+
+        ok = not fails
+        self.record("T15", "D3c SPARQL 查询模板（7 子例）", "PASS" if ok else "FAIL",
+                    "｜".join(details))
+
     def run_all(self):
         self.check_fixtures()
         self.t0_py_compile()
@@ -550,6 +1189,9 @@ class SuiteTests:
         self.t10_brand()
         self.t11_patch()
         self.t12_shacl()
+        self.t13_d2d4()
+        self.t14_ingest()
+        self.t15_sparql()
         n_pass = sum(1 for r in self.results if r[2] == "PASS")
         n_fail = sum(1 for r in self.results if r[2] == "FAIL")
         n_skip = sum(1 for r in self.results if r[2] == "SKIP")
@@ -560,7 +1202,7 @@ class SuiteTests:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="本体能力套件统一验收入口（N5）")
+    ap = argparse.ArgumentParser(description="本体能力套件统一验收入口")
     ap.add_argument("--skip-java", action="store_true",
                     help="跳过 T8 物化实跑（无 Java 环境或快速档）")
     ap.add_argument("--suite-root", default=None,

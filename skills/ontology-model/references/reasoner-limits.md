@@ -2,7 +2,7 @@
 
 > **用途**：`check_consistency.py`（L3 一致性）、`run_golden_cases.py`（S6 验收）、ontology-simulate `simulate_reason.py`（what-if 物化）执行与失败归因的**自包含引擎限制登记**。本文件为规范性条款+证据锚点，不依赖外部文档；编译侧硬规范权威=`assets/prompt-generator.md`（SWRL 规范 v2 / datatype 硬规范 / 编译形态约束），结构层含义见 `references/structure-patterns.md` §七。
 > **适用引擎版本**：Pellet 2.3.1 / HermiT（老版 OWLAPI），均经 owlready2 0.51 通道。**引擎或 owlready2 版本变更时须逐项复核本文件限制**（复核方法=§六削减实验）。
-> **来源**：2026-10-26 ~ 2026-11-02 多轮 run 实测裁定（虚构载体端到端试跑 + 真实规模载体生产级验收 + HermiT 对照复测）；实验矩阵明细与裁定史见本 skill `CHANGELOG.md` 实证证据登记。
+> **来源**：多轮 run 实测裁定（虚构载体端到端试跑 + 大规模载体生产级验收 + HermiT 对照复测）；削减实验矩阵见 §六。
 
 ## 一、环境要求与发现
 

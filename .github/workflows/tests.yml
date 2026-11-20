@@ -32,5 +32,10 @@ jobs:
           node-version: "20"
       - name: Install Python dependencies
         run: python -m pip install -r requirements.txt
-      - name: Suite acceptance (T1-T12 + py_compile)
+      # LibreOffice = ingest 2.0 office→PDF 全视觉渲染可选增强（MPL-2.0 独立子进程）。
+      # T14 以 --no-office-render 强制 substrate-only canonical 档（环境无关，limits ⑪）；
+      # 此步验证可选依赖可安装 + doctor 探测，不改变 T14 canonical 断言。
+      - name: Install LibreOffice (ingest office render, optional)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice
+      - name: Suite acceptance (T1-T15 + py_compile)
         run: python scripts/run_suite_tests.py

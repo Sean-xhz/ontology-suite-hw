@@ -66,6 +66,15 @@
 
 > 交付前自检：登记表中「无消费点」行必须为空或已删除对应构件。
 
+### 5.1 溯源登记表（构件 → 源单元）
+
+> 溯源链 `source → section → 描述句 → TTL`（s1-handoff-contract §五）的人类可读登记位。TTL 侧每个构件挂 `rdfs:isDefinedBy`（源文档/节 IRI，如 `urn:source:<doc_id>#<section_id>`）+ `skos:note`（溯源字符串）；本表登记构件↔源描述句↔源单元映射，供 G1 回溯源页核验 / S4 审计引源 / S6 黄金用例溯源 / **产品参数变更时定位受影响公理**（可持续维护命门）。来源取描述集「来源」列（doc_id/section_id/locator）。
+
+| 构件（类/属性/规则 IRI） | 源描述句编号 | 来源（doc_id / section_id / locator） | TTL annotation（isDefinedBy / note） |
+|---|---|---|---|
+
+> 跨文档合并构件挂多来源；无源构件（专家口述新增）登记「专家口述/待确认」非留空。交付前自检：每个编译构件可回溯到源单元，或显式登记无源理由。
+
 ## 六、场景切片（每切片四元组）
 
 > 切片四元组定义见 structure-patterns.md §五。MVP 至少 1 个切片；显式列未启用构件与理由。

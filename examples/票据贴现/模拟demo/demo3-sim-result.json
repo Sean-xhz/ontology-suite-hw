@@ -4,7 +4,7 @@
  "query": "评估该三手背书小额票据：背书链是否连续（R7 衔接与传递闭包）？小额面额的处置档结论是什么？AA 级承兑人的开放世界语义如何登记？",
  "ontology": {
   "ttl": "../建模run/ontology.ttl",
-  "sha": "ec85ca9598b4"
+  "sha": "5ff9b19917bb"
  },
  "consistency": "consistent",
  "inconsistency_detail": null,
@@ -117,7 +117,7 @@
    "code": "W08",
    "message": "属性 faceAmount 为具名 datatype PositiveAmount（pattern 类）——模拟侧不做 facet 校验（L2 承接），值 80000 未验证"
   },
-  "canonicalize 缓存命中（sha=ec85ca9598b4）"
+  "canonicalize 缓存命中（sha=5ff9b19917bb）"
  ],
  "cache": {
   "dir": ".sim-cache",

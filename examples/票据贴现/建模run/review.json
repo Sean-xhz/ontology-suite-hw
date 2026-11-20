@@ -1,6 +1,7 @@
 {
+ "schema_version": "1.1",
  "meta": {
-  "run_dir": "examples/票据贴现/建模run",
+  "run_dir": "建模run",
   "extractor": "review_extract.py（ontology-review skill）",
   "md_parse_ok": true,
   "md_parse_errors": [],
@@ -11,11 +12,12 @@
   "sources": {
    "ttl": {
     "path": "ontology.ttl",
-    "sha": "ec85ca9598b4"
+    "sha": "5ff9b19917bb",
+    "sha256_full": "5ff9b19917bb619310edc4c44aa5a06debc516243181440eb86d5302b886baeb"
    },
    "scheme": {
     "path": "建模方案.md",
-    "sha": "da7762ba3ba5"
+    "sha": "4111d3f8897f"
    }
   }
  },
@@ -34,6 +36,12 @@
    "md": null,
    "md_props": [],
    "derived": true,
+   "parents_guard": {
+    "named": [
+     "DiscountApplication"
+    ],
+    "anon": 0
+   },
    "depth": 1
   },
   {
@@ -102,6 +110,10 @@
     }
    ],
    "derived": false,
+   "parents_guard": {
+    "named": [],
+    "anon": 0
+   },
    "depth": 0
   },
   {
@@ -118,6 +130,12 @@
    "md": null,
    "md_props": [],
    "derived": true,
+   "parents_guard": {
+    "named": [
+     "DiscountApplication"
+    ],
+    "anon": 0
+   },
    "depth": 1
   },
   {
@@ -226,6 +244,10 @@
     }
    ],
    "derived": false,
+   "parents_guard": {
+    "named": [],
+    "anon": 2
+   },
    "depth": 0
   },
   {
@@ -334,6 +356,10 @@
     }
    ],
    "derived": false,
+   "parents_guard": {
+    "named": [],
+    "anon": 0
+   },
    "depth": 0
   },
   {
@@ -350,6 +376,12 @@
    "md": null,
    "md_props": [],
    "derived": true,
+   "parents_guard": {
+    "named": [
+     "Bill"
+    ],
+    "anon": 0
+   },
    "depth": 1
   },
   {
@@ -416,6 +448,10 @@
     }
    ],
    "derived": false,
+   "parents_guard": {
+    "named": [],
+    "anon": 0
+   },
    "depth": 0
   },
   {
@@ -484,6 +520,10 @@
     }
    ],
    "derived": false,
+   "parents_guard": {
+    "named": [],
+    "anon": 0
+   },
    "depth": 0
   },
   {
@@ -500,6 +540,12 @@
    "md": null,
    "md_props": [],
    "derived": true,
+   "parents_guard": {
+    "named": [
+     "Bill"
+    ],
+    "anon": 0
+   },
    "depth": 1
   },
   {
@@ -516,6 +562,12 @@
    "md": null,
    "md_props": [],
    "derived": true,
+   "parents_guard": {
+    "named": [
+     "DiscountApplication"
+    ],
+    "anon": 0
+   },
    "depth": 1
   }
  ],
@@ -1300,7 +1352,74 @@
     "head": [
      "该贴现申请 是「有效申请」"
     ],
-    "vars": {}
+    "vars": {
+     "?vR1_a": "贴现申请",
+     "?vR1_h": "持票人",
+     "?vR1_b": "票据"
+    }
+   },
+   "atom_meta": {
+    "body": [
+     {
+      "atom_id": "ruleR1.b0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR1_a"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR1.b1",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR1_a"
+       },
+       {
+        "kind": "var",
+        "name": "vR1_h"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR1.b2",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR1_a"
+       },
+       {
+        "kind": "var",
+        "name": "vR1_b"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR1.b3",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR1_b"
+       },
+       {
+        "kind": "var",
+        "name": "vR1_h"
+       }
+      ]
+     }
+    ],
+    "head": [
+     {
+      "atom_id": "ruleR1.h0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR1_a"
+       }
+      ]
+     }
+    ]
    }
   },
   {
@@ -1368,7 +1487,60 @@
     "head": [
      "该票据 是「禁止贴现票据」"
     ],
-    "vars": {}
+    "vars": {
+     "?vR3_b": "票据",
+     "?vR3_c": "承兑人"
+    }
+   },
+   "atom_meta": {
+    "body": [
+     {
+      "atom_id": "ruleR3.b0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR3_b"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR3.b1",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR3_b"
+       },
+       {
+        "kind": "var",
+        "name": "vR3_c"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR3.b2",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR3_c"
+       },
+       {
+        "kind": "literal",
+        "value": "A"
+       }
+      ]
+     }
+    ],
+    "head": [
+     {
+      "atom_id": "ruleR3.h0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR3_b"
+       }
+      ]
+     }
+    ]
    }
   },
   {
@@ -1446,7 +1618,74 @@
     "head": [
      "该票据 是「可贴现票据」"
     ],
-    "vars": {}
+    "vars": {
+     "?vR4_a": "可受理申请",
+     "?vR4_b": "票据",
+     "?vR4_c": "承兑人"
+    }
+   },
+   "atom_meta": {
+    "body": [
+     {
+      "atom_id": "ruleR4.b0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR4_a"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR4.b1",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR4_a"
+       },
+       {
+        "kind": "var",
+        "name": "vR4_b"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR4.b2",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR4_b"
+       },
+       {
+        "kind": "var",
+        "name": "vR4_c"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR4.b3",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR4_c"
+       },
+       {
+        "kind": "literal",
+        "value": "AAA"
+       }
+      ]
+     }
+    ],
+    "head": [
+     {
+      "atom_id": "ruleR4.h0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR4_b"
+       }
+      ]
+     }
+    ]
    }
   },
   {
@@ -1514,7 +1753,61 @@
     "head": [
      "该票据 是「禁止贴现票据」"
     ],
-    "vars": {}
+    "vars": {
+     "?vR5_b": "票据",
+     "?vR5_m": "票面金额值"
+    }
+   },
+   "atom_meta": {
+    "body": [
+     {
+      "atom_id": "ruleR5.b0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR5_b"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR5.b1",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR5_b"
+       },
+       {
+        "kind": "var",
+        "name": "vR5_m"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR5.b2",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR5_m"
+       },
+       {
+        "kind": "literal",
+        "value": "100000",
+        "datatype": "http://www.w3.org/2001/XMLSchema#integer"
+       }
+      ]
+     }
+    ],
+    "head": [
+     {
+      "atom_id": "ruleR5.h0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR5_b"
+       }
+      ]
+     }
+    ]
    }
   },
   {
@@ -1633,7 +1926,138 @@
     "head": [
      "该背书记录 的「链上游背书记录」是 该背书记录甲"
     ],
-    "vars": {}
+    "vars": {
+     "?vR7_b": "票据",
+     "?vR7_r1": "背书记录",
+     "?vR7_r2": "背书记录甲",
+     "?vR7_n1": "背书序号值",
+     "?vR7_n2": "背书序号值甲",
+     "?vR7_p": "持票人"
+    }
+   },
+   "atom_meta": {
+    "body": [
+     {
+      "atom_id": "ruleR7.b0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_b"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR7.b1",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_b"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_r1"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR7.b2",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_b"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_r2"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR7.b3",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_r1"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_n1"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR7.b4",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_r2"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_n2"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR7.b5",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_n2"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_n1"
+       },
+       {
+        "kind": "literal",
+        "value": "1",
+        "datatype": "http://www.w3.org/2001/XMLSchema#integer"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR7.b6",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_r1"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_p"
+       }
+      ]
+     },
+     {
+      "atom_id": "ruleR7.b7",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_r2"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_p"
+       }
+      ]
+     }
+    ],
+    "head": [
+     {
+      "atom_id": "ruleR7.h0",
+      "arg_kinds": [
+       {
+        "kind": "var",
+        "name": "vR7_r1"
+       },
+       {
+        "kind": "var",
+        "name": "vR7_r2"
+       }
+      ]
+     }
+    ]
    }
   }
  ],
@@ -1643,14 +2067,20 @@
    "prefLabel": "承兑人",
    "definition": "承诺票据到期无条件付款的企业。与「出票人」严格区分。",
    "comment": "源：描述集 3.1/词典第 4 行（承兑人）。消费：术语治理（付款人=承兑人≠出票人口径对齐，3.2）。",
-   "broader": "conceptEnterprise"
+   "broader": "conceptEnterprise",
+   "broader_list": [
+    "conceptEnterprise"
+   ]
   },
   {
    "id": "conceptBill",
    "prefLabel": "票据",
    "definition": "由出票人签发的、承诺到期无条件支付确定金额的有价证券。本场景仅指商业承兑汇票（描述集 2.1 范围收窄）。",
    "comment": "源：描述集 3.1/词典第 1 行（票据）。消费：术语治理（口径对齐：本场景收窄为商业承兑汇票，3.2「汇票」口语泛指收敛）。",
-   "broader": "conceptFinancialInstrument"
+   "broader": "conceptFinancialInstrument",
+   "broader_list": [
+    "conceptFinancialInstrument"
+   ]
   },
   {
    "id": "conceptBillAction",
@@ -1658,7 +2088,8 @@
    "definition": "",
    "comment": "结构节点：描述集 3.3 引用（票据行为{背书、贴现}），术语词典无对应行——不补造定义（编译缺口-7）。",
    "broader": "",
-   "definition_missing": true
+   "definition_missing": true,
+   "broader_list": []
   },
   {
    "id": "conceptBusinessRequest",
@@ -1666,63 +2097,82 @@
    "definition": "",
    "comment": "结构节点：词典「贴现申请」行 broader 列引用，无定义行——不补造（编译缺口-7）。",
    "broader": "",
-   "definition_missing": true
+   "definition_missing": true,
+   "broader_list": []
   },
   {
    "id": "conceptCommercialAcceptanceBill",
    "prefLabel": "商业承兑汇票",
    "definition": "由银行以外的付款人（承兑人）承兑的商业汇票。范围收窄登记于票据类 comment（不单设类，描述集 2.1 裁量：最小化原则）。",
    "comment": "源：描述集 3.1/词典第 2 行（商业承兑汇票）。消费：术语治理（与 :Bill 单类收窄口径互查，2.1 裁量）。",
-   "broader": "conceptBill"
+   "broader": "conceptBill",
+   "broader_list": [
+    "conceptBill"
+   ]
   },
   {
    "id": "conceptCreditRating",
    "prefLabel": "信用等级",
    "definition": "平台对承兑人的内部评级，三档：AAA/AA/A，仅用于贴现资格判断。非外部权威评级。",
    "comment": "源：描述集 3.1/词典第 10 行（信用等级）。消费：术语治理（口径对齐：平台内部评级，非外部权威）。",
-   "broader": ""
+   "broader": "",
+   "broader_list": []
   },
   {
    "id": "conceptDiscount",
    "prefLabel": "贴现",
    "definition": "持票人在票据到期前将票据权利转让给资金方以获取扣除利息后资金的行为。",
    "comment": "词典「对应本体构件」列记 owl:Class 与描述集 1.1（共 5 类）冲突——以 1.1 冻结权威为准：贴现属流程活动类（描述集 5.1-5.7 扩展位，md 结构化描述不建类），仅 skos 登记（编译缺口-7）。消费：①受理判定语义口径。",
-   "broader": "conceptBillAction"
+   "broader": "conceptBillAction",
+   "broader_list": [
+    "conceptBillAction"
+   ]
   },
   {
    "id": "conceptDiscountApplication",
    "prefLabel": "贴现申请",
    "definition": "持票人针对某张票据发起的一次贴现请求，具有编号、日期、期望金额与单向流转状态。",
    "comment": "源：描述集 3.1/词典第 9 行（贴现申请）。消费：术语治理（口径对齐；状态机语义见描述集 5.5）。",
-   "broader": "conceptBusinessRequest"
+   "broader": "conceptBusinessRequest",
+   "broader_list": [
+    "conceptBusinessRequest"
+   ]
   },
   {
    "id": "conceptDiscountPool",
    "prefLabel": "贴现池",
    "definition": "满足平台受理条件（票面金额 ≥10 万等）的票据集合。",
    "comment": "查询视图（描述集 7.5 组合查询），不建类（词典裁定）；R5 消费位。消费：③贴现池管理。",
-   "broader": ""
+   "broader": "",
+   "broader_list": []
   },
   {
    "id": "conceptDrawer",
    "prefLabel": "出票人",
    "definition": "签发票据的企业。",
    "comment": "仅术语登记，不建模（本场景无消费点，描述集 3.2/词典裁定——反博物馆）。消费：术语口径区分（承兑人≠出票人）。",
-   "broader": "conceptEnterprise"
+   "broader": "conceptEnterprise",
+   "broader_list": [
+    "conceptEnterprise"
+   ]
   },
   {
    "id": "conceptEndorsement",
    "prefLabel": "背书",
    "definition": "持票人在票据上签章并将票据权利转让给他人的行为；每次转让生成一条背书记录。",
    "comment": "对应构件：背书记录类（:EndorsementRecord）+ 背书人/被背书人关系（:hasEndorser/:hasEndorsee，词典「背书关系」）。",
-   "broader": "conceptBillAction"
+   "broader": "conceptBillAction",
+   "broader_list": [
+    "conceptBillAction"
+   ]
   },
   {
    "id": "conceptEndorsementChain",
    "prefLabel": "背书链",
    "definition": "一张票据自出票收款人起历次背书构成的有序转让序列；连续性=每次背书的背书人为上次的被背书人。",
    "comment": "R7 判定对象（描述集 4.1-R7）；对应构件：:isUpstreamOf（Transitive 上游关系）+ 记录链（1.3d 序号有序）。",
-   "broader": ""
+   "broader": "",
+   "broader_list": []
   },
   {
    "id": "conceptEnterprise",
@@ -1730,7 +2180,8 @@
    "definition": "",
    "comment": "结构节点：词典「持票人/承兑人/出票人」行 broader 列引用，无定义行——不补造（编译缺口-7）。",
    "broader": "",
-   "definition_missing": true
+   "definition_missing": true,
+   "broader_list": []
   },
   {
    "id": "conceptFinancialInstrument",
@@ -1738,19 +2189,23 @@
    "definition": "",
    "comment": "结构节点：词典「票据」行 broader 列引用，无定义行——不补造（编译缺口-7）。FIBO 对齐候选见建模方案§七。",
    "broader": "",
-   "definition_missing": true
+   "definition_missing": true,
+   "broader_list": []
   },
   {
    "id": "conceptHolder",
    "prefLabel": "持票人",
    "definition": "当前合法持有票据的企业，通过背书链取得票据权利。",
    "comment": "源：描述集 3.1/词典第 3 行（持票人）。消费：术语治理（同义词「票据持有人（旧系统）」口径对齐，3.2）。",
-   "broader": "conceptEnterprise"
+   "broader": "conceptEnterprise",
+   "broader_list": [
+    "conceptEnterprise"
+   ]
   }
  ],
  "scheme": {
   "id": "TermScheme",
-  "label": "票据贴现场景术语集（虚构试跑）"
+  "label": "票据贴现场景术语集（虚构示例）"
  },
  "counts": {
   "classes": 10,
@@ -1758,6 +2213,703 @@
   "data_properties": 13,
   "swrl_rules": 5,
   "skos_concepts": 15
+ },
+ "iri_map": {
+  "classes": {
+   "AcceptableApplication": "http://example.org/bill-discount#AcceptableApplication",
+   "Acceptor": "http://example.org/bill-discount#Acceptor",
+   "ApplicationUnderReview": "http://example.org/bill-discount#ApplicationUnderReview",
+   "Bill": "http://example.org/bill-discount#Bill",
+   "DiscountApplication": "http://example.org/bill-discount#DiscountApplication",
+   "Discountable": "http://example.org/bill-discount#Discountable",
+   "EndorsementRecord": "http://example.org/bill-discount#EndorsementRecord",
+   "Holder": "http://example.org/bill-discount#Holder",
+   "NonDiscountable": "http://example.org/bill-discount#NonDiscountable",
+   "ValidApplication": "http://example.org/bill-discount#ValidApplication"
+  },
+  "object_properties": {
+   "currentHolder": "http://example.org/bill-discount#currentHolder",
+   "hasAcceptor": "http://example.org/bill-discount#hasAcceptor",
+   "hasDiscountApplication": "http://example.org/bill-discount#hasDiscountApplication",
+   "hasEndorsee": "http://example.org/bill-discount#hasEndorsee",
+   "hasEndorsementRecord": "http://example.org/bill-discount#hasEndorsementRecord",
+   "hasEndorser": "http://example.org/bill-discount#hasEndorser",
+   "initiatedBy": "http://example.org/bill-discount#initiatedBy",
+   "isUpstreamOf": "http://example.org/bill-discount#isUpstreamOf",
+   "targetsBill": "http://example.org/bill-discount#targetsBill"
+  },
+  "data_properties": {
+   "applicationDate": "http://example.org/bill-discount#applicationDate",
+   "applicationNumber": "http://example.org/bill-discount#applicationNumber",
+   "applicationStatus": "http://example.org/bill-discount#applicationStatus",
+   "billNumber": "http://example.org/bill-discount#billNumber",
+   "creditRating": "http://example.org/bill-discount#creditRating",
+   "dueDate": "http://example.org/bill-discount#dueDate",
+   "endorsementDate": "http://example.org/bill-discount#endorsementDate",
+   "endorsementSequenceNo": "http://example.org/bill-discount#endorsementSequenceNo",
+   "enterpriseName": "http://example.org/bill-discount#enterpriseName",
+   "expectedDiscountAmount": "http://example.org/bill-discount#expectedDiscountAmount",
+   "faceAmount": "http://example.org/bill-discount#faceAmount",
+   "issueDate": "http://example.org/bill-discount#issueDate",
+   "unifiedSocialCreditCode": "http://example.org/bill-discount#unifiedSocialCreditCode"
+  },
+  "rules": {
+   "ruleR1": "http://example.org/bill-discount#ruleR1",
+   "ruleR3": "http://example.org/bill-discount#ruleR3",
+   "ruleR4": "http://example.org/bill-discount#ruleR4",
+   "ruleR5": "http://example.org/bill-discount#ruleR5",
+   "ruleR7": "http://example.org/bill-discount#ruleR7"
+  },
+  "skos_concepts": {
+   "conceptAcceptor": "http://example.org/bill-discount#conceptAcceptor",
+   "conceptBill": "http://example.org/bill-discount#conceptBill",
+   "conceptBillAction": "http://example.org/bill-discount#conceptBillAction",
+   "conceptBusinessRequest": "http://example.org/bill-discount#conceptBusinessRequest",
+   "conceptCommercialAcceptanceBill": "http://example.org/bill-discount#conceptCommercialAcceptanceBill",
+   "conceptCreditRating": "http://example.org/bill-discount#conceptCreditRating",
+   "conceptDiscount": "http://example.org/bill-discount#conceptDiscount",
+   "conceptDiscountApplication": "http://example.org/bill-discount#conceptDiscountApplication",
+   "conceptDiscountPool": "http://example.org/bill-discount#conceptDiscountPool",
+   "conceptDrawer": "http://example.org/bill-discount#conceptDrawer",
+   "conceptEndorsement": "http://example.org/bill-discount#conceptEndorsement",
+   "conceptEndorsementChain": "http://example.org/bill-discount#conceptEndorsementChain",
+   "conceptEnterprise": "http://example.org/bill-discount#conceptEnterprise",
+   "conceptFinancialInstrument": "http://example.org/bill-discount#conceptFinancialInstrument",
+   "conceptHolder": "http://example.org/bill-discount#conceptHolder"
+  },
+  "scheme": "http://example.org/bill-discount#TermScheme"
+ },
+ "literal_meta": {
+  "class:AcceptableApplication": {
+   "label": {
+    "value": "可受理申请",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 4.1-R2。R2 结论契约类：申请日期早于到期日期 且 到期与申请间隔≥15 天。G1-Q4 裁定（Q4-2）：标准 SWRL（swrlb 核心库）无日期差值 built-in → 降级为 DatatypeProperty 登记+应用层校验——成员由应用层执行 R2 双条件核对后断言（无 swrl:Imp，建模方案§十登记）；同时作为 :ruleR4 前提承载 G1-Q1 优先级（规则组合）。消费：①受理判定。"
+   }
+  },
+  "class:Acceptor": {
+   "label": {
+    "value": "承兑人",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.1/1.2b/词典。承诺票据到期无条件付款的企业（同义词：付款人；与出票人严格区分，出票人不建模）。消费：①受理判定（R3/R4 评级判定）+③贴现池管理（7.5 组合查询）。"
+   }
+  },
+  "class:ApplicationUnderReview": {
+   "label": {
+    "value": "审核中申请",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 2.2a/4.1-R6。定义类（等价类公理见文末公理区）：申请状态=审核中。为 R6 受限基数公理（maxQualifiedCardinality 1）提供计数对象（G1-Q4 裁定 Q4-3：owl:Restriction cardinality 分支，DL 完整可表达）。消费：④状态机校验+①受理判定（R6 并发约束）。"
+   }
+  },
+  "class:Bill": {
+   "label": {
+    "value": "票据",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.1/1.2a/2.1。范围收窄（2.1 建模裁量）：本场景仅商业承兑汇票，不建银行承兑汇票分支类（超范围，8.4 明确不做）。消费：①受理判定/②背书链查询/③贴现池管理/④状态机校验四链路根对象。"
+   }
+  },
+  "class:DiscountApplication": {
+   "label": {
+    "value": "贴现申请",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.1/1.2d/5.5/词典。持票人针对某张票据发起的一次贴现请求，具编号/日期/期望金额与单向流转状态。状态机（5.5，应用层校验）：已提交→审核中→已通过/已拒绝→已划款，不允许跳跃或回退。消费：①受理判定+④状态机校验。"
+   }
+  },
+  "class:Discountable": {
+   "label": {
+    "value": "可贴现票据",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 2.2c/4.1-R4。规则结论类（:ruleR4 头）。G1-Q1 裁定：R2 优先——「AAA 可随时贴现」收窄为「免评级限制但仍须过 R2 间隔检查」（见 :ruleR4 规则组合）。与 :NonDiscountable 互斥（2.2c，owl:AllDisjointClasses——规则冲突可检出前提）。消费：①受理判定+③贴现池管理。AA 级 open-world 登记（v1.1，S4 残留风险 2）：评级 AA 票据无 R3/R4 触发（A≠AA、AAA≠AA），开放世界语义下不获本类或 :NonDiscountable 推导——非本体缺陷（未判定≠不满足）；AA 入池候选由 7.5 组合查询独立判定（AAA/AA 直查）。"
+   }
+  },
+  "class:EndorsementRecord": {
+   "label": {
+    "value": "背书记录",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.1/1.2e/1.3c/1.3d/词典「背书」。每次背书转让生成一条记录（背书关系按词典裁定实体化为记录类，边属性背书日期/序号由本类承载——建模方案§三登记）。消费：②背书链查询+①受理判定（R7 背书链核验）。"
+   }
+  },
+  "class:Holder": {
+   "label": {
+    "value": "持票人",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.1/1.2c/词典。当前合法持有票据的企业，通过背书链取得票据权利（同义词：票据持有人·旧系统）。消费：②背书链查询（各手持票方）+①受理判定（R1 发起人核对）。"
+   }
+  },
+  "class:NonDiscountable": {
+   "label": {
+    "value": "禁止贴现票据",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 2.2c/4.1-R3/R5/R7。规则结论类（:ruleR3、:ruleR5 头；R7 断裂结论由应用层执行）。R5 结论归入本类：2.2c 将 R5 列入可贴现⊥禁止贴现冲突检出前提（S3 裁量登记，处置档差异见建模方案§四）。与 :Discountable 互斥。消费：①受理判定+③贴现池管理（R5 池外排除）。处置差异登记（v1.1，S4 残留风险 1）：本类成员含 R3（评级 A，拦截）与 R5（小额，仅登记）两种处置档——受理判定不得仅凭本类成员身份执行拦截，须按依据链命中规则编号区分处置档（7.6/X2）。"
+   }
+  },
+  "class:ValidApplication": {
+   "label": {
+    "value": "有效申请",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 4.1-R1。规则结论类（:ruleR1 头）：发起人=票据当前持票人的申请。「非持票人一律拒绝」否定语义由应用层执行（G1-Q4 裁定 Q4-1）。消费：①受理判定。"
+   }
+  },
+  "object_property:currentHolder": {
+   "label": {
+    "value": "当前持票人",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3b。票据→持票人，N:1（一张票据同一时刻仅一个当前持票人；一个持票人可持多张票据）。owl:FunctionalProperty。消费：①受理判定（R1 发起人核对）+②背书链查询（链末持有人）。链末一致性登记（v1.1，S4 残留风险 3）：currentHolder=链末背书记录被背书人的一致性由数据管线保证——本体无公理绑定（open-world 下不自动检出漂移）。"
+   }
+  },
+  "object_property:hasAcceptor": {
+   "label": {
+    "value": "票据承兑人",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3a/2.4。票据→承兑人，N:1，必填单值（:Bill ⊑ someValuesFrom，公理见文末）。owl:FunctionalProperty。消费：①受理判定（R3/R4）+③贴现池管理。"
+   }
+  },
+  "object_property:hasDiscountApplication": {
+   "label": {
+    "value": "票据的贴现申请",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3e 逆关系+4.1-R6。owl:inverseOf :targetsBill（v1.2 起双向对称声明——:targetsBill 侧同步补 inverseOf 镜像，消登记冗余型 warning）；为 R6 受限基数公理显式落地（Q4-3 DL 分支：Bill ⊑ maxQualifiedCardinality 1 hasDiscountApplication . ApplicationUnderReview）。消费：④状态机校验+①受理判定。"
+   }
+  },
+  "object_property:hasEndorsee": {
+   "label": {
+    "value": "被背书人",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3c。背书记录→持票人（被背书人），×2 之一。owl:FunctionalProperty（v1.1 补，S4 条目③：1.3c 单值语义显式化——一次背书行为仅一个被背书人；建模方案§三 N:1 基数 v1.0 已登记，本版补齐 ttl 特征）。消费：②背书链查询+①受理判定（R7，:ruleR7）。"
+   }
+  },
+  "object_property:hasEndorsementRecord": {
+   "label": {
+    "value": "票据背书记录",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3d。票据→背书记录，1:N，按背书序号构成有序背书链（序号排序消费见 :endorsementSequenceNo）。消费：②背书链查询（7.2① 按票号返回完整链）+①受理判定（R7）。"
+   }
+  },
+  "object_property:hasEndorser": {
+   "label": {
+    "value": "背书人",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3c。背书记录→持票人（背书人），×2 之一。owl:FunctionalProperty（v1.1 补，S4 条目③：1.3c 单值语义显式化——一次背书行为仅一个背书人；建模方案§三 N:1 基数 v1.0 已登记，本版补齐 ttl 特征）。消费：②背书链查询（链序回放）+①受理判定（R7 连续性核验：后手背书人=前手被背书人，:ruleR7）。"
+   }
+  },
+  "object_property:initiatedBy": {
+   "label": {
+    "value": "申请发起人",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3f。贴现申请→持票人，N:1。owl:FunctionalProperty（句式 N:1 单值语义）。消费：①受理判定（R1 发起人=当前持票人核对，:ruleR1）。"
+   }
+  },
+  "object_property:isUpstreamOf": {
+   "label": {
+    "value": "链上游背书记录",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 4.1-R7/词典「背书链」（Transitive 上游关系）。记录级（S3 裁量登记：持有人级传递会跨票据误串链——A→B 在票据甲、B→C 在票据乙 ⇒ 误推 A→C；记录级推导限定同票据内，闭包严格限于票据内）。推导（:ruleR7）：同票据+序号相邻+被背书人=背书人 ⇒ 有效衔接；Transitive 闭包使「首记录→末记录可达 ⟺ 背书链连续」——R7 连续性的机器判定形态（S3 裁量登记，首手核对缺口见文末）。v1.1：:hasEndorser/:hasEndorsee 补 Functional（1.3c 单值）排除记录级多值分支，等价性增强——链形态线性另依赖 L8 链内序号唯一（应用层）。owl:TransitiveProperty。消费：②背书链查询+①受理判定（R7）。数据前提：一条背书记录仅属一张票据（数据管线保证，本体未以公理强制——与 currentHolder 链末一致性同口径，残留风险 3）。"
+   }
+  },
+  "object_property:targetsBill": {
+   "label": {
+    "value": "针对票据",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.3e。贴现申请→票据，N:1。owl:FunctionalProperty（句式 N:1 单值语义）。owl:inverseOf :hasDiscountApplication（v1.2 补对称声明——与 :hasDiscountApplication 侧的 inverseOf 声明互为镜像，消登记冗余型 warning，语义不变）。消费：①受理判定（R1/R2/R4 前提）+④状态机校验（R6 经逆属性 :hasDiscountApplication 计数）。"
+   }
+  },
+  "data_property:applicationDate": {
+   "label": {
+    "value": "申请日期",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2d/4.1-R2。xsd:date。消费：①受理判定（R2 双条件核对——应用层执行，Q4-2 降级后 :AcceptableApplication 契约承载结论）。"
+   }
+  },
+  "data_property:applicationNumber": {
+   "label": {
+    "value": "申请编号",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2d/2.6。格式 ZX+日期+4 位序号（见 :ApplicationNumberFormat；日期段按 8 位 YYYYMMDD 假设——编译缺口-2，v1.1 引用偏移修正）。owl:FunctionalProperty + :DiscountApplication owl:hasKey（一申请一编号、一编号一申请）。消费：④状态机校验（7.3 迁移留痕）+依据链输出（7.6）。"
+   }
+  },
+  "data_property:applicationStatus": {
+   "label": {
+    "value": "申请状态",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2d/2.2a/5.5。受控枚举五值：已提交/审核中/已通过/已拒绝/已划款——range 内联匿名 oneOf（v1.2 前由具名枚举 datatype 承载，Pellet 值空间判空已删，见文件头变更摘要①；两两互斥仍由 Functional 保证）；「审核中」值被 :ApplicationUnderReview 定义类消费（R6 计数公理）。owl:FunctionalProperty——2.2a 五状态两两互斥（一个申请同一时刻仅一种状态）以「枚举+Functional」表达（S3 裁量登记：与 1.2d 冻结目标构件 DatatypeProperty+枚举一致，免五状态类膨胀——建模方案§十）。状态单向迁移与禁跳跃/回退由④状态机校验（应用层，5.5/6.4）执行。消费：①受理判定+④状态机校验。"
+   }
+  },
+  "data_property:billNumber": {
+   "label": {
+    "value": "票号",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2a/2.6。格式 PJ+12 位数字（xsd:pattern，见 :BillNumberFormat）。owl:FunctionalProperty + :Bill owl:hasKey（一票据一票号、一票号一票据；2.6 的 InverseFunctional 以 hasKey 标准替代——OWL 2 DL 不支持数据属性 InverseFunctional，S3 机械自检发现，建模方案§十登记）。消费：②背书链查询（7.2① 按票号定位）+①受理判定依据链（7.6）。"
+   }
+  },
+  "data_property:creditRating": {
+   "label": {
+    "value": "信用等级",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2b/2.2b/4.1-R3/R4。受控枚举 AAA/AA/A——range 内联匿名 oneOf 三值（v1.2 前由具名枚举 datatype 承载，Pellet 值空间判空已删，见文件头变更摘要①；两两互斥仍由 Functional 保证）。平台内部评级，非外部权威评级。owl:FunctionalProperty（2.2b 互斥：同一承兑人同一时刻仅一档）。消费：①受理判定（R3/R4）+③贴现池管理（7.5 AAA/AA 筛选）。"
+   }
+  },
+  "data_property:dueDate": {
+   "label": {
+    "value": "到期日期",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2a/2.5/4.1-R2/7.5。xsd:date。消费：①受理判定（R2 间隔核对——应用层，Q4-2）+③贴现池管理（7.5 距到期≥15 天）。"
+   }
+  },
+  "data_property:endorsementDate": {
+   "label": {
+    "value": "背书日期",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2e。xsd:date。消费：②背书链查询（7.2① 各手持票期间起讫）。"
+   }
+  },
+  "data_property:endorsementSequenceNo": {
+   "label": {
+    "value": "背书序号",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2e/1.3d/4.1-R7。xsd:integer；同一票据背书链内唯一且递增（「递增」按链内 +1 连续编号读法——S3 裁量登记，跳号兼容性=编译缺口-3，v1.1 引用偏移修正；链内唯一性应用层核对）。消费：②背书链查询（链序排序）+①受理判定（R7 相邻判定：:ruleR7 swrlb:add）。"
+   }
+  },
+  "data_property:enterpriseName": {
+   "label": {
+    "value": "企业名称",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2c。消费：②背书链查询（7.2① 各手持票方名称展示）。承兑人名称属性输入未列（1.2b 无企业名称行），不补造。"
+   }
+  },
+  "data_property:expectedDiscountAmount": {
+   "label": {
+    "value": "期望贴现金额",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2d/2.5。xsd:decimal >0（见 :PositiveAmount）。消费：①受理判定（申请要素核对）。"
+   }
+  },
+  "data_property:faceAmount": {
+   "label": {
+    "value": "票面金额",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2a/2.5/4.1-R5/7.5。xsd:decimal >0（见 :PositiveAmount）；币种人民币（单一币种场景，未建币种维度——建模方案§十三-8 登记）。消费：①受理判定（R5：<10 万元）+③贴现池管理（7.5：≥10 万且降序排序）。"
+   }
+  },
+  "data_property:issueDate": {
+   "label": {
+    "value": "出票日期",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2a/2.5。xsd:date。消费：①受理判定（2.5 后半「到期>出票」应用层核对——标准 swrlb 核心库不保证 xsd:date 比较（与 Q4-2 同根因），引擎支持 date 比较 built-in 时可编译为 SWRL，否则应用层核对，S3 裁量登记、v1.1 理由精确化）+②背书链查询（持票期间起点参照）。"
+   }
+  },
+  "data_property:unifiedSocialCreditCode": {
+   "label": {
+    "value": "统一社会信用代码",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源 1.2b/1.2c/2.6。承兑人与持票人共享属性（S3 裁量登记：同一企业标识，domain 取两类联合，非相似度归并）。owl:FunctionalProperty + :Acceptor/:Holder owl:hasKey——类内唯一（hasKey：同类内同 USCC ⇒ 同一个体）；跨角色同一性（Acceptor/Holder 归并）由实例层显式对齐（同 IRI 或 owl:sameAs）——hasKey 不承诺跨类归并（v1.1 条目②修正，原「同 USCC ⇒ 同一企业」为过度承诺）。消费：①受理判定（R1 发起人核对要素）+实例层对齐（建模方案§二-⑦）。"
+   }
+  },
+  "rule:ruleR1": {
+   "label": {
+    "value": "R1 发起人持票核对规则",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：4.1-R1。Q4-1 正向核对：initiatedBy 与 currentHolder 共享变量 :vR1_h（同一持票人）实现身份核对。否定方向应用层执行。v1.1（S4 条目①）：变量改具名声明，argument 直接引用变量 IRI。消费链路：①受理判定。"
+   }
+  },
+  "rule:ruleR3": {
+   "label": {
+    "value": "R3 A 级禁止贴现规则",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：4.1-R3。承兑人信用等级=\"A\" ⇒ :NonDiscountable。4.2a：与 R4 前提互斥（信用等级枚举互斥），无组合同真。v1.1（S4 条目①）：变量改具名声明。消费链路：①受理判定+③贴现池管理。"
+   }
+  },
+  "rule:ruleR4": {
+   "label": {
+    "value": "R4 AAA 可贴现规则（G1-Q1 收窄版）",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：4.1-R4+G1 待确认项 Q1。Q1 裁定：R2 优先。实现=规则组合（S3 裁量登记，建模方案§十-1）：ruleR4 前提合取 :AcceptableApplication（R2 结论），替代原文「随时」语义；前提合取原始日期原子因 Q4-2（日期 built-in 不可靠）不可行。v1.1（S4 条目①）：变量改具名声明；删 body 冗余 DiscountApplication 原子（子类公理蕴含，语义等价，body 4 原子：AcceptableApplication+targetsBill+hasAcceptor+creditRating）。副作用登记：可贴现推导依赖存在一笔过 R2 核对的申请；无申请的 AAA 票据不获推导（贴现池候选由 7.5 组合查询独立判定，不受影响）。消费链路：①受理判定+③贴现池管理。"
+   }
+  },
+  "rule:ruleR5": {
+   "label": {
+    "value": "R5 小额票据不入贴现池规则",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：4.1-R5。面额 <100000（10 万元，人民币）⇒ :NonDiscountable。处置档「仅登记」：不拦截入库、不进贴现池消费位、留痕（4.3）。R4∧R5 组合（AAA 且 <10 万）触发 2.2c disjoint 不一致检出 → 人工裁定（无自动消解，G1 未裁定该组合——待确认项）。v1.1（S4 条目①）：变量改具名声明。消费链路：③贴现池管理+①受理判定。"
+   }
+  },
+  "rule:ruleR7": {
+   "label": {
+    "value": "R7 背书链有效衔接推导规则",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：4.1-R7。相邻序号（swrlb:add: n2=n1+1）+被背书人=背书人 ⇒ :isUpstreamOf（有效衔接）；Transitive 闭包使首→末可达 ⟺ 链连续（R7 机器判定形态——S3 裁量登记）。断裂拦截与首手核对=应用层（处置档 4.3+编译缺口-1）。v1.1（S4 条目①）：变量改具名声明。消费链路：②背书链查询+①受理判定。"
+   }
+  },
+  "skos:conceptAcceptor": {
+   "prefLabel": {
+    "value": "承兑人",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "承诺票据到期无条件付款的企业。与「出票人」严格区分。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：描述集 3.1/词典第 4 行（承兑人）。消费：术语治理（付款人=承兑人≠出票人口径对齐，3.2）。"
+   }
+  },
+  "skos:conceptBill": {
+   "prefLabel": {
+    "value": "票据",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "由出票人签发的、承诺到期无条件支付确定金额的有价证券。本场景仅指商业承兑汇票（描述集 2.1 范围收窄）。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：描述集 3.1/词典第 1 行（票据）。消费：术语治理（口径对齐：本场景收窄为商业承兑汇票，3.2「汇票」口语泛指收敛）。"
+   }
+  },
+  "skos:conceptBillAction": {
+   "prefLabel": {
+    "value": "票据行为",
+    "lang": "zh"
+   },
+   "definition": null,
+   "comment": {
+    "value": "结构节点：描述集 3.3 引用（票据行为{背书、贴现}），术语词典无对应行——不补造定义（编译缺口-7）。"
+   }
+  },
+  "skos:conceptBusinessRequest": {
+   "prefLabel": {
+    "value": "业务申请",
+    "lang": "zh"
+   },
+   "definition": null,
+   "comment": {
+    "value": "结构节点：词典「贴现申请」行 broader 列引用，无定义行——不补造（编译缺口-7）。"
+   }
+  },
+  "skos:conceptCommercialAcceptanceBill": {
+   "prefLabel": {
+    "value": "商业承兑汇票",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "由银行以外的付款人（承兑人）承兑的商业汇票。范围收窄登记于票据类 comment（不单设类，描述集 2.1 裁量：最小化原则）。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：描述集 3.1/词典第 2 行（商业承兑汇票）。消费：术语治理（与 :Bill 单类收窄口径互查，2.1 裁量）。"
+   }
+  },
+  "skos:conceptCreditRating": {
+   "prefLabel": {
+    "value": "信用等级",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "平台对承兑人的内部评级，三档：AAA/AA/A，仅用于贴现资格判断。非外部权威评级。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：描述集 3.1/词典第 10 行（信用等级）。消费：术语治理（口径对齐：平台内部评级，非外部权威）。"
+   }
+  },
+  "skos:conceptDiscount": {
+   "prefLabel": {
+    "value": "贴现",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "持票人在票据到期前将票据权利转让给资金方以获取扣除利息后资金的行为。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "词典「对应本体构件」列记 owl:Class 与描述集 1.1（共 5 类）冲突——以 1.1 冻结权威为准：贴现属流程活动类（描述集 5.1-5.7 扩展位，md 结构化描述不建类），仅 skos 登记（编译缺口-7）。消费：①受理判定语义口径。"
+   }
+  },
+  "skos:conceptDiscountApplication": {
+   "prefLabel": {
+    "value": "贴现申请",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "持票人针对某张票据发起的一次贴现请求，具有编号、日期、期望金额与单向流转状态。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：描述集 3.1/词典第 9 行（贴现申请）。消费：术语治理（口径对齐；状态机语义见描述集 5.5）。"
+   }
+  },
+  "skos:conceptDiscountPool": {
+   "prefLabel": {
+    "value": "贴现池",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "满足平台受理条件（票面金额 ≥10 万等）的票据集合。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "查询视图（描述集 7.5 组合查询），不建类（词典裁定）；R5 消费位。消费：③贴现池管理。"
+   }
+  },
+  "skos:conceptDrawer": {
+   "prefLabel": {
+    "value": "出票人",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "签发票据的企业。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "仅术语登记，不建模（本场景无消费点，描述集 3.2/词典裁定——反博物馆）。消费：术语口径区分（承兑人≠出票人）。"
+   }
+  },
+  "skos:conceptEndorsement": {
+   "prefLabel": {
+    "value": "背书",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "持票人在票据上签章并将票据权利转让给他人的行为；每次转让生成一条背书记录。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "对应构件：背书记录类（:EndorsementRecord）+ 背书人/被背书人关系（:hasEndorser/:hasEndorsee，词典「背书关系」）。"
+   }
+  },
+  "skos:conceptEndorsementChain": {
+   "prefLabel": {
+    "value": "背书链",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "一张票据自出票收款人起历次背书构成的有序转让序列；连续性=每次背书的背书人为上次的被背书人。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "R7 判定对象（描述集 4.1-R7）；对应构件：:isUpstreamOf（Transitive 上游关系）+ 记录链（1.3d 序号有序）。"
+   }
+  },
+  "skos:conceptEnterprise": {
+   "prefLabel": {
+    "value": "企业",
+    "lang": "zh"
+   },
+   "definition": null,
+   "comment": {
+    "value": "结构节点：词典「持票人/承兑人/出票人」行 broader 列引用，无定义行——不补造（编译缺口-7）。"
+   }
+  },
+  "skos:conceptFinancialInstrument": {
+   "prefLabel": {
+    "value": "金融工具",
+    "lang": "zh"
+   },
+   "definition": null,
+   "comment": {
+    "value": "结构节点：词典「票据」行 broader 列引用，无定义行——不补造（编译缺口-7）。FIBO 对齐候选见建模方案§七。"
+   }
+  },
+  "skos:conceptHolder": {
+   "prefLabel": {
+    "value": "持票人",
+    "lang": "zh"
+   },
+   "definition": {
+    "value": "当前合法持有票据的企业，通过背书链取得票据权利。",
+    "lang": "zh"
+   },
+   "comment": {
+    "value": "源：描述集 3.1/词典第 3 行（持票人）。消费：术语治理（同义词「票据持有人（旧系统）」口径对齐，3.2）。"
+   }
+  }
+ },
+ "enum_literals": {
+  "applicationStatus": [
+   {
+    "value": "已提交"
+   },
+   {
+    "value": "审核中"
+   },
+   {
+    "value": "已通过"
+   },
+   {
+    "value": "已拒绝"
+   },
+   {
+    "value": "已划款"
+   }
+  ],
+  "creditRating": [
+   {
+    "value": "AAA"
+   },
+   {
+    "value": "AA"
+   },
+   {
+    "value": "A"
+   }
+  ]
+ },
+ "enum_editable": {
+  "applicationStatus": [
+   {
+    "value": "已提交",
+    "editable": true,
+    "reason": ""
+   },
+   {
+    "value": "审核中",
+    "editable": true,
+    "reason": ""
+   },
+   {
+    "value": "已通过",
+    "editable": true,
+    "reason": ""
+   },
+   {
+    "value": "已拒绝",
+    "editable": true,
+    "reason": ""
+   },
+   {
+    "value": "已划款",
+    "editable": true,
+    "reason": ""
+   }
+  ],
+  "creditRating": [
+   {
+    "value": "AAA",
+    "editable": true,
+    "reason": ""
+   },
+   {
+    "value": "AA",
+    "editable": true,
+    "reason": ""
+   },
+   {
+    "value": "A",
+    "editable": true,
+    "reason": ""
+   }
+  ]
+ },
+ "supply_meta": {
+  "base_ns": "http://example.org/bill-discount#",
+  "prefixes": {
+   "": "http://example.org/bill-discount#",
+   "dcam": "http://purl.org/dc/dcam/",
+   "dcmitype": "http://purl.org/dc/dcmitype/",
+   "dc": "http://purl.org/dc/elements/1.1/",
+   "dcterms": "http://purl.org/dc/terms/",
+   "qb": "http://purl.org/linked-data/cube#",
+   "vann": "http://purl.org/vocab/vann/",
+   "void": "http://rdfs.org/ns/void#",
+   "doap": "http://usefulinc.com/ns/doap#",
+   "geo": "http://www.opengis.net/ont/geosparql#",
+   "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+   "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+   "xsd": "http://www.w3.org/2001/XMLSchema#",
+   "owl": "http://www.w3.org/2002/07/owl#",
+   "swrl": "http://www.w3.org/2003/11/swrl#",
+   "swrlb": "http://www.w3.org/2003/11/swrlb#",
+   "skos": "http://www.w3.org/2004/02/skos/core#",
+   "time": "http://www.w3.org/2006/time#",
+   "xml": "http://www.w3.org/XML/1998/namespace",
+   "csvw": "http://www.w3.org/ns/csvw#",
+   "dcat": "http://www.w3.org/ns/dcat#",
+   "prof": "http://www.w3.org/ns/dx/prof/",
+   "odrl": "http://www.w3.org/ns/odrl/2/",
+   "org": "http://www.w3.org/ns/org#",
+   "prov": "http://www.w3.org/ns/prov#",
+   "sh": "http://www.w3.org/ns/shacl#",
+   "sosa": "http://www.w3.org/ns/sosa/",
+   "ssn": "http://www.w3.org/ns/ssn/",
+   "foaf": "http://xmlns.com/foaf/0.1/",
+   "brick": "https://brickschema.org/schema/Brick#",
+   "schema": "https://schema.org/",
+   "wgs": "https://www.w3.org/2003/01/geo/wgs84_pos#"
+  },
+  "ontology_version": "1.2.1"
  },
  "class_groups": [
   {
@@ -1800,5 +2952,729 @@
     "ValidApplication"
    ]
   }
- ]
+ ],
+ "axiom_graph": {
+  "nodes": [
+   {
+    "id": "ax:R:ApplicationUnderReview:applicationStatus:hasValue:审核中",
+    "kind": "restriction",
+    "label": "ApplicationUnderReview 值为 applicationStatus 审核中",
+    "owner": "ApplicationUnderReview",
+    "onProperty": "applicationStatus",
+    "fillerKind": "hasValue",
+    "filler": "审核中"
+   },
+   {
+    "id": "ax:R:Bill:hasAcceptor:someValuesFrom:Acceptor",
+    "kind": "restriction",
+    "label": "Bill 至少一个 hasAcceptor Acceptor",
+    "owner": "Bill",
+    "onProperty": "hasAcceptor",
+    "fillerKind": "someValuesFrom",
+    "filler": "Acceptor"
+   },
+   {
+    "id": "ax:R:Bill:hasDiscountApplication:maxQualifiedCardinality:1@ApplicationUnderReview",
+    "kind": "restriction",
+    "label": "Bill 至多(限定) hasDiscountApplication 1@ApplicationUnderReview",
+    "owner": "Bill",
+    "onProperty": "hasDiscountApplication",
+    "fillerKind": "maxQualifiedCardinality",
+    "filler": "1@ApplicationUnderReview"
+   },
+   {
+    "id": "ax:char:applicationNumber:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "applicationNumber: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:applicationStatus:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "applicationStatus: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:billNumber:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "billNumber: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:creditRating:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "creditRating: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:currentHolder:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "currentHolder: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:hasAcceptor:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "hasAcceptor: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:hasEndorsee:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "hasEndorsee: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:hasEndorser:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "hasEndorser: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:initiatedBy:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "initiatedBy: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:isUpstreamOf:TransitiveProperty",
+    "kind": "characteristic",
+    "label": "isUpstreamOf: TransitiveProperty"
+   },
+   {
+    "id": "ax:char:targetsBill:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "targetsBill: FunctionalProperty"
+   },
+   {
+    "id": "ax:char:unifiedSocialCreditCode:FunctionalProperty",
+    "kind": "characteristic",
+    "label": "unifiedSocialCreditCode: FunctionalProperty"
+   },
+   {
+    "id": "ax:disjoint:Discountable|NonDiscountable",
+    "kind": "disjoint",
+    "label": "互斥: Discountable, NonDiscountable"
+   },
+   {
+    "id": "ax:dt:ApplicationNumberFormat:pattern=ZX[0-9]{12}",
+    "kind": "datatypeFacet",
+    "label": "ApplicationNumberFormat: pattern=ZX[0-9]{12}",
+    "base": "string",
+    "facets": [
+     "pattern=ZX[0-9]{12}"
+    ]
+   },
+   {
+    "id": "ax:dt:BillNumberFormat:pattern=PJ[0-9]{12}",
+    "kind": "datatypeFacet",
+    "label": "BillNumberFormat: pattern=PJ[0-9]{12}",
+    "base": "string",
+    "facets": [
+     "pattern=PJ[0-9]{12}"
+    ]
+   },
+   {
+    "id": "ax:dt:PositiveAmount:minExclusive=0",
+    "kind": "datatypeFacet",
+    "label": "PositiveAmount: minExclusive=0",
+    "base": "decimal",
+    "facets": [
+     "minExclusive=0"
+    ]
+   },
+   {
+    "id": "ax:eq:ApplicationUnderReview:∩:DiscountApplication,R(applicationStatus,hasValue,审核中)",
+    "kind": "equivalent",
+    "label": "ApplicationUnderReview ≡ ∩(DiscountApplication,R(applicationStatus,hasValue,审核中))"
+   },
+   {
+    "id": "ax:inv:hasDiscountApplication|targetsBill",
+    "kind": "inverse",
+    "label": "逆: hasDiscountApplication, targetsBill"
+   },
+   {
+    "id": "ax:key:Acceptor:unifiedSocialCreditCode",
+    "kind": "hasKey",
+    "label": "Acceptor 键: unifiedSocialCreditCode"
+   },
+   {
+    "id": "ax:key:Bill:billNumber",
+    "kind": "hasKey",
+    "label": "Bill 键: billNumber"
+   },
+   {
+    "id": "ax:key:DiscountApplication:applicationNumber",
+    "kind": "hasKey",
+    "label": "DiscountApplication 键: applicationNumber"
+   },
+   {
+    "id": "ax:key:Holder:unifiedSocialCreditCode",
+    "kind": "hasKey",
+    "label": "Holder 键: unifiedSocialCreditCode"
+   },
+   {
+    "id": "ax:oneOf:applicationStatus",
+    "kind": "oneOf",
+    "label": "applicationStatus 受控值: 已提交/审核中/已通过/已拒绝/已划款",
+    "values": [
+     "已提交",
+     "审核中",
+     "已通过",
+     "已拒绝",
+     "已划款"
+    ]
+   },
+   {
+    "id": "ax:oneOf:creditRating",
+    "kind": "oneOf",
+    "label": "creditRating 受控值: AAA/AA/A",
+    "values": [
+     "AAA",
+     "AA",
+     "A"
+    ]
+   },
+   {
+    "id": "c:Acceptor",
+    "kind": "class",
+    "label": "承兑人"
+   },
+   {
+    "id": "c:ApplicationUnderReview",
+    "kind": "class",
+    "label": "审核中申请"
+   },
+   {
+    "id": "c:Bill",
+    "kind": "class",
+    "label": "票据"
+   },
+   {
+    "id": "c:DiscountApplication",
+    "kind": "class",
+    "label": "贴现申请"
+   },
+   {
+    "id": "c:Discountable",
+    "kind": "class",
+    "label": "可贴现票据"
+   },
+   {
+    "id": "c:Holder",
+    "kind": "class",
+    "label": "持票人"
+   },
+   {
+    "id": "c:NonDiscountable",
+    "kind": "class",
+    "label": "禁止贴现票据"
+   },
+   {
+    "id": "dt:ApplicationNumberFormat",
+    "kind": "datatype",
+    "label": "申请编号格式（ZX+日期+4 位序号）"
+   },
+   {
+    "id": "dt:BillNumberFormat",
+    "kind": "datatype",
+    "label": "票号格式（PJ+12 位数字）"
+   },
+   {
+    "id": "dt:PositiveAmount",
+    "kind": "datatype",
+    "label": "正金额（>0）"
+   },
+   {
+    "id": "p:applicationNumber",
+    "kind": "property",
+    "label": "申请编号"
+   },
+   {
+    "id": "p:applicationStatus",
+    "kind": "property",
+    "label": "申请状态"
+   },
+   {
+    "id": "p:billNumber",
+    "kind": "property",
+    "label": "票号"
+   },
+   {
+    "id": "p:creditRating",
+    "kind": "property",
+    "label": "信用等级"
+   },
+   {
+    "id": "p:currentHolder",
+    "kind": "property",
+    "label": "当前持票人"
+   },
+   {
+    "id": "p:hasAcceptor",
+    "kind": "property",
+    "label": "票据承兑人"
+   },
+   {
+    "id": "p:hasDiscountApplication",
+    "kind": "property",
+    "label": "票据的贴现申请"
+   },
+   {
+    "id": "p:hasEndorsee",
+    "kind": "property",
+    "label": "被背书人"
+   },
+   {
+    "id": "p:hasEndorser",
+    "kind": "property",
+    "label": "背书人"
+   },
+   {
+    "id": "p:initiatedBy",
+    "kind": "property",
+    "label": "申请发起人"
+   },
+   {
+    "id": "p:isUpstreamOf",
+    "kind": "property",
+    "label": "链上游背书记录"
+   },
+   {
+    "id": "p:targetsBill",
+    "kind": "property",
+    "label": "针对票据"
+   },
+   {
+    "id": "p:unifiedSocialCreditCode",
+    "kind": "property",
+    "label": "统一社会信用代码"
+   }
+  ],
+  "edges": [
+   {
+    "source": "ax:R:ApplicationUnderReview:applicationStatus:hasValue:审核中",
+    "target": "p:applicationStatus",
+    "kind": "onProperty"
+   },
+   {
+    "source": "ax:R:Bill:hasAcceptor:someValuesFrom:Acceptor",
+    "target": "c:Acceptor",
+    "kind": "filler"
+   },
+   {
+    "source": "ax:R:Bill:hasAcceptor:someValuesFrom:Acceptor",
+    "target": "p:hasAcceptor",
+    "kind": "onProperty"
+   },
+   {
+    "source": "ax:R:Bill:hasDiscountApplication:maxQualifiedCardinality:1@ApplicationUnderReview",
+    "target": "c:ApplicationUnderReview",
+    "kind": "onClass"
+   },
+   {
+    "source": "ax:R:Bill:hasDiscountApplication:maxQualifiedCardinality:1@ApplicationUnderReview",
+    "target": "p:hasDiscountApplication",
+    "kind": "onProperty"
+   },
+   {
+    "source": "ax:disjoint:Discountable|NonDiscountable",
+    "target": "c:Discountable",
+    "kind": "disjointMember"
+   },
+   {
+    "source": "ax:disjoint:Discountable|NonDiscountable",
+    "target": "c:NonDiscountable",
+    "kind": "disjointMember"
+   },
+   {
+    "source": "ax:eq:ApplicationUnderReview:∩:DiscountApplication,R(applicationStatus,hasValue,审核中)",
+    "target": "ax:R:ApplicationUnderReview:applicationStatus:hasValue:审核中",
+    "kind": "member"
+   },
+   {
+    "source": "ax:eq:ApplicationUnderReview:∩:DiscountApplication,R(applicationStatus,hasValue,审核中)",
+    "target": "c:DiscountApplication",
+    "kind": "member"
+   },
+   {
+    "source": "ax:inv:hasDiscountApplication|targetsBill",
+    "target": "p:hasDiscountApplication",
+    "kind": "inverse"
+   },
+   {
+    "source": "ax:inv:hasDiscountApplication|targetsBill",
+    "target": "p:targetsBill",
+    "kind": "inverse"
+   },
+   {
+    "source": "ax:key:Acceptor:unifiedSocialCreditCode",
+    "target": "p:unifiedSocialCreditCode",
+    "kind": "keyProp"
+   },
+   {
+    "source": "ax:key:Bill:billNumber",
+    "target": "p:billNumber",
+    "kind": "keyProp"
+   },
+   {
+    "source": "ax:key:DiscountApplication:applicationNumber",
+    "target": "p:applicationNumber",
+    "kind": "keyProp"
+   },
+   {
+    "source": "ax:key:Holder:unifiedSocialCreditCode",
+    "target": "p:unifiedSocialCreditCode",
+    "kind": "keyProp"
+   },
+   {
+    "source": "c:Acceptor",
+    "target": "ax:key:Acceptor:unifiedSocialCreditCode",
+    "kind": "hasKey"
+   },
+   {
+    "source": "c:ApplicationUnderReview",
+    "target": "ax:R:ApplicationUnderReview:applicationStatus:hasValue:审核中",
+    "kind": "constrains"
+   },
+   {
+    "source": "c:ApplicationUnderReview",
+    "target": "ax:eq:ApplicationUnderReview:∩:DiscountApplication,R(applicationStatus,hasValue,审核中)",
+    "kind": "equivalent"
+   },
+   {
+    "source": "c:Bill",
+    "target": "ax:R:Bill:hasAcceptor:someValuesFrom:Acceptor",
+    "kind": "constrains"
+   },
+   {
+    "source": "c:Bill",
+    "target": "ax:R:Bill:hasDiscountApplication:maxQualifiedCardinality:1@ApplicationUnderReview",
+    "kind": "constrains"
+   },
+   {
+    "source": "c:Bill",
+    "target": "ax:key:Bill:billNumber",
+    "kind": "hasKey"
+   },
+   {
+    "source": "c:DiscountApplication",
+    "target": "ax:key:DiscountApplication:applicationNumber",
+    "kind": "hasKey"
+   },
+   {
+    "source": "c:Holder",
+    "target": "ax:key:Holder:unifiedSocialCreditCode",
+    "kind": "hasKey"
+   },
+   {
+    "source": "dt:ApplicationNumberFormat",
+    "target": "ax:dt:ApplicationNumberFormat:pattern=ZX[0-9]{12}",
+    "kind": "rangeDatatype"
+   },
+   {
+    "source": "dt:BillNumberFormat",
+    "target": "ax:dt:BillNumberFormat:pattern=PJ[0-9]{12}",
+    "kind": "rangeDatatype"
+   },
+   {
+    "source": "dt:PositiveAmount",
+    "target": "ax:dt:PositiveAmount:minExclusive=0",
+    "kind": "rangeDatatype"
+   },
+   {
+    "source": "p:applicationNumber",
+    "target": "ax:char:applicationNumber:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:applicationStatus",
+    "target": "ax:char:applicationStatus:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:applicationStatus",
+    "target": "ax:oneOf:applicationStatus",
+    "kind": "controlledRange"
+   },
+   {
+    "source": "p:billNumber",
+    "target": "ax:char:billNumber:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:creditRating",
+    "target": "ax:char:creditRating:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:creditRating",
+    "target": "ax:oneOf:creditRating",
+    "kind": "controlledRange"
+   },
+   {
+    "source": "p:currentHolder",
+    "target": "ax:char:currentHolder:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:hasAcceptor",
+    "target": "ax:char:hasAcceptor:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:hasEndorsee",
+    "target": "ax:char:hasEndorsee:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:hasEndorser",
+    "target": "ax:char:hasEndorser:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:initiatedBy",
+    "target": "ax:char:initiatedBy:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:isUpstreamOf",
+    "target": "ax:char:isUpstreamOf:TransitiveProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:targetsBill",
+    "target": "ax:char:targetsBill:FunctionalProperty",
+    "kind": "characteristic"
+   },
+   {
+    "source": "p:unifiedSocialCreditCode",
+    "target": "ax:char:unifiedSocialCreditCode:FunctionalProperty",
+    "kind": "characteristic"
+   }
+  ],
+  "md_overlay": {
+   "ax:dt:BillNumberFormat:pattern=PJ[0-9]{12}": [
+    {
+     "family": "F",
+     "编号": "F1",
+     "名称": "票号格式"
+    }
+   ],
+   "ax:dt:ApplicationNumberFormat:pattern=ZX[0-9]{12}": [
+    {
+     "family": "F",
+     "编号": "F1",
+     "名称": "票号格式"
+    },
+    {
+     "family": "F",
+     "编号": "F2",
+     "名称": "编号格式"
+    }
+   ],
+   "ax:key:Bill:billNumber": [
+    {
+     "family": "F",
+     "编号": "F1",
+     "名称": "票号格式"
+    },
+    {
+     "family": "F",
+     "编号": "F6",
+     "名称": "票号唯一"
+    },
+    {
+     "family": "P",
+     "编号": "P1",
+     "名称": "必有承兑人"
+    }
+   ],
+   "ax:char:billNumber:FunctionalProperty": [
+    {
+     "family": "F",
+     "编号": "F1",
+     "名称": "票号格式"
+    },
+    {
+     "family": "F",
+     "编号": "F6",
+     "名称": "票号唯一"
+    }
+   ],
+   "ax:oneOf:creditRating": [
+    {
+     "family": "F",
+     "编号": "F3",
+     "名称": "评级受控"
+    },
+    {
+     "family": "L",
+     "编号": "L2",
+     "名称": "评级互斥"
+    }
+   ],
+   "ax:char:creditRating:FunctionalProperty": [
+    {
+     "family": "F",
+     "编号": "F3",
+     "名称": "评级受控"
+    },
+    {
+     "family": "L",
+     "编号": "L2",
+     "名称": "评级互斥"
+    }
+   ],
+   "ax:R:ApplicationUnderReview:applicationStatus:hasValue:审核中": [
+    {
+     "family": "F",
+     "编号": "F4",
+     "名称": "状态受控"
+    },
+    {
+     "family": "L",
+     "编号": "L1",
+     "名称": "状态互斥"
+    }
+   ],
+   "ax:eq:ApplicationUnderReview:∩:DiscountApplication,R(applicationStatus,hasValue,审核中)": [
+    {
+     "family": "F",
+     "编号": "F4",
+     "名称": "状态受控"
+    },
+    {
+     "family": "F",
+     "编号": "F8",
+     "名称": "申请号唯一"
+    },
+    {
+     "family": "L",
+     "编号": "L1",
+     "名称": "状态互斥"
+    }
+   ],
+   "ax:oneOf:applicationStatus": [
+    {
+     "family": "F",
+     "编号": "F4",
+     "名称": "状态受控"
+    },
+    {
+     "family": "L",
+     "编号": "L1",
+     "名称": "状态互斥"
+    }
+   ],
+   "ax:char:applicationStatus:FunctionalProperty": [
+    {
+     "family": "F",
+     "编号": "F4",
+     "名称": "状态受控"
+    },
+    {
+     "family": "L",
+     "编号": "L1",
+     "名称": "状态互斥"
+    }
+   ],
+   "ax:dt:PositiveAmount:minExclusive=0": [
+    {
+     "family": "F",
+     "编号": "F5",
+     "名称": "金额正值"
+    }
+   ],
+   "ax:R:Bill:hasAcceptor:someValuesFrom:Acceptor": [
+    {
+     "family": "F",
+     "编号": "F6",
+     "名称": "票号唯一"
+    },
+    {
+     "family": "F",
+     "编号": "F7",
+     "名称": "标识唯一"
+    },
+    {
+     "family": "P",
+     "编号": "P1",
+     "名称": "必有承兑人"
+    }
+   ],
+   "ax:R:Bill:hasDiscountApplication:maxQualifiedCardinality:1@ApplicationUnderReview": [
+    {
+     "family": "F",
+     "编号": "F6",
+     "名称": "票号唯一"
+    },
+    {
+     "family": "P",
+     "编号": "P1",
+     "名称": "必有承兑人"
+    }
+   ],
+   "ax:key:Acceptor:unifiedSocialCreditCode": [
+    {
+     "family": "F",
+     "编号": "F7",
+     "名称": "标识唯一"
+    }
+   ],
+   "ax:key:Holder:unifiedSocialCreditCode": [
+    {
+     "family": "F",
+     "编号": "F7",
+     "名称": "标识唯一"
+    }
+   ],
+   "ax:char:unifiedSocialCreditCode:FunctionalProperty": [
+    {
+     "family": "F",
+     "编号": "F7",
+     "名称": "标识唯一"
+    }
+   ],
+   "ax:key:DiscountApplication:applicationNumber": [
+    {
+     "family": "F",
+     "编号": "F8",
+     "名称": "申请号唯一"
+    }
+   ],
+   "ax:char:applicationNumber:FunctionalProperty": [
+    {
+     "family": "F",
+     "编号": "F8",
+     "名称": "申请号唯一"
+    }
+   ],
+   "ax:disjoint:Discountable|NonDiscountable": [
+    {
+     "family": "L",
+     "编号": "L3",
+     "名称": "结论互斥"
+    }
+   ],
+   "ax:char:currentHolder:FunctionalProperty": [
+    {
+     "family": "L",
+     "编号": "L4",
+     "名称": "单一持票人"
+    }
+   ],
+   "ax:char:hasAcceptor:FunctionalProperty": [
+    {
+     "family": "P",
+     "编号": "P1",
+     "名称": "必有承兑人"
+    }
+   ]
+  },
+  "md_only": [
+   "C1",
+   "C2",
+   "C3",
+   "L5",
+   "L6",
+   "L7",
+   "L8",
+   "P2",
+   "X1",
+   "X2",
+   "X3"
+  ]
+ }
 }

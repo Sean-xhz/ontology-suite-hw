@@ -21,6 +21,7 @@ import json
 import os
 import re
 import sys
+from collections import deque
 
 import rdflib
 from rdflib import RDF, RDFS, OWL, XSD, BNode, URIRef, Literal
@@ -29,6 +30,11 @@ from rdflib.namespace import Namespace
 SWRL = Namespace("http://www.w3.org/2003/11/swrl#")
 SWRLB = Namespace("http://www.w3.org/2003/11/swrlb#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+
+# review.json 子协议版本（独立登记，不联动 skill 版本；1.3.0 批次 1.0→1.1：
+# 新增 supply 供给层〔D2 六图 + D4 编辑〕+ meta.sources.ttl.sha256_full）。
+# 模板守卫 DATA.schema_version||"1.0"；legacy（无 supply）→D2 hint/D4 禁用。
+REVIEW_JSON_SCHEMA = "1.1"
 
 
 def local(n):
@@ -45,6 +51,16 @@ def file_sha(path):
         for chunk in iter(lambda: fh.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()[:12]
+
+
+def file_sha_full(path):
+    """全 64 位 sha256（D4 patch baseline.sha256 须 64hex，R2 validate_patch
+    fullmatch；12 位 file_sha 不动——意见导出链 HTML→ingest_opinions 消费）。"""
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 # ---------------------------------------------------------------- TTL 层
@@ -71,9 +87,9 @@ def parse_oneof_enum(g, range_node):
 
 def union_class_members(g, node):
     """domain/range 节点为匿名 owl:unionOf bnode → 成员类 ID 列表；否则 []。
-    S3 裁量登记的联合值域形态（如 :profileOf/:relatedPartyOf 的 企业∪个人），
-    供 check_instance E06/E09 做 domain/range 兼容判定（2026-11-09 真实载体 A/B
-    run 发现：原实现匿名值域输出 bnode ID，兼容判定必误报）。"""
+    S3 裁量登记的联合值域形态（如某对象属性值域为 企业∪个人 的匿名 union），
+    供 check_instance E06/E09 做 domain/range 兼容判定——须输出成员类 ID
+    而非 bnode ID，否则兼容判定误报。"""
     if not isinstance(node, BNode):
         return []
     union = g.value(node, OWL.unionOf)
@@ -85,8 +101,8 @@ def union_class_members(g, node):
 
 def _arg_str(g, a):
     """atom 实参 → 字符串。变量（swrl:Variable）加 ? 前缀（SWRL 标准记法，
-    也是下游 plain_swrl 的变量判据——2026-11-05 修复：原实现变量与类名
-    无法区分，导致通俗翻译的变量重命名与图例失效）；字面量原样。"""
+    也是下游 plain_swrl 的变量判据——? 前缀使变量与类名可区分，
+    保障通俗翻译的变量重命名与图例正确）；字面量原样。"""
     if a is None:
         return "?"
     if isinstance(a, Literal):
@@ -179,7 +195,7 @@ def parse_ttl(ttl_path):
             "comment": str(g.value(p, RDFS.comment) or ""),
             # 确定性纪律：具名字段只承载具名 IRI localname；匿名类表达式
             # （unionOf 等）→ 空串，联合成员经 domain_union/range_union 承载
-            # （rdflib bnode 标签跨进程随机，禁入输出——2026-11-11 修复）
+            # （rdflib bnode 标签跨进程随机，禁入输出）
             "domain": local(dom) if isinstance(dom, URIRef) else "",
             "range": local(rng) if isinstance(rng, URIRef) else "",
             "domain_union": union_class_members(g, dom),
@@ -212,8 +228,8 @@ def parse_ttl(ttl_path):
         body = parse_atoms(g, imp, SWRL.body)
         head = parse_atoms(g, imp, SWRL.head)
         # variables=本规则真实变量名（? 前缀，与 arguments 记法一致，排序去重）。
-        # 2026-11-11 修复：原实现误遍历 body/head 的 atom 列表收集 bnode 标签
-        # （语义错误+跨进程随机）；改从已解析 atom 实参导出（单一解析源）。
+        # 从已解析 atom 实参导出（单一解析源）——确定性纪律：bnode 随机标签
+        # 禁入确定性输出（跨进程漂移）。
         rule_vars = sorted({a for atom in body + head
                             for a in atom.get("arguments", [])
                             if a.startswith("?") and len(a) > 1})
@@ -249,7 +265,465 @@ def parse_ttl(ttl_path):
         "swrl_rules": len(ttl["rules"]),
         "skos_concepts": len(ttl["skos_concepts"]),
     }
+    # D2/D4 供给层（schema 1.1）：唯一新顶层键，图访问集中于 build_supply 纯函数。
+    # T4 安全：extract_signature.build_signature 逐键白名单投影构造全新 dict，
+    # 从不迭代 ttl 顶层键、从不引用 supply（实证注入后 signature JSON/字节全等）。
+    ttl["supply"] = build_supply(g, base_ns)
     return ttl
+
+
+# ---------------------------------------------------------------- supply 供给层（D2/D4，schema 1.1）
+# 图访问集中于 build_supply 纯函数（parse_ttl 唯一新顶层键）。确定性纪律：所有
+# 列表/映射排序，公理图节点 id 内容派生（禁 bnode 随机标签）；T4 安全（白名单不取 supply）。
+
+FILLER_PREDS = [
+    (OWL.someValuesFrom, "someValuesFrom"), (OWL.allValuesFrom, "allValuesFrom"),
+    (OWL.hasValue, "hasValue"), (OWL.hasSelf, "hasSelf"),
+    (OWL.minCardinality, "minCardinality"), (OWL.maxCardinality, "maxCardinality"),
+    (OWL.minQualifiedCardinality, "minQualifiedCardinality"),
+    (OWL.maxQualifiedCardinality, "maxQualifiedCardinality"),
+]
+FILLER_CN = {
+    "someValuesFrom": "至少一个", "allValuesFrom": "全部", "hasValue": "值为",
+    "hasSelf": "自反", "minCardinality": "至少", "maxCardinality": "至多",
+    "minQualifiedCardinality": "至少(限定)", "maxQualifiedCardinality": "至多(限定)",
+}
+FACET_PREDS = [XSD.pattern, XSD.minExclusive, XSD.maxExclusive, XSD.minInclusive,
+               XSD.maxInclusive, XSD.length, XSD.minLength, XSD.maxLength,
+               XSD.totalDigits, XSD.fractionDigits]
+CHAR_TYPES = {"FunctionalProperty", "InverseFunctionalProperty", "TransitiveProperty",
+              "SymmetricProperty", "AsymmetricProperty", "ReflexiveProperty",
+              "IrreflexiveProperty"}
+
+
+def _literal_meta(lit):
+    """rdflib Literal → {value, lang?, datatype?} 精确编码（G2 replace_literal old
+    全等）。None→None；lang/datatype 互斥（rdflib 有 lang 则无显式 datatype）。"""
+    if lit is None:
+        return None
+    if not isinstance(lit, Literal):
+        return {"value": str(lit)}
+    d = {"value": str(lit)}
+    if lit.language:
+        d["lang"] = lit.language
+    elif lit.datatype is not None:
+        d["datatype"] = str(lit.datatype)
+    return d
+
+
+def _label(g, iri):
+    """参考节点 label：rdfs:label 优先，回退 localname。"""
+    return str(g.value(iri, RDFS.label) or local(iri))
+
+
+def _anchor_owners(g, node):
+    """反向 BFS 回溯具名 owner（本地重实现 ontology-model incremental_patch
+    .anchor_resolve 算法，避 review→model import 禁区）。URIRef→{自身}；BNode→
+    穿透 bnode 主语收集 URIRef 主语（嵌套 restriction/intersectionOf 链可达）。"""
+    if isinstance(node, URIRef):
+        return {node}
+    seen, owners, queue = set(), set(), deque([node])
+    while queue:
+        cur = queue.popleft()
+        if cur in seen:
+            continue
+        seen.add(cur)
+        for s, p, o in g.triples((None, None, cur)):
+            if isinstance(s, URIRef):
+                owners.add(s)
+            elif isinstance(s, BNode) and s not in seen:
+                queue.append(s)
+    return owners
+
+
+def _filler_token(g, filler):
+    """restriction filler → 内容派生 token（禁 bnode 标签）。URIRef→localname；
+    Literal→str；BNode→unionOf/intersectionOf 成员或嵌套 restriction 递归。"""
+    if isinstance(filler, URIRef):
+        return local(filler)
+    if isinstance(filler, Literal):
+        return str(filler)
+    for lp, tag in [(OWL.unionOf, "∪"), (OWL.intersectionOf, "∩")]:
+        lst = g.value(filler, lp)
+        if lst is not None:
+            members = sorted(_filler_token(g, m) for m in rdf_list_items(g, lst))
+            return tag + "(" + ",".join(members) + ")"
+    if (filler, RDF.type, OWL.Restriction) in g:
+        op = g.value(filler, OWL.onProperty)
+        for fp, fk in FILLER_PREDS:
+            fv = g.value(filler, fp)
+            if fv is not None:
+                return "R(%s,%s,%s)" % (local(op) if op is not None else "?",
+                                        fk, _filler_token(g, fv))
+    return "anon"
+
+
+def _restriction_info(g, r):
+    """owl:Restriction bnode → 内容派生节点信息（id 禁 bnode 标签，owner 经反向
+    BFS）。无识别 filler→None。qualified cardinality 的 onClass 并入 filler token
+    保 id 唯一。equivalentClass 成员引用复用本函数算同一 id。"""
+    op = g.value(r, OWL.onProperty)
+    op_local = local(op) if op is not None else "?"
+    filler_kind, filler_val = None, None
+    for fp, fk in FILLER_PREDS:
+        fv = g.value(r, fp)
+        if fv is not None:
+            filler_kind, filler_val = fk, fv
+            break
+    if filler_kind is None:
+        return None
+    onclass = g.value(r, OWL.onClass)
+    owners = _anchor_owners(g, r)
+    owner_str = "|".join(sorted(local(o) for o in owners)) or "orphan"
+    filler_tok = _filler_token(g, filler_val)
+    if onclass is not None and filler_kind in ("minQualifiedCardinality",
+                                               "maxQualifiedCardinality"):
+        filler_tok = "%s@%s" % (filler_tok, local(onclass))
+    nid = "ax:R:%s:%s:%s:%s" % (owner_str, op_local, filler_kind, filler_tok)
+    label = "%s %s %s %s" % (owner_str, FILLER_CN.get(filler_kind, filler_kind),
+                             op_local, filler_tok)
+    return {"nid": nid, "owner_str": owner_str, "owners": owners, "op": op,
+            "op_local": op_local, "filler_kind": filler_kind,
+            "filler_val": filler_val, "filler_tok": filler_tok,
+            "onclass": onclass, "label": label}
+
+
+def build_axiom_graph(g, base_ns):
+    """D2④b 公理族约束图：从 TTL OWL 公理构件提取（Restriction/equivalentClass/
+    AllDisjointClasses+pairwise disjointWith/hasKey/characteristics/inverseOf 镜像
+    去重/datatypeFacet/oneOf）。节点 id 内容派生（禁 bnode 随机标签），owner 经
+    通用反向 BFS；nodes 按 id 排序、edges 按 (source,target,kind) 排序→双跑字节等。
+    md 形式化表达 overlay 在 merge 层做（表仍权威，md_only 显式）。"""
+    def in_base(n):
+        return isinstance(n, URIRef) and str(n).startswith(base_ns)
+
+    nodes, edges = {}, set()
+
+    def add_node(nid, kind, label, **extra):
+        if nid not in nodes:
+            n = {"id": nid, "kind": kind, "label": label}
+            n.update(extra)
+            nodes[nid] = n
+
+    def add_edge(s, t, kind):
+        edges.add((s, t, kind))
+
+    def cls_node(iri):
+        nid = "c:" + local(iri)
+        add_node(nid, "class", _label(g, iri))
+        return nid
+
+    def prop_node(iri):
+        nid = "p:" + local(iri)
+        add_node(nid, "property", _label(g, iri))
+        return nid
+
+    def dt_node(iri):
+        nid = "dt:" + local(iri)
+        add_node(nid, "datatype", _label(g, iri))
+        return nid
+
+    # 1. Restriction（owner 经反向 BFS；嵌套 restriction 经 equivalentClass 可达）
+    for r in g.subjects(RDF.type, OWL.Restriction):
+        info = _restriction_info(g, r)
+        if info is None:
+            continue
+        add_node(info["nid"], "restriction", info["label"],
+                 owner=info["owner_str"], onProperty=info["op_local"],
+                 fillerKind=info["filler_kind"], filler=info["filler_tok"])
+        for o in sorted(info["owners"], key=str):
+            add_edge(cls_node(o), info["nid"], "constrains")
+        if info["op"] is not None:
+            add_edge(info["nid"], prop_node(info["op"]), "onProperty")
+        fv = info["filler_val"]
+        if isinstance(fv, URIRef):
+            if (fv, RDF.type, OWL.Class) in g:
+                add_edge(info["nid"], cls_node(fv), "filler")
+            elif (fv, RDF.type, RDFS.Datatype) in g:
+                add_edge(info["nid"], dt_node(fv), "filler")
+        if info["onclass"] is not None and isinstance(info["onclass"], URIRef):
+            add_edge(info["nid"], cls_node(info["onclass"]), "onClass")
+
+    # 2. equivalentClass（具名等价 + 匿名 intersectionOf/unionOf 成员）
+    for c in g.subjects(OWL.equivalentClass, None):
+        if not in_base(c):
+            continue
+        for eq in g.objects(c, OWL.equivalentClass):
+            if isinstance(eq, URIRef):
+                nid = "ax:eq:%s:%s" % (local(c), local(eq))
+                add_node(nid, "equivalent", "%s ≡ %s" % (local(c), local(eq)))
+                add_edge(cls_node(c), nid, "equivalent")
+                add_edge(nid, cls_node(eq), "member")
+            elif isinstance(eq, BNode):
+                for lp, tag in [(OWL.intersectionOf, "∩"), (OWL.unionOf, "∪")]:
+                    lst = g.value(eq, lp)
+                    if lst is None:
+                        continue
+                    members = rdf_list_items(g, lst)
+                    toks = sorted(_filler_token(g, m) for m in members)
+                    nid = "ax:eq:%s:%s:%s" % (local(c), tag, ",".join(toks))
+                    add_node(nid, "equivalent",
+                             "%s ≡ %s(%s)" % (local(c), tag, ",".join(toks)))
+                    add_edge(cls_node(c), nid, "equivalent")
+                    for m in members:
+                        if isinstance(m, URIRef):
+                            add_edge(nid, cls_node(m), "member")
+                        elif isinstance(m, BNode) and (m, RDF.type, OWL.Restriction) in g:
+                            minfo = _restriction_info(g, m)
+                            if minfo:
+                                add_edge(nid, minfo["nid"], "member")
+
+    # 3. disjoint（AllDisjointClasses bnode 主语 + pairwise disjointWith 双形态去重）
+    for d in g.subjects(RDF.type, OWL.AllDisjointClasses):
+        members = [m for m in rdf_list_items(g, g.value(d, OWL.members))
+                   if isinstance(m, URIRef)]
+        toks = sorted(local(m) for m in members)
+        if not toks:
+            continue
+        nid = "ax:disjoint:" + "|".join(toks)
+        add_node(nid, "disjoint", "互斥: " + ", ".join(toks))
+        for m in members:
+            add_edge(nid, cls_node(m), "disjointMember")
+    for a, b in g.subject_objects(OWL.disjointWith):
+        if in_base(a) and in_base(b):
+            pair = sorted([local(a), local(b)])
+            nid = "ax:disjoint:" + "|".join(pair)
+            add_node(nid, "disjoint", "互斥: " + ", ".join(pair))
+            for x in (a, b):
+                add_edge(nid, cls_node(x), "disjointMember")
+
+    # 4. hasKey
+    for c in g.subjects(OWL.hasKey, None):
+        if not in_base(c):
+            continue
+        for hk in g.objects(c, OWL.hasKey):
+            keys = sorted(local(k) for k in rdf_list_items(g, hk)
+                          if isinstance(k, URIRef))
+            if not keys:
+                continue
+            nid = "ax:key:%s:%s" % (local(c), ",".join(keys))
+            add_node(nid, "hasKey", "%s 键: %s" % (local(c), ", ".join(keys)))
+            add_edge(cls_node(c), nid, "hasKey")
+            for k in keys:
+                add_edge(nid, prop_node(URIRef(base_ns + k)), "keyProp")
+
+    # 5. characteristics（Functional/Transitive/…）
+    for p in list(g.subjects(RDF.type, OWL.ObjectProperty)) + \
+            list(g.subjects(RDF.type, OWL.DatatypeProperty)):
+        if not in_base(p):
+            continue
+        for t in g.objects(p, RDF.type):
+            tl = local(t)
+            if tl in CHAR_TYPES:
+                nid = "ax:char:%s:%s" % (local(p), tl)
+                add_node(nid, "characteristic", "%s: %s" % (local(p), tl))
+                add_edge(prop_node(p), nid, "characteristic")
+
+    # 6. inverseOf（镜像去重：A inverseOf B ∧ B inverseOf A → 单节点）
+    for p in g.subjects(OWL.inverseOf, None):
+        if not in_base(p):
+            continue
+        for q in g.objects(p, OWL.inverseOf):
+            if isinstance(q, URIRef) and in_base(q):
+                pair = sorted([local(p), local(q)])
+                nid = "ax:inv:" + "|".join(pair)
+                add_node(nid, "inverse", "逆: " + ", ".join(pair))
+                for x in (p, q):
+                    add_edge(nid, prop_node(x), "inverse")
+
+    # 7. datatypeFacet（具名 rdfs:Datatype onDatatype+withRestrictions）
+    for dt in g.subjects(RDF.type, RDFS.Datatype):
+        if not in_base(dt):
+            continue
+        ondt = g.value(dt, OWL.onDatatype)
+        wr = g.value(dt, OWL.withRestrictions)
+        facets = []
+        if wr is not None:
+            for cell in rdf_list_items(g, wr):
+                for fp in FACET_PREDS:
+                    fv = g.value(cell, fp)
+                    if fv is not None:
+                        facets.append("%s=%s" % (local(fp), str(fv)))
+        facets.sort()
+        if not facets:
+            continue
+        nid = "ax:dt:%s:%s" % (local(dt), ",".join(facets))
+        add_node(nid, "datatypeFacet", "%s: %s" % (local(dt), ", ".join(facets)),
+                 base=local(ondt) if ondt is not None else "", facets=facets)
+        add_edge(dt_node(dt), nid, "rangeDatatype")
+
+    # 8. oneOf（数据属性 range 匿名 oneOf 受控值）
+    for p in g.subjects(RDF.type, OWL.DatatypeProperty):
+        if not in_base(p):
+            continue
+        rng = g.value(p, RDFS.range)
+        if not isinstance(rng, BNode):
+            continue
+        oneof = g.value(rng, OWL.oneOf)
+        if oneof is None:
+            continue
+        vals = [str(v) for v in rdf_list_items(g, oneof)]
+        nid = "ax:oneOf:" + local(p)
+        add_node(nid, "oneOf", "%s 受控值: %s" % (local(p), "/".join(vals)),
+                 values=vals)
+        add_edge(prop_node(p), nid, "controlledRange")
+        ondt = g.value(rng, OWL.onDatatype)
+        if ondt is not None and in_base(ondt):
+            add_edge(nid, dt_node(ondt), "rangeDatatype")
+
+    return {
+        "nodes": [nodes[k] for k in sorted(nodes)],
+        "edges": [{"source": s, "target": t, "kind": k}
+                  for s, t, k in sorted(edges)],
+    }
+
+
+def build_supply(g, base_ns):
+    """D2/D4 供给层纯函数（parse_ttl 唯一新顶层键 ttl["supply"]）。集中图访问，
+    产 iris/literals/enum/class_parents/atom_meta/broader_list/axiom_graph 等平行表，
+    既有实体 dict 字节不动（T4 白名单不取 supply）。所有输出确定性排序。"""
+    def in_base(n):
+        return isinstance(n, URIRef) and str(n).startswith(base_ns)
+
+    supply = {"base_ns": base_ns}
+    supply["prefixes"] = {str(p): str(ns) for p, ns in
+                          sorted(g.namespaces(), key=lambda x: (str(x[1]), str(x[0])))}
+    versions = sorted({str(v) for v in g.objects(None, OWL.versionInfo)})
+    supply["ontology_version"] = versions[0] if len(versions) == 1 else None
+
+    # iris（G3：D4 一律产全 IRI，避默认 ns 歧义）
+    iris = {"classes": {}, "object_properties": {}, "data_properties": {},
+            "rules": {}, "skos_concepts": {}, "scheme": None}
+    for c in sorted(g.subjects(RDF.type, OWL.Class), key=str):
+        if in_base(c):
+            iris["classes"][local(c)] = str(c)
+    for p in sorted(g.subjects(RDF.type, OWL.ObjectProperty), key=str):
+        if in_base(p):
+            iris["object_properties"][local(p)] = str(p)
+    for p in sorted(g.subjects(RDF.type, OWL.DatatypeProperty), key=str):
+        if in_base(p):
+            iris["data_properties"][local(p)] = str(p)
+    for imp in sorted(g.subjects(RDF.type, SWRL.Imp), key=str):
+        iris["rules"][local(imp)] = str(imp)
+    for c in sorted(g.subjects(RDF.type, SKOS.Concept), key=str):
+        iris["skos_concepts"][local(c)] = str(c)
+    scheme = next(iter(sorted(g.subjects(RDF.type, SKOS.ConceptScheme), key=str)), None)
+    if scheme is not None:
+        iris["scheme"] = str(scheme)
+    supply["iris"] = iris
+
+    # literals（G2：replace_literal old 全等编码取精确 lang/datatype）
+    literals = {}
+    for kind, stype in [("class", OWL.Class), ("object_property", OWL.ObjectProperty),
+                        ("data_property", OWL.DatatypeProperty), ("rule", SWRL.Imp)]:
+        for s in sorted(g.subjects(RDF.type, stype), key=str):
+            if kind != "rule" and not in_base(s):
+                continue
+            literals["%s:%s" % (kind, local(s))] = {
+                "label": _literal_meta(g.value(s, RDFS.label)),
+                "comment": _literal_meta(g.value(s, RDFS.comment)),
+            }
+    for c in sorted(g.subjects(RDF.type, SKOS.Concept), key=str):
+        literals["skos:%s" % local(c)] = {
+            "prefLabel": _literal_meta(g.value(c, SKOS.prefLabel)),
+            "definition": _literal_meta(g.value(c, SKOS.definition)),
+            "comment": _literal_meta(g.value(c, RDFS.comment)),
+        }
+    supply["literals"] = literals
+
+    # enum_literals + enum_editable（G8 重名预检：全图 rdf:first 字面量计数）
+    first_counts = {}
+    for o in g.objects(None, RDF.first):
+        if isinstance(o, Literal):
+            first_counts[str(o)] = first_counts.get(str(o), 0) + 1
+    enum_literals, enum_editable = {}, {}
+    for p in sorted(g.subjects(RDF.type, OWL.DatatypeProperty), key=str):
+        if not in_base(p):
+            continue
+        rng = g.value(p, RDFS.range)
+        if not isinstance(rng, BNode):
+            continue
+        oneof = g.value(rng, OWL.oneOf)
+        if oneof is None:
+            continue
+        vals = rdf_list_items(g, oneof)
+        pid = local(p)
+        enum_literals[pid] = [_literal_meta(v) for v in vals]
+        ed = []
+        for v in vals:
+            cnt = first_counts.get(str(v), 0)
+            if cnt > 1:
+                ed.append({"value": str(v), "editable": False,
+                           "reason": "重名不可消歧（全图 %d 处 rdf:first），转入口 (c)" % cnt})
+            else:
+                ed.append({"value": str(v), "editable": True, "reason": ""})
+        enum_editable[pid] = ed
+    supply["enum_literals"] = enum_literals
+    supply["enum_editable"] = enum_editable
+
+    # class_parents（G4 拖拽守卫：具名父列表 + 匿名父计数）
+    class_parents = {}
+    for c in sorted(g.subjects(RDF.type, OWL.Class), key=str):
+        if not in_base(c):
+            continue
+        named, anon = [], 0
+        for s in g.objects(c, RDFS.subClassOf):
+            if isinstance(s, URIRef) and not str(s).startswith(str(SWRL)):
+                named.append(local(s))
+            elif isinstance(s, BNode):
+                anon += 1
+        class_parents[local(c)] = {"named": sorted(named), "anon": anon}
+    supply["class_parents"] = class_parents
+
+    # atom_meta（D2⑤c 规则流图：atom_id 位置派生 <rid>.b<i>/.h<i>，跨 parse 确定；
+    # arg_kinds 与 parse_atoms arguments 同序同数，索引只计 bnode atom 对齐 body_atoms）
+    atom_meta = {}
+    for imp in sorted(g.subjects(RDF.type, SWRL.Imp), key=str):
+        rid = local(imp)
+        meta = {}
+        for side, pred, tag in [("body", SWRL.body, "b"), ("head", SWRL.head, "h")]:
+            entries, bi = [], 0
+            for atom in rdf_list_items(g, g.value(imp, pred)):
+                if not isinstance(atom, BNode):
+                    continue
+                args_node = g.value(atom, SWRL.arguments)
+                if args_node is not None:
+                    arg_nodes = rdf_list_items(g, args_node)
+                else:
+                    arg_nodes = [a for a in (g.value(atom, SWRL.argument1),
+                                             g.value(atom, SWRL.argument2))
+                                 if a is not None]
+                arg_kinds = []
+                for a in arg_nodes:
+                    if isinstance(a, Literal):
+                        ak = {"kind": "literal", "value": str(a)}
+                        if a.language:
+                            ak["lang"] = a.language
+                        elif a.datatype is not None:
+                            ak["datatype"] = str(a.datatype)
+                        arg_kinds.append(ak)
+                    elif (a, RDF.type, SWRL.Variable) in g:
+                        arg_kinds.append({"kind": "var", "name": local(a)})
+                    else:
+                        arg_kinds.append({"kind": "iri", "iri": str(a),
+                                          "name": local(a)})
+                entries.append({"atom_id": "%s.%s%d" % (rid, tag, bi),
+                                "arg_kinds": arg_kinds})
+                bi += 1
+            meta[side] = entries
+        atom_meta[rid] = meta
+    supply["atom_meta"] = atom_meta
+
+    # broader_list（D2⑥b SKOS 多父：g.objects 通用实现，broader 单值保留保⑥区 compat）
+    broader_list = {}
+    for c in sorted(g.subjects(RDF.type, SKOS.Concept), key=str):
+        broader_list[local(c)] = sorted(local(b) for b in g.objects(c, SKOS.broader)
+                                        if isinstance(b, URIRef))
+    supply["broader_list"] = broader_list
+
+    # axiom_graph（D2④b 公理约束图）
+    supply["axiom_graph"] = build_axiom_graph(g, base_ns)
+    return supply
 
 
 # ---------------------------------------------------------------- md 层
@@ -501,7 +975,7 @@ def parse_term_dicts(paths):
     兼容两种表头：`术语（prefLabel）| 定义（definition）| …`（基线词典）
     与 `# | 标准名 | 定义 | 同义词/别名 | 上位词 | 溯源`（增补词典）。
     用途：TTL 的 skos:Concept 常缺 skos:definition，审阅页定义列需回填，
-    否则专家看到空定义（问题⑥）——词典是人写的权威定义来源。
+    否则专家看到空定义——词典是人写的权威定义来源。
     """
     defs = {}
     for p in paths:
@@ -536,7 +1010,7 @@ def parse_term_dicts(paths):
 
 def class_hierarchy(classes):
     """类继承树 → [{root, root_label, ids}]（组内先序：父类在前、子类紧随）。
-    供审阅页「类与属性」分组呈现（问题②：平铺无层次）。"""
+    供审阅页「类与属性」分组呈现（避免平铺无层次）。"""
     ids = {c["id"] for c in classes}
     label = {c["id"]: (c["label"] or c["id"]) for c in classes}
     sup = {c["id"]: [s for s in c["superclasses"] if s in ids] for c in classes}
@@ -585,7 +1059,7 @@ BUILTIN_CN = {
 
 
 def plain_swrl(t, cls_label, prop_label, prop_range):
-    """SWRL atoms → 业务可读的通俗翻译（AG1 二轮⑧建层、三轮反馈去占位符）。
+    """SWRL atoms → 业务可读的通俗翻译（业务专家读不懂 SWRL 结构，需业务名翻译）。
 
     确定性模板翻译（机械回归层纪律：不过 LLM，同输入必同输出）。变量不暴露
     占位符（?1/?2 仍需人脑对照图例），直接代入**角色名词**：
@@ -689,14 +1163,20 @@ def plain_swrl(t, cls_label, prop_label, prop_range):
                 out.append("%s(%s)" % (name, ", ".join(sv(x) for x in args)))
         return out
 
-    return {"body": conv(body), "head": conv(head), "vars": {}}
+    # vars=role（角色定名 map 本就存在，原 vars:{} 丢弃致图例恒空——1.3.0 一行修）；
+    # body/head 串逐规则全等（E10 安全），模板 plainOf 渲染 p.vars 立即生效。
+    return {"body": conv(body), "head": conv(head), "vars": role}
 
 
 def merge(ttl, md, run_dir, term_defs=None):
     md_ok = not md["parse_errors"]
+    supply = ttl.get("supply", {})
     out = {
+        "schema_version": REVIEW_JSON_SCHEMA,
         "meta": {
-            "run_dir": run_dir,
+            # run_dir 取 basename：此字段经意见单导出与浏览器 localStorage key 消费，
+            # 禁绝对本地路径泄漏；与 sources.path/term_dicts 同构，跨部署确定性。
+            "run_dir": os.path.basename(run_dir.rstrip("/")) if run_dir else "",
             "extractor": "review_extract.py（ontology-review skill）",
             "md_parse_ok": md_ok,
             "md_parse_errors": md["parse_errors"],
@@ -704,6 +1184,17 @@ def merge(ttl, md, run_dir, term_defs=None):
         "classes": [], "object_properties": [], "data_properties": [],
         "axioms": [], "rules": [], "skos": [], "scheme": ttl["skos_scheme"],
         "counts": ttl["counts"],
+    }
+    # supply 透传（D2/D4 表面字段，schema 1.1；legacy 无 supply→空 dict，模板守卫降级）。
+    # 签名零改动：merge 输出从不见于 extract_signature（白名单取 parse_ttl 实体键）。
+    out["iri_map"] = supply.get("iris", {})
+    out["literal_meta"] = supply.get("literals", {})
+    out["enum_literals"] = supply.get("enum_literals", {})
+    out["enum_editable"] = supply.get("enum_editable", {})
+    out["supply_meta"] = {
+        "base_ns": supply.get("base_ns", ""),
+        "prefixes": supply.get("prefixes", {}),
+        "ontology_version": supply.get("ontology_version"),
     }
 
     # 类 + 实体 md 表合并；衍生/子类（实体节「②子类」文本、规则/公理表形式化列承载）标 derived 不报错
@@ -715,7 +1206,7 @@ def merge(ttl, md, run_dir, term_defs=None):
                 for m in re.finditer(r":([A-Za-z0-9_]+)", str(v)):
                     derived_mentions.add(m.group(1))
     # 实体节全文（含①定义②子类分叉描述）中提及的子类也算有承载（某 run 形态：产品叶类在父节描述）
-    # entity_extra_tables（实体节内联关系表等，2026-11-05 E3 修复后分离出属性表）
+    # entity_extra_tables（实体节内联关系表等，与属性表分离）
     # 的提及同样计入——它们也是建模方案承载，只是不进 md_props 显示
     for tbl in ent_tables.values():
         for r in tbl["rows_dicts"]:
@@ -732,7 +1223,7 @@ def merge(ttl, md, run_dir, term_defs=None):
         for line in text_lines:
             for m in re.finditer(r":([A-Za-z0-9_]+)", line):
                 derived_mentions.add(m.group(1))
-    # 中文 label 桥：实体节散文用中文名列子类（如「税票贷/车抵贷」），
+    # 中文 label 桥：实体节散文用中文名列子类（如「银票贴现/商票贴现」），
     # 以 TTL rdfs:label 对照——类 label 出现在实体节文本即有承载
     all_entity_text = "\n".join(
         "\n".join(v) for v in (md.get("entity_text") or {}).values())
@@ -750,6 +1241,9 @@ def merge(ttl, md, run_dir, term_defs=None):
             e["md_props"] = entity_rows_normalized(t["header"], t["rows"])
         elif not e["derived"]:
             md["parse_errors"].append("类 %s 无 md 实体表" % c["id"])
+        # G4 拖拽守卫表（D4①c）：具名父列表 + 匿名父计数（匿名 Restriction 不可寻址）
+        e["parents_guard"] = supply.get("class_parents", {}).get(
+            c["id"], {"named": [], "anon": 0})
         out["classes"].append(e)
 
     # 关系合并（按行首 :prop 匹配）
@@ -790,13 +1284,13 @@ def merge(ttl, md, run_dir, term_defs=None):
 
     # 规则双通道：TTL atom 结构 + md 自然语言
     # 同一业务规则的编译变体：引用通道（ruleR1）与字面量展开通道（ruleR1c）共享 md 行，
-    # 直接逐 TTL imp 出卡会显示成重复卡片（问题⑤）——按 md 编号分组，前端同组折叠。
+    # 直接逐 TTL imp 出卡会显示成重复卡片——按 md 编号分组，前端同组折叠。
     md_rules = {}
     for r in md["rules"]:
         rid = str(r.get("编号", ""))
         md_rules[rid] = r
     rule_ids = {r["id"] for r in ttl["rules"]}
-    # 通俗翻译的中文名映射（AG1 第二轮问题⑧：业务专家读不懂 SWRL 结构）
+    # 通俗翻译的中文名映射（业务专家读不懂 SWRL 结构，需业务名翻译）
     cls_label = {c["id"]: c["label"] for c in ttl["classes"] if c.get("label")}
     prop_label = {p["id"]: p["label"]
                   for p in ttl["object_properties"] + ttl["data_properties"]
@@ -812,17 +1306,19 @@ def merge(ttl, md, run_dir, term_defs=None):
         out["rules"].append({"ttl": rule, "md": md_rules.get(key),
                              "md_key": key, "channel": channel,
                              "plain": plain_swrl(rule, cls_label,
-                                                 prop_label, prop_range)})
+                                                 prop_label, prop_range),
+                             "atom_meta": supply.get("atom_meta", {}).get(
+                                 rule["id"], {"body": [], "head": []})})
         if md_rules and key not in md_rules:
             md["parse_errors"].append("规则 %s 无 md 行" % rule["id"])
 
-    # 类层级分组（审阅页「类与属性」按根分组 + 组内先序，问题②）
+    # 类层级分组（审阅页「类与属性」按根分组 + 组内先序）
     groups, depth_of = class_hierarchy(ttl["classes"])
     out["class_groups"] = groups
     for e in out["classes"]:
         e["depth"] = depth_of.get(e["ttl"]["id"], 0)
 
-    # SKOS 定义回填：TTL 无 skos:definition 时用术语词典 md 的权威定义补齐（问题⑥）
+    # SKOS 定义回填：TTL 无 skos:definition 时用术语词典 md 的权威定义补齐
     for c in ttl["skos_concepts"]:
         if not c.get("definition"):
             filled = (term_defs or {}).get(c["prefLabel"]) or \
@@ -832,8 +1328,52 @@ def merge(ttl, md, run_dir, term_defs=None):
                 c["definition_source"] = "term_dict"
             else:
                 c["definition_missing"] = True
+        # D2⑥b SKOS 层级图多父边（broader 单值保留保⑥区 compat；skos 不在签名白名单）
+        c["broader_list"] = supply.get("broader_list", {}).get(c["id"], [])
 
     out["skos"] = ttl["skos_concepts"]
+
+    # 公理图 md overlay（D2④b，best-effort：形式化表达列 :localname token 匹配约束
+    # 节点，按承载特异性排序产候选列表；表仍权威，md_only 显式不静默）。
+    ag = supply.get("axiom_graph", {"nodes": [], "edges": []})
+    md_overlay, md_only = {}, []
+    if ag.get("nodes"):
+        node_tokens, kind_of = {}, {}
+        for n in ag["nodes"]:
+            kind_of[n["id"]] = n["kind"]
+            toks = set(re.findall(r"[A-Za-z0-9_]+", n["id"]))
+            for fld in ("owner", "onProperty", "filler", "base"):
+                if n.get(fld):
+                    toks.update(re.findall(r"[A-Za-z0-9_]+", str(n[fld])))
+            for fld in ("facets", "values"):
+                for v in n.get(fld, []):
+                    toks.update(re.findall(r"[A-Za-z0-9_]+", str(v)))
+            node_tokens[n["id"]] = toks
+        # 承载特异性：结构约束 > 逆关系 > 特征（参考节点 class/property/datatype 不算承载）
+        spec = {"restriction": 6, "oneOf": 6, "hasKey": 6, "datatypeFacet": 6,
+                "disjoint": 6, "equivalent": 6, "inverse": 3, "characteristic": 2}
+        for ax in out["axioms"]:
+            r = ax["md"]
+            tokens = set(re.findall(r":([A-Za-z0-9_]+)", str(r.get("形式化表达", ""))))
+            num = str(r.get("编号", ""))
+            candidates = []
+            if tokens:
+                for nid, ntoks in node_tokens.items():
+                    if kind_of[nid] in ("class", "property", "datatype"):
+                        continue
+                    inter = tokens & ntoks
+                    if inter:
+                        candidates.append((spec.get(kind_of[nid], 1), nid, len(inter)))
+            if not candidates:
+                if num:
+                    md_only.append(num)
+                continue
+            candidates.sort(key=lambda x: (-x[0], -x[2], x[1]))
+            ref = {"family": ax["family"], "编号": num, "名称": str(r.get("名称", ""))}
+            for _, nid, _ in candidates:
+                md_overlay.setdefault(nid, []).append(ref)
+    out["axiom_graph"] = {"nodes": ag.get("nodes", []), "edges": ag.get("edges", []),
+                          "md_overlay": md_overlay, "md_only": sorted(set(md_only))}
     out["meta"]["md_parse_ok"] = not md["parse_errors"]
     out["meta"]["md_parse_errors"] = md["parse_errors"][:20]
     return out
@@ -877,7 +1417,8 @@ def main():
     merged["meta"]["term_dicts"] = [os.path.basename(p) for p in dict_paths]
     merged["meta"]["term_defs_loaded"] = len(term_defs)
     merged["meta"]["sources"] = {
-        "ttl": {"path": args.ttl, "sha": file_sha(ttl_path)},
+        "ttl": {"path": args.ttl, "sha": file_sha(ttl_path),
+                "sha256_full": file_sha_full(ttl_path)},
         "scheme": {"path": args.scheme,
                    "sha": file_sha(md_path) if os.path.exists(md_path) else None},
     }

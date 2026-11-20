@@ -1,12 +1,11 @@
 {
   "meta": {
     "schema_version": "1.0",
-    "scenario": "票据贴现（虚构试跑）",
+    "scenario": "票据贴现（虚构示例）",
     "ontology_baseline": "ontology.ttl v1.2.1（G3 终审终版基线）",
     "source": "专家种子 6（主会话代拟→G3 专家确认通过 2026-10-27）+ AI 扩展 9（边缘 2/异常 7）+ 压力豁免 1",
     "created_date": "2026-10-26",
-    "externalized_date": "2026-10-27",
-    "notes": "S6 执行器泛化（2026-10-27）：自 workspace/golden-case-runner/run_cases.py 内嵌 CASES 零转录外置（import dump，无人工转写）。用例 ttl 片段复用本体文件 prefix 声明；expect 断言类型枚举见 scripts/run_golden_cases.py --check 校验。"
+    "notes": "用例 ttl 片段复用本体文件 prefix 声明；expect 断言类型枚举见 scripts/run_golden_cases.py --check 校验。"
   },
   "cases": [
     {

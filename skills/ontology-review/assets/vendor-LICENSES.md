@@ -15,7 +15,7 @@
 
 **许可兼容性**：三库均 MIT，与套件主 LICENSE（MIT）兼容，无 copyleft 传染。
 
-## 补注登记（2026-11-11，Phase C N2）
+## 补注登记
 
 - cytoscape.min.js 上游 dist 自带完整 MIT 许可头——**未改动**。
 - dagre.min.js 与 cytoscape-dagre.js 上游 dist/构建**不带许可头**——本次在文件头部补注 MIT 许可全文注释块（版权行+许可文本逐字取自上游 LICENSE，经 jsdelivr npm 包渠道获取）。**原始代码字节未改动**，仅前置注释。

@@ -11,11 +11,11 @@ description: 本体 what-if 模拟验证——客户画像+业务诉求（受控
 
 在专家复核过的本体上（通常经 ontology-review AG1）做**实例级业务模拟**：把「客户画像+诉求」编译成合规实例 → 物化推理 → 归因到规则 → 业务语言解读。业务专家不写一行 TTL 就能验证「这套规则对这样的画像会给出什么判定」。
 
-- **执行内核**：双快照 diff=推断层 / 逐规则启停=归因 / TBox 边界=类级走断言直读（技术验证明细见 `CHANGELOG.md` A 节）
+- **执行内核**：双快照 diff=推断层 / 逐规则启停=归因 / TBox 边界=类级走断言直读
 - **不做**：本体编辑（入口 (c) 管）、审阅批注（ontology-review 管）。A/B 三臂实验=本 skill 第二协议（与 what-if 共享物化内核；完整协议见 `references/ab-protocol.md`）
 - **沙箱铁律**：模拟实例与物化结果**零回写**本体/黄金集——模拟输出独立落盘，显式 hash 断言
 - **路径约定**：脚本调用以 `<skill根>` 指本 skill 根目录（Claude Code 环境=`.claude/skills/ontology-simulate/`；独立套件=`skills/ontology-simulate/`）；跨 skill 脚本经相对路径 import，部署时三 skill 保持同级
-- 版本历史与构建档案=`CHANGELOG.md`（执行不依赖）；人类手册=`README.md`
+- 版本历史=`CHANGELOG.md`（执行不依赖）；人类手册=`README.md`
 
 ## T0 输入定位
 
@@ -105,9 +105,9 @@ python3 <skill根>/scripts/simulate_reason.py \
 
 ## 资产索引
 
-- `references/`：ab-protocol.md（A/B 三臂实验协议全文，协议迭代唯一入口；子协议版本史见 CHANGELOG B 节）
+- `references/`：ab-protocol.md（A/B 三臂实验协议全文，协议迭代唯一入口）
 - `scripts/`：extract_signature.py（TTL→签名）/ check_instance.py（E01-E10 机械校验，exit 0/1）/ simulate_reason.py（物化+归因+canonical 缓存+`--render-md` 业务语言确定性渲染〔A/B 本体臂材料可读层〕，复用 run_golden_cases 的 canonicalize_base/find_java 与 review_extract 的 parse_ttl——跨 skill import，禁分叉）/ ab_score.py（A/B：机械判据 score + 盲评聚合 aggregate，跨 skill import review_extract 建词汇表）
 - `assets/`：prompt-whatif-compiler.md / prompt-whatif-interpreter.md / tpl-sim-report.md / prompt-ab-responder.md（三臂共用应答契约 v1.1）/ tpl-ab-questionbank.md（题库三层+编制契约+冻结纪律）/ tpl-ab-report.md（六节报告含强制披露节）
 - agents：ontology-whatif-compiler（T2，只读）/ ontology-whatif-interpreter（T5，只读）/ ab-responder（A/B 三臂应答，只读，臂别无关）
-- `README.md`（人类手册）/ `CHANGELOG.md`（版本历史+构建档案，执行不依赖）
+- `README.md`（人类手册）/ `CHANGELOG.md`（版本历史，执行不依赖）
 - 姊妹 skill：ontology-model（上游产本体；引擎限制登记=`references/reasoner-limits.md`）/ ontology-review（同基线审阅层）

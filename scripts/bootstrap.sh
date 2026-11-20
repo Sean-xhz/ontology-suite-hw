@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 本体能力套件环境引导（N4）——依赖检查 + 安装 + 可选验收。
+# 本体能力套件环境引导——依赖检查 + 安装 + 可选验收。
 # 用法：bash scripts/bootstrap.sh [--no-install] [--run-tests] [--skip-java]
 #   --no-install  只检查依赖不执行 pip install
 #   --run-tests   引导完成后运行 scripts/run_suite_tests.py（--skip-java 透传）
@@ -53,6 +53,31 @@ fi
 echo "== node（可选：review self_test E9 语法检查）=="
 if command -v node >/dev/null 2>&1; then node --version; else
   echo "node 缺失——E9 降级 skip 并登记（不阻塞）"
+fi
+
+echo "== ingest 解析渲染库（可选：2.0 保真进料机械层，requirements.txt 默认已装）=="
+python3 - <<'PY'
+import importlib
+missing = []
+for m in ("pypdf", "pypdfium2", "docx", "openpyxl", "pptx", "PIL"):
+    try:
+        importlib.import_module(m)
+    except ImportError:
+        missing.append(m)
+if missing:
+    print("警告: ingest 解析渲染库缺失 %s——ingest parse 降级 exit2（不阻塞 model/review/simulate）" % missing)
+    print("  提示: pypdfium2 须 pip install --only-binary=:all: pypdfium2（旧 pip 选 sdist 会触发 GitHub 下载超时）")
+else:
+    print("pypdf/pypdfium2/python-docx/openpyxl/python-pptx/Pillow ✓")
+PY
+
+echo "== LibreOffice（可选：office→PDF 全视觉渲染增强）=="
+if command -v soffice >/dev/null 2>&1 || command -v libreoffice >/dev/null 2>&1; then
+  echo "soffice ✓（office 全视觉渲染增强可用）"
+elif [ -x "/Applications/LibreOffice.app/Contents/MacOS/soffice" ]; then
+  echo "LibreOffice.app ✓（office 全视觉渲染增强可用）"
+else
+  echo "LibreOffice 缺失——office 退 substrate-only（纯 pip 主路径仍工作；全视觉增强需 brew install --cask libreoffice）"
 fi
 
 if [ "$RUN_TESTS" -eq 1 ]; then
