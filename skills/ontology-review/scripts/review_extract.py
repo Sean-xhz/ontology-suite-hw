@@ -1168,7 +1168,86 @@ def plain_swrl(t, cls_label, prop_label, prop_range):
     return {"body": conv(body), "head": conv(head), "vars": role}
 
 
+def _collect_derived_mentions(md, ttl):
+    """F32：收集 md 承载提及的类局部名（纯函数，merge 拆出）。"""
+    mentions = set()
+    for rows in list(md["axiom_families"].values()) + [md["rules"]]:
+        for r in rows:
+            for v in r.values():
+                for m in re.finditer(r":([A-Za-z0-9_]+)", str(v)):
+                    mentions.add(m.group(1))
+    for tbl in md["entities"].values():
+        for r in tbl["rows_dicts"]:
+            for v in r.values():
+                for m in re.finditer(r":([A-Za-z0-9_]+)", str(v)):
+                    mentions.add(m.group(1))
+    for extra_list in (md.get("entity_extra_tables") or {}).values():
+        for tbl in extra_list:
+            for cells in [tbl["header"]] + tbl["rows"]:
+                for v in cells:
+                    for m in re.finditer(r":([A-Za-z0-9_]+)", str(v)):
+                        mentions.add(m.group(1))
+    for text_lines in (md.get("entity_text") or {}).values():
+        for line in text_lines:
+            for m in re.finditer(r":([A-Za-z0-9_]+)", line):
+                mentions.add(m.group(1))
+    all_entity_text = "\n".join(
+        "\n".join(v) for v in (md.get("entity_text") or {}).values())
+    for c in ttl["classes"]:
+        if c["label"] and len(c["label"]) >= 2 and c["label"] in all_entity_text:
+            mentions.add(c["id"])
+    return mentions
+
+
+def _axiom_md_overlay(axioms, ag):
+    """F32：公理图 md overlay（纯函数，merge 拆出）。返回 (md_overlay, md_only_sorted)。"""
+    md_overlay, md_only = {}, []
+    if ag.get("nodes"):
+        node_tokens, kind_of = {}, {}
+        for n in ag["nodes"]:
+            kind_of[n["id"]] = n["kind"]
+            toks = set(re.findall(r"[A-Za-z0-9_]+", n["id"]))
+            for fld in ("owner", "onProperty", "filler", "base"):
+                if n.get(fld):
+                    toks.update(re.findall(r"[A-Za-z0-9_]+", str(n[fld])))
+            for fld in ("facets", "values"):
+                for v in n.get(fld, []):
+                    toks.update(re.findall(r"[A-Za-z0-9_]+", str(v)))
+            node_tokens[n["id"]] = toks
+        spec = {"restriction": 6, "oneOf": 6, "hasKey": 6, "datatypeFacet": 6,
+                "disjoint": 6, "equivalent": 6, "inverse": 3, "characteristic": 2}
+        for ax in axioms:
+            r = ax["md"]
+            tokens = set(re.findall(r":([A-Za-z0-9_]+)", str(r.get("形式化表达", ""))))
+            num = str(r.get("编号", ""))
+            candidates = []
+            if tokens:
+                for nid, ntoks in node_tokens.items():
+                    if kind_of[nid] in ("class", "property", "datatype"):
+                        continue
+                    inter = tokens & ntoks
+                    if inter:
+                        candidates.append((spec.get(kind_of[nid], 1), nid, len(inter)))
+            if not candidates:
+                if num:
+                    md_only.append(num)
+                continue
+            candidates.sort(key=lambda x: (-x[0], -x[2], x[1]))
+            ref = {"family": ax["family"], "编号": num, "名称": str(r.get("名称", ""))}
+            for _, nid, _ in candidates:
+                md_overlay.setdefault(nid, []).append(ref)
+    return md_overlay, sorted(set(md_only))
+
+
 def merge(ttl, md, run_dir, term_defs=None):
+    """TTL 结构权威 + md 专家语言层 → review.json（双源合并）。
+
+    F32 入参突变契约（有意，非纯函数）：本函数 append md["parse_errors"]
+    （类/对象属性/规则无 md 承载时登记）并回填 ttl["skos_concepts"] 的
+    definition/broader_list；调用方须知道 md/ttl 被修改。meta.md_parse_errors
+    最终取 md["parse_errors"][:20]。纯子块已拆出 _collect_derived_mentions /
+    _axiom_md_overlay（行为保持，review.json 字节不变）。
+    """
     md_ok = not md["parse_errors"]
     supply = ttl.get("supply", {})
     out = {
@@ -1199,38 +1278,7 @@ def merge(ttl, md, run_dir, term_defs=None):
 
     # 类 + 实体 md 表合并；衍生/子类（实体节「②子类」文本、规则/公理表形式化列承载）标 derived 不报错
     ent_tables = md["entities"]
-    derived_mentions = set()
-    for rows in list(md["axiom_families"].values()) + [md["rules"]]:
-        for r in rows:
-            for v in r.values():
-                for m in re.finditer(r":([A-Za-z0-9_]+)", str(v)):
-                    derived_mentions.add(m.group(1))
-    # 实体节全文（含①定义②子类分叉描述）中提及的子类也算有承载（某 run 形态：产品叶类在父节描述）
-    # entity_extra_tables（实体节内联关系表等，与属性表分离）
-    # 的提及同样计入——它们也是建模方案承载，只是不进 md_props 显示
-    for tbl in ent_tables.values():
-        for r in tbl["rows_dicts"]:
-            for v in r.values():
-                for m in re.finditer(r":([A-Za-z0-9_]+)", str(v)):
-                    derived_mentions.add(m.group(1))
-    for extra_list in (md.get("entity_extra_tables") or {}).values():
-        for tbl in extra_list:
-            for cells in [tbl["header"]] + tbl["rows"]:
-                for v in cells:
-                    for m in re.finditer(r":([A-Za-z0-9_]+)", str(v)):
-                        derived_mentions.add(m.group(1))
-    for text_lines in (md.get("entity_text") or {}).values():
-        for line in text_lines:
-            for m in re.finditer(r":([A-Za-z0-9_]+)", line):
-                derived_mentions.add(m.group(1))
-    # 中文 label 桥：实体节散文用中文名列子类（如「银票贴现/商票贴现」），
-    # 以 TTL rdfs:label 对照——类 label 出现在实体节文本即有承载
-    all_entity_text = "\n".join(
-        "\n".join(v) for v in (md.get("entity_text") or {}).values())
-    for c in ttl["classes"]:
-        if c["label"] and len(c["label"]) >= 2 and c["label"] in all_entity_text:
-            derived_mentions.add(c["id"])
-            derived_label_mentions = True  # noqa: F841（登记用途）
+    derived_mentions = _collect_derived_mentions(md, ttl)  # F32 纯子块拆出
     for c in ttl["classes"]:
         e = {"ttl": c, "md": None, "md_props": [],
              "derived": c["id"] not in ent_tables and c["id"] in derived_mentions}
@@ -1336,44 +1384,9 @@ def merge(ttl, md, run_dir, term_defs=None):
     # 公理图 md overlay（D2④b，best-effort：形式化表达列 :localname token 匹配约束
     # 节点，按承载特异性排序产候选列表；表仍权威，md_only 显式不静默）。
     ag = supply.get("axiom_graph", {"nodes": [], "edges": []})
-    md_overlay, md_only = {}, []
-    if ag.get("nodes"):
-        node_tokens, kind_of = {}, {}
-        for n in ag["nodes"]:
-            kind_of[n["id"]] = n["kind"]
-            toks = set(re.findall(r"[A-Za-z0-9_]+", n["id"]))
-            for fld in ("owner", "onProperty", "filler", "base"):
-                if n.get(fld):
-                    toks.update(re.findall(r"[A-Za-z0-9_]+", str(n[fld])))
-            for fld in ("facets", "values"):
-                for v in n.get(fld, []):
-                    toks.update(re.findall(r"[A-Za-z0-9_]+", str(v)))
-            node_tokens[n["id"]] = toks
-        # 承载特异性：结构约束 > 逆关系 > 特征（参考节点 class/property/datatype 不算承载）
-        spec = {"restriction": 6, "oneOf": 6, "hasKey": 6, "datatypeFacet": 6,
-                "disjoint": 6, "equivalent": 6, "inverse": 3, "characteristic": 2}
-        for ax in out["axioms"]:
-            r = ax["md"]
-            tokens = set(re.findall(r":([A-Za-z0-9_]+)", str(r.get("形式化表达", ""))))
-            num = str(r.get("编号", ""))
-            candidates = []
-            if tokens:
-                for nid, ntoks in node_tokens.items():
-                    if kind_of[nid] in ("class", "property", "datatype"):
-                        continue
-                    inter = tokens & ntoks
-                    if inter:
-                        candidates.append((spec.get(kind_of[nid], 1), nid, len(inter)))
-            if not candidates:
-                if num:
-                    md_only.append(num)
-                continue
-            candidates.sort(key=lambda x: (-x[0], -x[2], x[1]))
-            ref = {"family": ax["family"], "编号": num, "名称": str(r.get("名称", ""))}
-            for _, nid, _ in candidates:
-                md_overlay.setdefault(nid, []).append(ref)
+    md_overlay, md_only = _axiom_md_overlay(out["axioms"], ag)  # F32 纯子块拆出
     out["axiom_graph"] = {"nodes": ag.get("nodes", []), "edges": ag.get("edges", []),
-                          "md_overlay": md_overlay, "md_only": sorted(set(md_only))}
+                          "md_overlay": md_overlay, "md_only": md_only}
     out["meta"]["md_parse_ok"] = not md["parse_errors"]
     out["meta"]["md_parse_errors"] = md["parse_errors"][:20]
     return out

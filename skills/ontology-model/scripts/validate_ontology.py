@@ -36,6 +36,7 @@ from urllib.parse import urlparse
 
 from rdflib import BNode, Graph, Literal, Namespace, OWL, RDF, RDFS, URIRef
 from rdflib.collection import Collection
+from _common import local_name
 
 SWRL = Namespace("http://www.w3.org/2003/11/swrl#")
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
@@ -75,14 +76,6 @@ CANONICAL_PREFIXES = {
     "swrl": "http://www.w3.org/2003/11/swrl#",
     "swrlb": "http://www.w3.org/2003/11/swrlb#",
 }
-
-
-def local_name(iri):
-    """取 IRI 的局部名（# 或最后一个 / 之后）"""
-    s = str(iri)
-    if "#" in s:
-        return s.rsplit("#", 1)[-1]
-    return s.rsplit("/", 1)[-1]
 
 
 class Validator(object):

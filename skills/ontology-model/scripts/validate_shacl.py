@@ -49,17 +49,10 @@ except ImportError:
     sys.exit(2)
 
 from validate_ontology import local_name
+from _common import file_sha256
 
 SH = pyshacl.consts.SH
 REPORT_SCHEMA_VERSION = "1.0"
-
-
-def file_sha256(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 def load_graph(path, label):

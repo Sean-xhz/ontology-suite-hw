@@ -1,7 +1,7 @@
 ---
 name: ontology-review
 metadata:
-  version: 1.3.2
+  version: 1.3.3
 description: 本体审阅页生成与专家意见回流——把 ontology-model 产出的 8 件套转成业务专家（零工程背景）可直接浏览器打开的单文件审阅页（六板块图示+规则双通道+批注+L1-L2 拖拽编辑），意见导出后机械回流入口 (c) 或下轮 G1/S2；D4 编辑产 patch 交 ontology-model R2 机械执行。触发：「专家审阅本体」「审阅页」「批注回流」「本体可视化审阅」「本体拖拽编辑」。
 ---
 

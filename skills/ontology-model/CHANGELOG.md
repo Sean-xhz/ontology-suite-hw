@@ -2,6 +2,10 @@
 
 > semver（MAJOR.MINOR.PATCH）：MAJOR=执行契约不兼容变更（Stage/闸门/交付契约）；MINOR=新增能力或条款；PATCH=措辞与修正。当前版本登记于 SKILL.md frontmatter `metadata.version`。子协议版本（golden-cases / shapes / query-templates / patch schema、SWRL 规范）独立登记，不随 skill 版本联动。
 
+## 1.14.2 (2026-11-26)
+- 删除未接线的 expand_affected 死代码；新增 model 内共享工具模块 _common.py（file_sha256/base_namespace/rdf_list_items/local_name 收敛，消除重复定义分叉）。跨 skill 独立实现护栏不动。
+- 子协议版本不变。
+
 ## 1.14.1 (2026-11-26)
 - 黄金用例 prop_value/no_prop_value 字面量回退判定；run_one 早退预置 pass 键（防崩批）；--only 未知 id exit2；CQ 预检词汇补 rdfs:Class/skos:Concept/AnnotationProperty；版本 diff 排序全 IRI 决胜；closeout 敏感扫描补 .html；退出码契约修正。
 - 子协议版本不变。

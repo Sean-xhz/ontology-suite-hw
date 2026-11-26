@@ -498,66 +498,6 @@ def touches_global(removed, added, g_base, g_draft):
     return False
 
 
-def expand_affected(aff, union_g):
-    """保守扩展至不动点：subClassOf/subPropertyOf 闭包 + equivalentClass/disjointWith/inverseOf
-    伙伴 + domain/range 双向一跳 + 规则引用闭包。union_g=baseline∪draft（覆盖已删边）。"""
-    aff = set(aff)
-    # 预计算规则 → 引用 IRI 映射（效率）
-    rule_refs = {}
-    for imp in union_g.subjects(RDF.type, SWRL.Imp):
-        refs = set()
-        for part in (SWRL.body, SWRL.head):
-            node = union_g.value(imp, part)
-            if node is None or node == RDF.nil:
-                continue
-            try:
-                atoms = list(Collection(union_g, node))
-            except Exception:
-                continue
-            for atom in atoms:
-                for ap in (SWRL.classPredicate, SWRL.propertyPredicate):
-                    ref = union_g.value(atom, ap)
-                    if isinstance(ref, URIRef) and not is_vocab(ref):
-                        refs.add(ref)
-        rule_refs[imp] = refs
-    iri_to_rules = {}
-    for imp, refs in rule_refs.items():
-        for r in refs:
-            iri_to_rules.setdefault(r, set()).add(imp)
-    changed = True
-    while changed:
-        changed = False
-        new = set()
-        for x in aff:
-            for pred in (RDFS.subClassOf, RDFS.subPropertyOf):
-                for o in union_g.objects(x, pred):
-                    if isinstance(o, URIRef):
-                        new.add(o)
-                for s in union_g.subjects(pred, x):
-                    if isinstance(s, URIRef):
-                        new.add(s)
-            for pred in (OWL.equivalentClass, OWL.disjointWith, OWL.inverseOf):
-                for o in union_g.objects(x, pred):
-                    if isinstance(o, URIRef):
-                        new.add(o)
-                for s in union_g.subjects(pred, x):
-                    if isinstance(s, URIRef):
-                        new.add(s)
-            # domain/range 双向：x 为类 → 以其为 domain/range 的属性；x 为属性 → 其 domain/range 类
-            for pred in (RDFS.domain, RDFS.range):
-                for p in union_g.subjects(pred, x):
-                    if isinstance(p, URIRef):
-                        new.add(p)
-                for o in union_g.objects(x, pred):
-                    if isinstance(o, URIRef):
-                        new.add(o)
-            # 规则引用闭包：凡引用 x 的规则，其全部引用项并入
-            for imp in iri_to_rules.get(x, ()):
-                new |= rule_refs.get(imp, set())
-        if new - aff:
-            aff |= new
-            changed = True
-    return aff
 
 
 def rule_closure_triples(g):

@@ -22,6 +22,7 @@ from collections import defaultdict
 
 from rdflib import Graph, Namespace, OWL, RDF, RDFS, URIRef
 from rdflib.collection import Collection
+from _common import local_name
 
 SWRL = Namespace("http://www.w3.org/2003/11/swrl#")
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
@@ -38,18 +39,6 @@ PROP_CHARS = [
     (OWL.IrreflexiveProperty, "Irrefl"),
     (OWL.ReflexiveProperty, "Refl"),
 ]
-
-
-def local_name(iri):
-    """取 IRI 局部名；非 URIRef 原样转字符串"""
-    if iri is None:
-        return "?"
-    if not isinstance(iri, URIRef):
-        return str(iri)
-    s = str(iri)
-    if "#" in s:
-        return s.rsplit("#", 1)[-1]
-    return s.rsplit("/", 1)[-1]
 
 
 def parse(path):

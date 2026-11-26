@@ -64,6 +64,7 @@ from rdflib.plugins.sparql import prepareQuery
 
 # 同目录复用（rdflib-only 模块，不破坏纯 rdflib 核心）
 from validate_ontology import VOCAB_NS, local_name
+from _common import file_sha256, base_namespace, rdf_list_items
 
 SWRL = Namespace("http://www.w3.org/2003/11/swrl#")
 
@@ -95,13 +96,6 @@ STD_PREFIXES = [
 
 # ============================================================ 基础设施
 
-def file_sha256(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
 
 def load_ontology(path):
     if not os.path.exists(path):
@@ -114,31 +108,6 @@ def load_ontology(path):
         sys.stderr.write("exit 2: TTL 解析失败（%s）：%s\n" % (path, exc))
         sys.exit(2)
     return g
-
-
-def base_namespace(g, path):
-    """@prefix : 回推 base（derive_shacl.base_namespace 同算法）。"""
-    for prefix, ns in g.namespaces():
-        if prefix == "":
-            return str(ns)
-    with open(path, encoding="utf-8") as fh:
-        for line in fh:
-            m = re.match(r"@prefix\s+:\s*<([^>]*)>", line)
-            if m:
-                return m.group(1)
-    sys.stderr.write("exit 2: 无法确定 base namespace（TTL 无 @prefix : 声明）\n")
-    sys.exit(2)
-
-
-def rdf_list_items(g, node):
-    """rdf:List → items（本地重实现 review_extract.rdf_list_items 算法）。"""
-    items = []
-    while node is not None and isinstance(node, BNode):
-        first = g.value(node, RDF.first)
-        if first is not None:
-            items.append(first)
-        node = g.value(node, RDF.rest)
-    return items
 
 
 def facet_datatypes_raw(g):
