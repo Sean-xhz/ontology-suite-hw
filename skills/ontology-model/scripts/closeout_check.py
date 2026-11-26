@@ -60,7 +60,7 @@ BUILTIN_PATTERNS = [
         r"(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)")),
 ]
 
-SCAN_EXT = {".md", ".ttl", ".txt", ".json"}
+SCAN_EXT = {".md", ".ttl", ".txt", ".json", ".html", ".htm"}
 
 # 实验/历史副本命名特征（净化清单判据）
 EXP_NAME_RE = re.compile(r"(exp|实验|_v\d|削减)", re.IGNORECASE)

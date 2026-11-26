@@ -1,7 +1,7 @@
 ---
 name: ontology-ingest
 metadata:
-  version: 2.2.1
+  version: 2.2.2
 description: 异构文档保真进料前置——把 PDF/图片/Excel/Word/PPT 业务资料统一转为「萃取原料包」（清洁保真 MD + canonical manifest + attachments），喂入 ontology-model S1。唯一目标=萃取就绪的保真（内容完备性/准确性/结构性，S1 能消费的保真），还原结构+保真全量内容，不理解内容本身（萃取是 S1 的事）。架构=LLM 整页布局感知转录 primary（每个视觉单元必过）+ 机械渲染/完整性 inventory/原生 substrate/交叉校验护栏；图样类（流程图/交互图/架构图）嵌原图保真交 S1 多模态萃取流程语义不文字扁平化；产物按 ingest→S1 接缝契约（s1-handoff-contract）产五类 affordance（形态维 unit_type/图样保真/置信度 verification_status/个人信息精确位/溯源映射 md_heading）。当用户要求把异构业务资料（PDF/扫描件/Excel/Word/PPT/图片）接入本体建模、做文档解析进料、产萃取原料包、或提到「文档解析」「进料」「萃取原料包」「异构资料接入」「PDF 转结构化」时使用本 skill。即使用户只说「帮我把这份 PDF 资料建模」，进料前置也应先经本 skill。
 ---
 

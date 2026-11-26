@@ -194,7 +194,9 @@ def drop_rule(nt_text, rule_local):
     g = rdflib.Graph()
     g.parse(data=nt_text, format="nt")
     for imp in list(g.subjects(RDF.type, SWRL.Imp)):
-        if rule_local not in str(imp):
+        # F02：精确 localname 相等（原子串匹配误删 ruleR1c/ruleR10，与 incremental_patch 对齐）
+        imp_local = str(imp).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        if imp_local != rule_local:
             continue
         for pred in (SWRL.body, SWRL.head):
             lst = g.value(imp, pred)
@@ -351,7 +353,7 @@ def main():
 
     for path, code in ((args.instance, "--instance"), (args.ttl, "--ttl")):
         if not os.path.exists(path):
-            sys.exit("exit 2: %s 不存在：%s" % (code, path))
+            sys.stderr.write("exit 2: %s 不存在：%s" % (code, path) + "\n"); sys.exit(2)
     with open(args.instance, encoding="utf-8") as fh:
         inst = json.load(fh)
 
@@ -363,7 +365,7 @@ def main():
         from extract_signature import build_signature
         sig = build_signature(args.ttl)
         if sig is None:
-            sys.exit("exit 1: TTL 无法提取签名")
+            sys.stderr.write("exit 1: TTL 无法提取签名" + "\n"); sys.exit(1)
 
     # ---- 机械校验（SG1 机器侧：拦臆造）
     errors, warnings = check_instance(inst, sig)

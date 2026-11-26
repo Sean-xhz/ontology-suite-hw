@@ -2,6 +2,26 @@
 
 > semver（MAJOR.MINOR.PATCH）：MAJOR=执行契约不兼容变更（Stage/闸门/交付契约）；MINOR=新增能力或条款；PATCH=措辞与修正。当前版本登记于 SKILL.md frontmatter `metadata.version`。子协议版本（golden-cases / shapes / query-templates / patch schema、SWRL 规范）独立登记，不随 skill 版本联动。
 
+## 1.14.1 (2026-11-26)
+- 黄金用例 prop_value/no_prop_value 字面量回退判定；run_one 早退预置 pass 键（防崩批）；--only 未知 id exit2；CQ 预检词汇补 rdfs:Class/skos:Concept/AnnotationProperty；版本 diff 排序全 IRI 决胜；closeout 敏感扫描补 .html；退出码契约修正。
+- 子协议版本不变。
+
+## 1.14.0 (2026-11-25)
+- 新增 builtin × 引擎支持矩阵（`references/builtin-engine-matrix.md`）：Pellet builtin 支持（实测分级）/ HermiT 全不支持，结构化替代散文限制条目；validate 新增 L2-SWRL-BUILTIN builtin 使用清单（info 级）。
+- 子协议版本不变；限制编号①-⑭稳定。
+
+## 1.13.0 (2026-11-25)
+- 新增 CQ 结构预检（`--precheck`）：推理执行前检查用例断言词汇∈本体词汇表（缺失硬失败）+ 类间 BFS 可达（depth≤3，advisory 告警），分流结构不可达用例省推理执行。
+- 子协议版本不变（黄金集 schema 1.0）。
+
+## 1.12.0 (2026-11-25)
+- 新增版本机械 diff（`diff_ontology.py`）：两版本 TTL 三元组级 added/removed/changed 对照，按类/属性/规则/Concept 四面归类，产 JSON + md 修订对照表草稿（基线迭代人工只裁定不比对）。具名构件级准确，匿名 bnode 公理噪声单列计数。
+- 子协议版本不变。
+
+## 1.11.0 (2026-11-25)
+- 新增 SWRL 静态反模式 lint（L2-SWRL-LINT）：恒假自比较（死规则，error）/ 恒真自比较（冗余恒真，warning）/ DL-safe（head 变量须 body 绑定，error），机械前置拦截 LLM 编译反模式。
+- 子协议版本不变。
+
 ## 1.10.0 (2026-11-20)
 - 接缝契约增补（`s1-handoff-contract.md`）：§六.2 图样联合消费条款（substrate-exact 图样内嵌原图仅含关系 glyphs 时，Read 原图给关系 + substrate bbox 给节点身份，联合重建拓扑）；§1.2 保图覆盖范围澄清（raster 载体无条件保图；PPTX 原生矢量 substrate-only 档无图片载体，内容经 substrate 位置结构承载）；§九 限制登记。
 

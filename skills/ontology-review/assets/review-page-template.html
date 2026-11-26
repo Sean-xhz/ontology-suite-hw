@@ -1027,7 +1027,7 @@ function renderClassCard(c){
     ${t.comment?`<div class="nl" style="font-size:12.5px">${esc(t.comment)}</div>`:""}
     <dl class="kv"><dt>父类</dt><dd>${esc(t.superclasses.join("、")||"—")}</dd>
     <dt>hasKey</dt><dd>${esc(t.hasKey.join("、")||"—")}</dd></dl>
-    ${rows? `<div class="tbl-wrap"><table><tr>${heads.map(h=>`<th>${h}</th>`).join("")}</tr>${rows}</table></div>`
+    ${rows? `<div class="tbl-wrap"><table><tr>${heads.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${rows}</table></div>`
       : (c.derived? `<p class="empty">衍生类（规则/公理承载，无独立实体表）</p>`
                   : `<p class="empty">建模方案无该实体表（md 层缺失）</p>`)}
   </div>`;
@@ -1110,8 +1110,8 @@ function renderClassCard(c){
 //          确定性模板翻译：如果①②③ ⇒ 那么…，变量重命名 ?1/?2 + 图例）
 //  第 3 层「技术细节」= SWRL 结构原文，<details> 默认折叠（工程师核对用）
 function renderAtom(a){
-  const pred = a.predicate||"?";
-  const args = (a.arguments||[]).join(", ");
+  const pred = esc(a.predicate||"?");
+  const args = (a.arguments||[]).map(esc).join(", ");
   return pred + "(" + args + ")";
 }
 // 同一业务规则的多个编译变体（引用通道 ruleR1 与字面量展开通道 ruleR1c，

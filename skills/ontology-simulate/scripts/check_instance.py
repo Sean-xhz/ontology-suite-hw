@@ -44,12 +44,12 @@ XSD_PATTERNS = {
 
 def load_json(path, code="E00"):
     if not os.path.exists(path):
-        sys.exit("exit 2: 文件不存在：%s" % path)
+        sys.stderr.write("exit 2: 文件不存在：%s" % path + "\n"); sys.exit(2)
     try:
         with open(path, encoding="utf-8") as fh:
             return json.load(fh)
     except json.JSONDecodeError as exc:
-        sys.exit("exit 2: JSON 解析失败（%s）：%s" % (path, exc))
+        sys.stderr.write("exit 2: JSON 解析失败（%s）：%s" % (path, exc) + "\n"); sys.exit(2)
 
 
 def ancestors(sig, class_id):
@@ -72,14 +72,12 @@ def domain_ok(sig, class_ids, domain, union=None):
     union 非空 = domain/range 为匿名 owl:unionOf 类表达式（bnode ID 不可
     直接判定）——按「实例任一类 ∈ 任一联合成员或其后代」判定。"""
     if union:
-        closure = set()
-        for m in union:
-            closure |= ancestors(sig, m)
-        return any(cid in closure for cid in class_ids)
+        # F01：实例类 cid ∈ 联合成员 m 或其后代 ⟺ m ∈ ancestors(cid)（对实例类上溯）
+        return any(any(m in ancestors(sig, cid) for m in union) for cid in class_ids)
     if not domain:
         return True
-    dom_desc = ancestors(sig, domain)
-    return any(cid in dom_desc for cid in class_ids)
+    # F01：实例类 cid ∈ domain 或其后代 ⟺ domain ∈ ancestors(cid)（原误算 domain 祖先，方向反置）
+    return any(domain in ancestors(sig, cid) for cid in class_ids)
 
 
 def check_instance(inst, sig):
@@ -108,6 +106,7 @@ def check_instance(inst, sig):
     cls_by_id = {c["id"]: c for c in sig["classes"]}
     dp_by_id = {p["id"]: p for p in sig["data_properties"]}
     op_by_id = {p["id"]: p for p in sig["object_properties"]}
+    derived_props = set(sig.get("derived_properties") or [])  # F28：facts/relations 共用
 
     # ---- 个体
     seen_names = {}
@@ -137,6 +136,10 @@ def check_instance(inst, sig):
             if prop is None:
                 err("E05", "个体 %s 引用不存在的数据属性：%s（臆造拦截）" % (name, key))
                 continue
+            if key in derived_props:  # F28：推导数据属性越权（规则 head DatavaluedPropertyAtom）
+                err("E10", "数据属性 %r 是推导结论属性（规则 head）——由推理器物化产出，"
+                           "不得进入实例输入" % key)
+                continue
             if not domain_ok(sig, class_ids, prop.get("domain"),
                              prop.get("domain_union")):
                 err("E06", "属性 %s 的 domain=%s，个体 %s 的类 %s 不兼容"
@@ -150,8 +153,14 @@ def check_instance(inst, sig):
             rng = prop.get("range") or "string"
             pat = XSD_PATTERNS.get(rng)
             if rng in XSD_PATTERNS:
-                if pat is not None and not isinstance(val, (bool, int, float)):
-                    if not pat.match(str(val)):
+                if pat is not None:
+                    # F09：按 range 精确类型分派（原 bool/int/float 一律跳过致旁路）
+                    numeric_rng = rng in ("integer", "decimal", "double")
+                    if numeric_rng and isinstance(val, (int, float)) and not isinstance(val, bool):
+                        pass  # 数值 range + 数值类型（非 bool）匹配，免词法
+                    elif rng == "boolean" and isinstance(val, bool):
+                        pass  # boolean range + bool 匹配
+                    elif not pat.match(str(val)):
                         err("E08", "属性 %s 类型 %s 不符：%r" % (key, rng, val))
             else:
                 warn("W08", "属性 %s 为具名 datatype %s（pattern 类）——模拟侧不做 "

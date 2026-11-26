@@ -114,6 +114,7 @@ def canonical_json(obj):
 def sanitize_doc_id(stem):
     s = re.sub(r"\s+", "_", stem.strip())
     s = re.sub(r'[\\/:*?"<>|]', "_", s)
+    s = s.strip(".")  # F18：防纯 .. / 前导点路径穿越
     return s or "doc"
 
 
@@ -909,8 +910,14 @@ def main():
         before = file_sha256(src)
         src_size = os.path.getsize(src)
         basename = os.path.basename(src)
-        doc_id = args.doc_id or sanitize_doc_id(os.path.splitext(basename)[0])
+        doc_id = sanitize_doc_id(args.doc_id) if args.doc_id else sanitize_doc_id(os.path.splitext(basename)[0])
         pack_dir = os.path.join(out_root, doc_id)
+        # F18：包目录包含守卫——doc_id 净化后 realpath 仍须落在 out_root 内（防路径穿越）
+        _pack_real = os.path.realpath(pack_dir)
+        _root_real = os.path.realpath(out_root)
+        if not (_pack_real == _root_real or _pack_real.startswith(_root_real + os.sep)):
+            sys.stderr.write("exit 2: 包目录越界（doc-id 路径净化守卫）：%s\n" % pack_dir)
+            sys.exit(2)
         if os.path.realpath(pack_dir) == src:
             sys.stderr.write("exit 2: 输出不得等于源文档：%s\n" % pack_dir)
             sys.exit(2)

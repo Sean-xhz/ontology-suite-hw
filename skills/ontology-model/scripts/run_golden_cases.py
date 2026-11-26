@@ -194,6 +194,7 @@ def run_one(case, base_nt, java, base_prefixes="", do_strip=True, engine="pellet
     os.close(fd)
     result = {"id": case["id"], "kind": case.get("kind"), "desc": case["desc"],
               "asserts": [], "error": None, "engine": engine,
+              "pass": False, "inconsistent_detected": False,  # F06：早退路径（Java 失败）预置，防 main KeyError
               "notes": ["基底 canonical NT 缓存 + 限制⑩剥离见启动日志（限制⑭确定性修复）"]
                        if do_strip else ["--no-strip：未执行限制⑩降级（调试档）"]}
     if engine != "pellet":
@@ -259,7 +260,7 @@ def run_one(case, base_nt, java, base_prefixes="", do_strip=True, engine="pellet
                         vals = getattr(ind, prop, [])
                         if not isinstance(vals, list):
                             vals = [vals]
-                        has = any(getattr(v, "name", None) == obj_name for v in vals)
+                        has = any(getattr(v, "name", None) == obj_name or str(v) == obj_name for v in vals)
                         ok = has if kind == "prop_value" else not has
                         detail = "%s.%s 含 %s = %s（值=%s）" % (
                             ind_name, prop, obj_name, has,
@@ -280,6 +281,101 @@ def run_one(case, base_nt, java, base_prefixes="", do_strip=True, engine="pellet
     return result
 
 
+def precheck_cases(ontology_path, data):
+    """IT-03 CQ 结构预检（推理执行前分流结构不可达用例，省 canonical 档 60s+ 推理）：
+    ① 断言词汇 ∈ 本体词汇表（类/属性；缺失=用例错误，硬失败）；
+    ② 用例涉及类间 BFS 可达（depth≤3，经 subClassOf/objectProperty domain-range；不可达=advisory 告警）。
+    纯 rdflib 结构预检，不跑 reasoner。"""
+    from rdflib import Graph, Namespace, RDF, RDFS, OWL, URIRef
+    ln = lambda x: str(x).split("#")[-1].split("/")[-1]
+    base_text = open(ontology_path, encoding="utf-8").read()
+    g = Graph()
+    g.parse(data=base_text, format="turtle")
+    vocab, classes = set(), set()
+    for s in g.subjects(RDF.type, OWL.Class):
+        if isinstance(s, URIRef):
+            vocab.add(str(s)); classes.add(str(s))
+    # F10：补 rdfs:Class / skos:Concept / AnnotationProperty（原漏致术语层/注解属性误报 missing_vocab）
+    SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+    for t in (RDFS.Class, OWL.AnnotationProperty, SKOS.Concept):
+        for s in g.subjects(RDF.type, t):
+            if isinstance(s, URIRef):
+                vocab.add(str(s))
+    for t in (OWL.ObjectProperty, OWL.DatatypeProperty, RDF.Property):
+        for s in g.subjects(RDF.type, t):
+            if isinstance(s, URIRef):
+                vocab.add(str(s))
+    adj = {}
+
+    def link(a, b):
+        a, b = str(a), str(b)
+        adj.setdefault(a, set()).add(b)
+        adj.setdefault(b, set()).add(a)
+
+    for s, o in g.subject_objects(RDFS.subClassOf):
+        if isinstance(s, URIRef) and isinstance(o, URIRef):
+            link(s, o)
+    for p in g.subjects(RDF.type, OWL.ObjectProperty):
+        for d in g.objects(p, RDFS.domain):
+            for r in g.objects(p, RDFS.range):
+                if isinstance(d, URIRef) and isinstance(r, URIRef):
+                    link(d, r)
+
+    def reachable(a, b, depth=3):
+        if a == b:
+            return True
+        seen, frontier = {a}, {a}
+        for _ in range(depth):
+            nxt = set()
+            for n in frontier:
+                nxt |= adj.get(n, set())
+            nxt -= seen
+            if b in nxt:
+                return True
+            seen |= nxt
+            frontier = nxt
+        return False
+
+    prefixes = _prefix_header(base_text)
+    STD = ("http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+           "http://www.w3.org/2000/01/rdf-schema#",
+           "http://www.w3.org/2002/07/owl#",
+           "http://www.w3.org/2001/XMLSchema#",
+           "http://www.w3.org/2003/11/swrl#",
+           "http://www.w3.org/2003/11/swrlb#",
+           "http://www.w3.org/2004/02/skos/core#")
+    out = []
+    for c in data["cases"]:
+        if c.get("exempt"):
+            continue
+        cid = c["id"]
+        cg = Graph()
+        try:
+            cg.parse(data=prefixes + "\n" + c.get("ttl", ""), format="turtle")
+        except Exception as exc:
+            out.append({"id": cid, "ok": False, "missing_vocab": [],
+                        "unreachable_pairs": [], "error": "ttl 解析失败: %s" % exc})
+            continue
+        ref_classes, ref_props = set(), set()
+        for s, p, o in cg:
+            if p == RDF.type and isinstance(o, URIRef):
+                ref_classes.add(str(o))
+            elif isinstance(p, URIRef) and p != RDF.type:
+                ref_props.add(str(p))
+        missing = sorted(r for r in (ref_classes | ref_props)
+                         if r not in vocab and not r.startswith(STD))
+        cls_list = sorted(ref_classes & classes)
+        unreachable = []
+        for i in range(len(cls_list)):
+            for j in range(i + 1, len(cls_list)):
+                if not reachable(cls_list[i], cls_list[j]):
+                    unreachable.append([ln(cls_list[i]), ln(cls_list[j])])
+        out.append({"id": cid, "ok": not missing,
+                    "missing_vocab": [ln(m) for m in missing],
+                    "unreachable_pairs": unreachable})
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description="S6 黄金用例执行器（泛化版）")
     ap.add_argument("ontology", nargs="?", help="基底本体 Turtle 路径")
@@ -292,6 +388,8 @@ def main():
                     help="调试档：不执行限制⑩具名 datatype 剥离")
     ap.add_argument("--engine", choices=["pellet", "hermit"], default="pellet",
                     help="推理引擎（默认 pellet；hermit=DL 对照档，不执行 SWRL 规则）")
+    ap.add_argument("--precheck", action="store_true",
+                    help="IT-03 CQ 结构预检（不跑 reasoner）：断言词汇∈本体词汇表 + 类间 BFS 可达")
     args = ap.parse_args()
 
     if args.check and args.cases is None and args.ontology:
@@ -321,6 +419,22 @@ def main():
     if not args.ontology or not os.path.exists(args.ontology):
         print("本体文件不存在: %s" % args.ontology); sys.exit(2)
 
+    if args.precheck:
+        pc = precheck_cases(args.ontology, data)
+        bad = [r for r in pc if not r["ok"]]
+        warn = [r for r in pc if r.get("unreachable_pairs")]
+        for r in pc:
+            status = "FAIL" if not r["ok"] else ("WARN" if r.get("unreachable_pairs") else "OK")
+            print("  %s %s missing=%s unreachable=%s%s"
+                  % (status, r["id"], r["missing_vocab"], r.get("unreachable_pairs", []),
+                     (" error=" + r["error"]) if r.get("error") else ""))
+        print("CQ 预检：%d 用例，%d 词汇缺失/解析失败，%d 可达性告警"
+              % (len(pc), len(bad), len(warn)))
+        if args.json_output:
+            with open(args.json_output, "w", encoding="utf-8") as fh:
+                json.dump({"precheck": pc}, fh, ensure_ascii=False, indent=1)
+        sys.exit(1 if bad else 0)
+
     java = find_java()
     if not java:
         print("未找到 Java，退出"); sys.exit(2)
@@ -332,6 +446,14 @@ def main():
           % (_time.time() - _t0, n_stripped,
              "" if not args.no_strip else "（--no-strip 未执行）"))
     base_prefixes = _prefix_header(base_text)
+
+    # F16：--only 未知 id 校验（原静默空过 exit0 → exit2 输入错）
+    if args.only:
+        known = {c["id"] for c in data["cases"]}
+        unknown = [i for i in args.only if i not in known]
+        if unknown:
+            sys.stderr.write("exit 2: --only 未知用例 id：%s\n" % unknown)
+            sys.exit(2)
 
     results = []
     n_exempt = 0

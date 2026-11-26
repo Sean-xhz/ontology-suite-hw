@@ -1175,23 +1175,243 @@ class SuiteTests:
         self.record("T15", "D3c SPARQL 查询模板（7 子例）", "PASS" if ok else "FAIL",
                     "｜".join(details))
 
+    # ---- T16 ab_score 词汇表四面 + 受控值（IT-10 Concept 面 / IT-16 oneOf_enum 键）----
+    def t16_ab_vocab(self):
+        sim_dir = os.path.join(self.skills, "ontology-simulate", "scripts")
+        rev_dir = os.path.join(self.skills, "ontology-review", "scripts")
+        code = (
+            "import sys, json; "
+            "sys.path.insert(0, r'%s'); sys.path.insert(0, r'%s'); "
+            "import ab_score, review_extract as RX; "
+            "t = RX.parse_ttl(r'%s'); w, r = ab_score.build_vocab(r'%s'); "
+            "enums = {str(v) for p in t['data_properties'] for v in (p.get('oneOf_enum') or [])}; "
+            "concepts = {c['id'] for c in (t.get('skos_concepts') or [])}; "
+            "classes = {c['id'] for c in t['classes']}; "
+            "props = {p['id'] for p in t['object_properties'] + t['data_properties']}; "
+            "print(json.dumps({"
+            "'enum_n': len(enums), 'concept_n': len(concepts), "
+            "'miss_enum': sorted(enums - w), 'miss_concept': sorted(concepts - w), "
+            "'miss_class': sorted(classes - w), 'miss_prop': sorted(props - w)}))"
+        ) % (sim_dir, rev_dir, self.ttl, self.ttl)
+        p = self.py("-c", code)
+        if p.returncode != 0:
+            self.record("T16", "ab_score 词汇表四面+受控值（IT-10/16）", "FAIL",
+                        (p.stderr or p.stdout)[:200])
+            return
+        try:
+            d = json.loads(p.stdout.strip().splitlines()[-1])
+        except (ValueError, IndexError):
+            self.record("T16", "ab_score 词汇表四面+受控值（IT-10/16）", "FAIL", "输出解析失败")
+            return
+        ok = (d["enum_n"] > 0 and d["concept_n"] > 0
+              and not d["miss_enum"] and not d["miss_concept"]
+              and not d["miss_class"] and not d["miss_prop"])
+        if ok:
+            detail = "受控值%d/Concept%d 全覆盖四面（类/属性/规则/Concept）" % (
+                d["enum_n"], d["concept_n"])
+        else:
+            detail = "miss_enum=%s miss_concept=%s miss_class=%s miss_prop=%s" % (
+                d["miss_enum"], d["miss_concept"], d["miss_class"], d["miss_prop"])
+        self.record("T16", "ab_score 词汇表四面+受控值（IT-10/16）",
+                    "PASS" if ok else "FAIL", detail)
+
+    # ---- T17 SWRL 静态 lint（IT-02：恒假/恒真自比较 + DL-safe）----
+    def t17_swrl_lint(self):
+        bad_ttl = (
+            "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+            "@prefix swrl: <http://www.w3.org/2003/11/swrl#> .\n"
+            "@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .\n"
+            "@prefix ex: <http://example.org/test#> .\n"
+            "ex:A a owl:Class .\nex:x a swrl:Variable .\nex:y a swrl:Variable .\n"
+            "ex:ruleBad a swrl:Imp ;\n"
+            "  swrl:body ( [ a swrl:BuiltinAtom ; swrl:builtin swrlb:notEqual ;"
+            " swrl:arguments ( ex:x ex:x ) ] ) ;\n"
+            "  swrl:head ( [ a swrl:ClassAtom ; swrl:classPredicate ex:A ;"
+            " swrl:argument1 ex:y ] ) .\n")
+        taut_ttl = (
+            "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+            "@prefix swrl: <http://www.w3.org/2003/11/swrl#> .\n"
+            "@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .\n"
+            "@prefix ex: <http://example.org/test#> .\n"
+            "ex:A a owl:Class .\nex:x a swrl:Variable .\n"
+            "ex:ruleTaut a swrl:Imp ;\n"
+            "  swrl:body ( [ a swrl:ClassAtom ; swrl:classPredicate ex:A ;"
+            " swrl:argument1 ex:x ] [ a swrl:BuiltinAtom ; swrl:builtin swrlb:equal ;"
+            " swrl:arguments ( ex:x ex:x ) ] ) ;\n"
+            "  swrl:head ( [ a swrl:ClassAtom ; swrl:classPredicate ex:A ;"
+            " swrl:argument1 ex:x ] ) .\n")
+        bp = os.path.join(self.tmp, "t17_bad.ttl")
+        tp = os.path.join(self.tmp, "t17_taut.ttl")
+        with open(bp, "w", encoding="utf-8") as fh:
+            fh.write(bad_ttl)
+        with open(tp, "w", encoding="utf-8") as fh:
+            fh.write(taut_ttl)
+        v = self.script("ontology-model", "validate_ontology.py")
+
+        def run_case(ttl, tag):
+            jout = os.path.join(self.tmp, "t17_%s.json" % tag)
+            p = self.py(v, ttl, "--json-output", jout)
+            try:
+                d = json.load(open(jout, encoding="utf-8"))
+                finds = d.get("findings", [])
+            except (OSError, ValueError):
+                finds = []
+            lint = [f for f in finds if f.get("check_id") == "L2-SWRL-LINT"]
+            return p.returncode, lint
+
+        b_rc, b_lint = run_case(bp, "bad")
+        t_rc, t_lint = run_case(tp, "taut")
+        f_rc, f_lint = run_case(self.ttl, "fix")
+        b_err = sum(1 for f in b_lint if f.get("severity") == "error")
+        t_warn = sum(1 for f in t_lint if f.get("severity") == "warning")
+        ok = (b_rc == 1 and b_err >= 2 and t_rc == 0 and t_warn >= 1
+              and f_rc == 0 and len(f_lint) == 0)
+        detail = "反例exit1/恒假+DL-safe %derror｜恒真exit0/%dwarning｜fixture exit0零误杀" % (
+            b_err, t_warn)
+        if not ok:
+            detail = "bad_rc=%d err=%d taut_rc=%d warn=%d fix_rc=%d fixlint=%d" % (
+                b_rc, b_err, t_rc, t_warn, f_rc, len(f_lint))
+        self.record("T17", "SWRL 静态 lint（IT-02 恒假/恒真/DL-safe）",
+                    "PASS" if ok else "FAIL", detail)
+
+    # ---- T18 版本机械 diff（IT-07：相同 0 增删 + 修改版具名构件检出）----
+    def t18_diff(self):
+        from rdflib import Graph, Namespace, RDF, RDFS, OWL, URIRef, Literal
+        g = Graph()
+        g.parse(self.ttl, format="turtle")
+        EX = Namespace("http://example.org/diff#")
+        g.add((EX.NewClass, RDF.type, OWL.Class))
+        g.add((EX.NewClass, RDFS.label, Literal("新增类")))
+        cls = [s for s in g.subjects(RDF.type, OWL.Class)
+               if isinstance(s, URIRef) and "diff#" not in str(s)]
+        target = cls[0]
+        target_local = str(target).split("#")[-1].split("/")[-1]
+        g.add((target, RDFS.comment, Literal("diff 测试注释")))
+        mod = os.path.join(self.tmp, "t18_mod.ttl")
+        g.serialize(mod, format="turtle")
+        ds = self.script("ontology-model", "diff_ontology.py")
+        j_same = os.path.join(self.tmp, "t18_same.json")
+        j_mod = os.path.join(self.tmp, "t18_mod.json")
+        p_same = self.py(ds, self.ttl, self.ttl, "--json-output", j_same)
+        p_mod = self.py(ds, self.ttl, mod, "--json-output", j_mod)
+        try:
+            same = json.load(open(j_same, encoding="utf-8"))["counts"]
+            mod_d = json.load(open(j_mod, encoding="utf-8"))
+        except (OSError, ValueError):
+            self.record("T18", "版本机械 diff（IT-07）", "FAIL", "输出解析失败")
+            return
+        added_ids = {e["id"] for e in mod_d["detail"]["added_subjects"]}
+        changed_ids = {e["id"] for e in mod_d["detail"]["changed_subjects"]}
+        ok = (p_same.returncode == 0 and p_mod.returncode == 0
+              and same["added_subjects"] == 0 and same["removed_subjects"] == 0
+              and same["changed_subjects"] == 0
+              and "NewClass" in added_ids and target_local in changed_ids)
+        detail = "相同0增删｜修改版NewClass新增+%s变更｜bnode噪声单列%d" % (
+            target_local, mod_d["counts"]["bnode_subjects_changed"])
+        if not ok:
+            detail = "same=%s added=%s changed=%s" % (same, sorted(added_ids), sorted(changed_ids))
+        self.record("T18", "版本机械 diff（IT-07 三元组级具名构件）",
+                    "PASS" if ok else "FAIL", detail)
+
+    # ---- T19 CQ 结构预检（IT-03：词汇∈本体 + BFS 可达）----
+    def t19_precheck(self):
+        gs = self.script("ontology-model", "run_golden_cases.py")
+        j_fix = os.path.join(self.tmp, "t19_fix.json")
+        p_fix = self.py(gs, self.ttl, self.cases, "--precheck", "--json-output", j_fix)
+        data = json.load(open(self.cases, encoding="utf-8"))
+        for c in data["cases"]:
+            if not c.get("exempt"):
+                c["ttl"] = c["ttl"] + "\n:badInd a :NonExistentClass ."
+                c["id"] = "BADTEST"
+                break
+        bad_path = os.path.join(self.tmp, "t19_bad.json")
+        with open(bad_path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False)
+        p_bad = self.py(gs, self.ttl, bad_path, "--precheck")
+        ok = (p_fix.returncode == 0 and p_bad.returncode == 1
+              and "NonExistentClass" in p_bad.stdout)
+        detail = "fixture exit0 全命中｜注入不存在类 exit1 检出"
+        if not ok:
+            detail = "fix_rc=%d bad_rc=%d" % (p_fix.returncode, p_bad.returncode)
+        self.record("T19", "CQ 结构预检（IT-03 词汇+BFS 可达）",
+                    "PASS" if ok else "FAIL", detail)
+
+    # ---- T20 builtin × 引擎矩阵（IT-06：清单检查 + 矩阵存在）----
+    def t20_builtin(self):
+        v = self.script("ontology-model", "validate_ontology.py")
+        j = os.path.join(self.tmp, "t20.json")
+        p = self.py(v, self.ttl, "--json-output", j)
+        try:
+            finds = json.load(open(j, encoding="utf-8")).get("findings", [])
+        except (OSError, ValueError):
+            finds = []
+        bi = [f for f in finds if f.get("check_id") == "L2-SWRL-BUILTIN"]
+        matrix = os.path.join(self.skills, "ontology-model", "references",
+                              "builtin-engine-matrix.md")
+        ok = (p.returncode == 0 and len(bi) > 0 and os.path.exists(matrix))
+        detail = "builtin 清单%d规则｜矩阵存在｜exit0（info 不影响）" % len(bi)
+        if not ok:
+            detail = "rc=%d builtin=%d matrix=%s" % (
+                p.returncode, len(bi), os.path.exists(matrix))
+        self.record("T20", "builtin×引擎矩阵（IT-06 清单+矩阵）",
+                    "PASS" if ok else "FAIL", detail)
+
+    # ---- T21 承重闸门正确性回归（审计 F01/F02/F07，先红后修守住）----
+    def t21_correctness(self):
+        sim = os.path.join(self.skills, "ontology-simulate", "scripts")
+        rev = os.path.join(self.skills, "ontology-review", "scripts")
+        code = (
+            "import sys, json; sys.path.insert(0, r'%s'); sys.path.insert(0, r'%s'); "
+            "import check_instance as CI, simulate_reason as SR, ab_score as AB; "
+            "sig = {'classes': [{'id': 'Parent', 'superclasses': []}, "
+            "{'id': 'Child', 'superclasses': ['Parent']}], "
+            "'data_properties': [], 'object_properties': []}; "
+            "f01a = CI.domain_ok(sig, ['Child'], 'Parent'); "
+            "f01b = CI.domain_ok(sig, ['Parent'], 'Child'); "
+            "nt = ('<http://x#ruleR1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2003/11/swrl#Imp> .\\n' "
+            "'<http://x#ruleR1c> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2003/11/swrl#Imp> .\\n' "
+            "'<http://x#ruleR10> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2003/11/swrl#Imp> .\\n'); "
+            "after = SR.list_rules(SR.drop_rule(nt, 'ruleR1')); "
+            "f02 = ('ruleR1' not in after and 'ruleR1c' in after and 'ruleR10' in after); "
+            "resp = {'conclusion': {'label': 'x', 'explanation': '根据 R10 判定'}, "
+            "'evidence': [{'type': 'rule', 'ref': 'R10', 'note': ''}]}; "
+            "q = {'id': 'Q', 'layer': 'L3', 'gold': {'label': 'x'}}; "
+            "row = AB.score_one(q, resp, {'ruleR10'}, {10}); "
+            "f07 = ('R10' not in row['hallucinations']); "
+            "print(json.dumps({'f01a': f01a, 'f01b': f01b, 'f02': f02, "
+            "'f07': f07, 'after': after}))"
+        ) % (sim, rev)
+        p = self.py("-c", code)
+        try:
+            d = json.loads(p.stdout.strip().splitlines()[-1])
+        except (ValueError, IndexError):
+            self.record("T21", "承重闸门正确性回归（F01/F02/F07）", "FAIL",
+                        (p.stderr or p.stdout)[:200])
+            return
+        ok = (d["f01a"] is True and d["f01b"] is False and d["f02"] and d["f07"])
+        detail = "F01子类过/超类拦=%s/%s｜F02精确删ruleR1保R1c/R10=%s｜F07 R10非幻觉=%s" % (
+            d["f01a"], d["f01b"], d["f02"], d["f07"])
+        self.record("T21", "承重闸门正确性回归（F01/F02/F07）",
+                    "PASS" if ok else "FAIL", detail)
+
     def run_all(self):
         self.check_fixtures()
-        self.t0_py_compile()
-        self.t1_self_test()
-        self.t2_golden_schema()
-        self.t3_validate()
-        self.t4_signature()
-        self.t5_t6_check_instance()
-        self.t7_cross_import()
-        self.t8_simulate()
-        self.t9_closeout()
-        self.t10_brand()
-        self.t11_patch()
-        self.t12_shacl()
-        self.t13_d2d4()
-        self.t14_ingest()
-        self.t15_sparql()
+        # F08：逐测隔离——单测崩溃登记 FAIL 不中断全批（原顺序裸调一崩全崩）
+        tests = [
+            self.t0_py_compile, self.t1_self_test, self.t2_golden_schema,
+            self.t3_validate, self.t4_signature, self.t5_t6_check_instance,
+            self.t7_cross_import, self.t8_simulate, self.t9_closeout,
+            self.t10_brand, self.t11_patch, self.t12_shacl, self.t13_d2d4,
+            self.t14_ingest, self.t15_sparql, self.t16_ab_vocab,
+            self.t17_swrl_lint, self.t18_diff, self.t19_precheck,
+            self.t20_builtin, self.t21_correctness,
+        ]
+        for t in tests:
+            try:
+                t()
+            except Exception as exc:
+                self.record(t.__name__, "逐测隔离捕获崩溃", "FAIL",
+                            "%s: %s" % (exc.__class__.__name__, str(exc)[:150]))
         n_pass = sum(1 for r in self.results if r[2] == "PASS")
         n_fail = sum(1 for r in self.results if r[2] == "FAIL")
         n_skip = sum(1 for r in self.results if r[2] == "SKIP")

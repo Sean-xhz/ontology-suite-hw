@@ -2,6 +2,16 @@
 
 > semver（MAJOR.MINOR.PATCH）：MAJOR=执行契约不兼容变更（T 阶段/闸门/A-B 协议）；MINOR=新增能力或条款；PATCH=措辞与修正。当前版本登记于 SKILL.md frontmatter `metadata.version`。子协议版本（应答契约 / 题库 schema）独立登记，不随 skill 版本联动。
 
+## 1.3.1 (2026-11-26)
+- 零臆造闸门 domain_ok 方向修正（对实例类上溯）；drop_rule 精确 localname 匹配；CAMEL 幻觉判据排除 R 记号；E08 按 range 精确类型分派；derived 数据属性闸（extract_signature 收 DatavaluedPropertyAtom + check_instance facts E10）。
+- text_of conclusion:null 守卫；COMMON_WORDS 移除 fixture 类名；退出码契约修正（sys.exit(str)→显式码）。
+- 子协议版本不变。
+
+## 1.3.0 (2026-11-25)
+- A/B 机械判据词汇表补全 SKOS Concept 面（类/属性/规则/Concept 四面），引用真实性/幻觉判据覆盖术语层。
+- 修复受控值词汇表键名（oneOf_enum 对齐 parse_ttl 产出），受控值字面量正确进入词汇表。
+- 子协议版本不变（应答契约 v1.1 / 题库 schema 1.0）。
+
 ## 1.2.4 (2026-11-17)
 - facet 实例校验承接方注释口径修正（→ model SHACL 层 R4）；T3 三闸正交组合薄指针（check_instance JSON 零臆造 → validate_shacl TTL 数据完整性 → simulate_reason 物化）。校验/物化/归因逻辑零改动。
 

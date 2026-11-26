@@ -31,13 +31,13 @@ def main():
     ap.add_argument("--output", default=None)
     args = ap.parse_args()
     if not os.path.exists(args.opinions_json):
-        sys.exit("exit 2: 意见 JSON 不存在")
+        sys.stderr.write("exit 2: 意见 JSON 不存在" + "\n"); sys.exit(2)
 
     with open(args.opinions_json, encoding="utf-8") as fh:
         data = json.load(fh)
     opinions = data.get("opinions", [])
     if not isinstance(opinions, list) or not opinions:
-        sys.exit("exit 1: 无意见条目（opinions 为空）")
+        sys.stderr.write("exit 1: 无意见条目（opinions 为空）" + "\n"); sys.exit(1)
 
     baseline = data.get("baseline", {})
     ttl_sha = (baseline.get("ttl") or {}).get("sha", "未知")

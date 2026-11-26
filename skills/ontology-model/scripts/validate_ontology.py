@@ -531,6 +531,107 @@ class Validator(object):
 
     # ---------- 主流程 ----------
 
+    # ---------- L2 SWRL 静态反模式 lint（IT-02，逻辑确定无误杀） ----------
+
+    def _is_var(self, a):
+        """SWRL 变量判定（与 _atom_signature 口径一致）：bnode 或 rdf:type swrl:Variable
+        的 URIRef 为变量；Literal 与具名个体（URIRef 且 type≠Variable）非变量。"""
+        if a is None or isinstance(a, Literal):
+            return False
+        if isinstance(a, URIRef) and self.graph.value(a, RDF.type) != SWRL.Variable:
+            return False
+        return True
+
+    def _atom_args(self, atom):
+        """SWRL 原子全部参数（argument1/2 + builtin 的 arguments 列表）。"""
+        g = self.graph
+        args = []
+        for ap in (SWRL.argument1, SWRL.argument2):
+            a = g.value(atom, ap)
+            if a is not None:
+                args.append(a)
+        an = g.value(atom, SWRL.arguments)
+        if an is not None and an != RDF.nil:
+            try:
+                args.extend(Collection(g, an))
+            except Exception:
+                pass
+        return args
+
+    def check_l2_swrl_lint(self):
+        """IT-02 SWRL 静态反模式三检查（LLM 编译高发反模式机械前置拦截，省 auditor 博弈轮次）：
+        ① 恒假自比较（同变量 notEqual/lessThan/greaterThan）→ body 永假死规则，error；
+        ② 恒真自比较（同变量 equal/lessThanOrEqual/greaterThanOrEqual）→ 冗余恒真原子，warning；
+        ③ DL-safe（head 变量须在 body 绑定）→ 非安全规则，error。
+        三条均逻辑确定，无误杀风险（OntoMind 死规则清理 + DL-safe 校验两团队独立同构印证高发）。"""
+        g = self.graph
+        SWRLB = Namespace("http://www.w3.org/2003/11/swrlb#")
+        false_builtins = {SWRLB.notEqual, SWRLB.lessThan, SWRLB.greaterThan}
+        true_builtins = {SWRLB.equal, SWRLB.lessThanOrEqual, SWRLB.greaterThanOrEqual}
+        imps = sorted(g.subjects(RDF.type, SWRL.Imp), key=str)
+        for idx, imp in enumerate(imps, 1):
+            rule_loc = imp if isinstance(imp, URIRef) else "swrl:Imp#%d" % idx
+            rule_tag = local_name(imp) if isinstance(imp, URIRef) else "#%d" % idx
+            body_node = g.value(imp, SWRL.body)
+            head_node = g.value(imp, SWRL.head)
+            try:
+                body_items = list(Collection(g, body_node)) if body_node and body_node != RDF.nil else []
+            except Exception:
+                body_items = []
+            try:
+                head_items = list(Collection(g, head_node)) if head_node and head_node != RDF.nil else []
+            except Exception:
+                head_items = []
+            # ①② 自比较（builtin 原子前两参同变量）
+            for atom in body_items:
+                builtin = g.value(atom, SWRL.builtin)
+                if builtin is None:
+                    continue
+                args = self._atom_args(atom)
+                if len(args) >= 2 and args[0] == args[1] and self._is_var(args[0]):
+                    if builtin in false_builtins:
+                        self.add("L2-SWRL-LINT", "error",
+                                 "SWRL 规则 %s 恒假自比较（%s 同变量）——body 永假，死规则"
+                                 % (rule_tag, local_name(builtin)), rule_loc)
+                    elif builtin in true_builtins:
+                        self.add("L2-SWRL-LINT", "warning",
+                                 "SWRL 规则 %s 恒真自比较（%s 同变量）——冗余恒真原子"
+                                 % (rule_tag, local_name(builtin)), rule_loc)
+            # ③ DL-safe：head 变量须在 body 绑定
+            body_vars = {a for atom in body_items for a in self._atom_args(atom)
+                         if self._is_var(a)}
+            head_vars = {a for atom in head_items for a in self._atom_args(atom)
+                         if self._is_var(a)}
+            unbound = head_vars - body_vars
+            if unbound:
+                self.add("L2-SWRL-LINT", "error",
+                         "SWRL 规则 %s 违反 DL-safe：head 变量未在 body 绑定（%d 个）——非安全规则"
+                         % (rule_tag, len(unbound)), rule_loc)
+
+    def check_l2_swrl_builtin(self):
+        """IT-06 builtin 使用清单（info 级，供引擎兼容性审查）：机械列出每规则 body 使用的
+        swrlb builtin。Pellet 支持分级见 references/builtin-engine-matrix.md（实测✅/未实测⚠️）；
+        HermiT 不执行任何 builtin（限制⑬）。info 级不影响 exit code。"""
+        g = self.graph
+        imps = sorted(g.subjects(RDF.type, SWRL.Imp), key=str)
+        for idx, imp in enumerate(imps, 1):
+            rule_tag = local_name(imp) if isinstance(imp, URIRef) else "#%d" % idx
+            body_node = g.value(imp, SWRL.body)
+            try:
+                body_items = list(Collection(g, body_node)) if body_node and body_node != RDF.nil else []
+            except Exception:
+                body_items = []
+            builtins = set()
+            for atom in body_items:
+                b = g.value(atom, SWRL.builtin)
+                if b is not None:
+                    builtins.add(local_name(b))
+            if builtins:
+                self.add("L2-SWRL-BUILTIN", "info",
+                         "SWRL 规则 %s 使用 builtin：%s（Pellet 支持分级见 builtin-engine-matrix；"
+                         "HermiT 不执行，限制⑬）" % (rule_tag, "/".join(sorted(builtins))),
+                         imp if isinstance(imp, URIRef) else None)
+
     def run(self):
         self.check_l1_parse()
         if self.parse_ok:
@@ -543,6 +644,8 @@ class Validator(object):
             self.check_l2_imports()
             self.check_l2_swrl()
             self.check_l2_swrl_form()
+            self.check_l2_swrl_lint()
+            self.check_l2_swrl_builtin()
         errors = sum(1 for f in self.findings if f["severity"] == "error")
         self.exit_code = 0 if (self.parse_ok and errors == 0) else (2 if not self.parse_ok else 1)
         return self.to_json_obj()

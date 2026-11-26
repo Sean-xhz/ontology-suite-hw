@@ -1389,7 +1389,7 @@ def main():
                     help="术语词典 md（可多次；缺省自动取 run 目录内 术语词典*.md）")
     args = ap.parse_args()
     if not os.path.isdir(args.run_dir):
-        sys.exit("exit 2: run 目录不存在")
+        sys.stderr.write("exit 2: run 目录不存在" + "\n"); sys.exit(2)
 
     ttl_path = os.path.join(args.run_dir, args.ttl)
     md_path = os.path.join(args.run_dir, args.scheme)

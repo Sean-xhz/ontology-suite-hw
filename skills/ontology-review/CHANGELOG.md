@@ -2,6 +2,10 @@
 
 > semver（MAJOR.MINOR.PATCH）：MAJOR=执行契约不兼容变更（R 阶段/闸门/回流契约）；MINOR=新增能力或条款；PATCH=措辞与修正。当前版本登记于 SKILL.md frontmatter `metadata.version`。子协议版本（review.json / 意见 JSON / 页 PAGE_SCHEMA / patch schema）独立登记，不随 skill 版本联动。
 
+## 1.3.2 (2026-11-26)
+- 修复专家审阅页存储型 XSS（SWRL 原子 predicate/arguments + 实体表列头转义）；冻结审阅页维护批次再生（3 页字节全等，signature 零影响）；退出码契约修正。
+- 子协议版本不变。
+
 ## 1.3.1 (2026-11-20)
 - engine 修正：`review_extract` 提取的 `meta.run_dir` 取 basename 归一化，杜绝绝对本地路径进入意见单导出与浏览器 localStorage key；消费端全兼容，提取 DATA 零变更。
 - 子协议版本不变（review.json 1.1 / 意见 JSON 1.1 / PAGE_SCHEMA 1.1 / patch schema 1.0）。

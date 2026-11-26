@@ -1,7 +1,7 @@
 ---
 name: ontology-simulate
 metadata:
-  version: 1.2.4
+  version: 1.3.1
 description: 本体 what-if 模拟验证——客户画像+业务诉求（受控范围内接受真实案例，对外产物用虚构案例）→ 合规实例编译 → Pellet 物化推理（双快照 diff+逐规则归因）→ 业务语言解读报告。三闸门防臆造（check_instance 机械拦截/compiler 零臆造纪律/SG1 人核）。触发：「what-if 模拟」「本体推演」「模拟业务验证」「画像模拟」。
 ---
 

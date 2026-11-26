@@ -36,7 +36,7 @@ def main():
     args = ap.parse_args()
 
     if not os.path.exists(args.review_json):
-        sys.exit("exit 2: review.json 不存在")
+        sys.stderr.write("exit 2: review.json 不存在" + "\n"); sys.exit(2)
     data = json.loads(read(args.review_json))
 
     run_name = args.run_name
@@ -52,7 +52,7 @@ def main():
     for token, fname in VENDORS.items():
         vpath = os.path.join(ASSETS, fname)
         if not os.path.exists(vpath):
-            sys.exit("exit 1: vendor 缺失 %s" % vpath)
+            sys.stderr.write("exit 1: vendor 缺失 %s" % vpath + "\n"); sys.exit(1)
         html = html.replace(token, read(vpath))
     html = html.replace("__RUN_NAME__", run_name.replace("<", "&lt;"))
 

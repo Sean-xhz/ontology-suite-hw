@@ -45,7 +45,7 @@ CAMEL = re.compile(r"\b[A-Z][a-zA-Z0-9]{2,}\b")
 # 取前导数字为族号（与 build_vocab 的 ruleR(\d+) 口径一致；无后缀 gold 不受影响）
 RNUM = re.compile(r"\bR(\d+)")
 # 本体词汇白名单外的常见英文误报词（应答纪律允许的普通词）
-COMMON_WORDS = {"JSON", "AAA", "AA", "AcceptableApplication"}  # AAA/AA 另由受控值表覆盖
+COMMON_WORDS = {"JSON", "AAA", "AA"}  # AAA/AA 另由受控值表覆盖；F54：移除 fixture 类名（不应白名单真实本体类致幻觉漏检）
 
 
 def norm(s):
@@ -54,7 +54,11 @@ def norm(s):
 
 
 def build_vocab(ttl_path):
-    """TTL → 构件词汇表（local name 集合 + R 编号集合 + 受控值集合）。"""
+    """TTL → 构件词汇表（四面 local name〔类/属性/规则/SKOS Concept〕 + R 编号集合 + 受控值集合）。
+
+    IT-10：词汇表覆盖类/属性/规则/Concept 四面（Concept 面原缺，致术语层引用误判幻觉）。
+    IT-16：受控值键名 oneOf_enum（对齐 review_extract.parse_ttl 产出；原误读 enum_values 恒空）。
+    """
     ttl = RX.parse_ttl(ttl_path)
     words, rnums = set(), set()
     for c in ttl["classes"]:
@@ -67,16 +71,19 @@ def build_vocab(ttl_path):
         m = re.match(r"ruleR(\d+)", rid)
         if m:
             rnums.add(int(m.group(1)))
-    # 受控值（oneOf 枚举字面量）
+    # SKOS Concept 面（IT-10：四面词汇表补 Concept，引用真实性/幻觉判据覆盖术语层）
+    for c in ttl.get("skos_concepts") or []:
+        words.add(c["id"])
+    # 受控值（oneOf 枚举字面量；IT-16：键名 oneOf_enum 对齐 parse_ttl 产出）
     for p in ttl["data_properties"]:
-        for v in p.get("enum_values") or []:
+        for v in p.get("oneOf_enum") or []:
             words.add(str(v))
     return words, rnums
 
 
 def text_of(resp):
     """应答 JSON → 判分用全文（explanation + evidence notes + refs）。"""
-    parts = [resp.get("conclusion", {}).get("explanation", "")]
+    parts = [(resp.get("conclusion") or {}).get("explanation", "")]  # F39：conclusion:null 守卫
     for e in resp.get("evidence") or []:
         parts.append(str(e.get("ref", "")))
         parts.append(str(e.get("note", "")))
@@ -122,6 +129,8 @@ def score_one(q, resp, vocab, rnums):
     halluc = set()
     for token_src in refs_of(resp) + [full]:
         for t in CAMEL.findall(str(token_src)):
+            if re.fullmatch(r"R\d+\w*", t):  # F07：R 记号由 RNUM 分支判定，CAMEL 不重复计幻觉
+                continue
             if t not in vocab and t not in COMMON_WORDS:
                 halluc.add(t)
         for m in RNUM.finditer(str(token_src)):
@@ -153,7 +162,7 @@ def arm_aggregate(rows):
 def cmd_score(args):
     qb = json.load(open(args.questionbank, encoding="utf-8"))
     if "questions" not in qb or "meta" not in qb:
-        sys.exit("exit 1: 题库 schema 缺 meta/questions")
+        sys.stderr.write("exit 1: 题库 schema 缺 meta/questions" + "\n"); sys.exit(1)
     vocab, rnums = build_vocab(args.ttl)
     os.makedirs(args.output_dir, exist_ok=True)
     answers = {}
@@ -182,7 +191,7 @@ def cmd_score(args):
             "questionbank": os.path.basename(args.questionbank),
             "frozen_sha": qb["meta"].get("frozen_sha"),
             "ontology_sha": qb["meta"].get("ontology_sha"),
-            "scorer": "ab_score.py v1.0",
+            "scorer": "ab_score.py v1.1",
             "blind_spot": "裸臂编造恰好存在于 TTL 的 R 编号时真实性判据不检出——由专家盲评补",
         },
         "per_question": all_rows,

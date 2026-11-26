@@ -69,8 +69,8 @@ def build_signature(ttl_path):
                 continue
             if atom.get("atom_type") == "ClassAtom":
                 head_classes.add(atom["predicate"])
-            elif atom.get("atom_type") == "IndividualPropertyAtom":
-                head_props.add(atom["predicate"])
+            elif atom.get("atom_type") in ("IndividualPropertyAtom", "DatavaluedPropertyAtom"):
+                head_props.add(atom["predicate"])  # F28：数据属性推导结论同收（原漏 DatavaluedPropertyAtom）
 
     classes = []
     for c in ttl["classes"]:
@@ -109,14 +109,14 @@ def main():
     ap.add_argument("--output", default=None)
     args = ap.parse_args()
     if not os.path.exists(args.ttl):
-        sys.exit("exit 2: TTL 不存在：%s" % args.ttl)
+        sys.stderr.write("exit 2: TTL 不存在：%s" % args.ttl + "\n"); sys.exit(2)
 
     try:
         sig = build_signature(args.ttl)
     except Exception as exc:  # rdflib 解析失败等
-        sys.exit("exit 1: TTL 解析失败：%s" % exc)
+        sys.stderr.write("exit 1: TTL 解析失败：%s" % exc + "\n"); sys.exit(1)
     if sig is None:
-        sys.exit("exit 1: TTL 无具名类（空本体？）")
+        sys.stderr.write("exit 1: TTL 无具名类（空本体？）" + "\n"); sys.exit(1)
 
     out = args.output or os.path.join(
         os.path.dirname(os.path.abspath(args.ttl)), "signature.json")
