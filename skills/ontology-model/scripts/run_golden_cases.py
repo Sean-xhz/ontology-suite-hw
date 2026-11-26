@@ -60,9 +60,10 @@ def find_java():
         for _, name in sorted(vers, reverse=True):
             candidates.append(os.path.join(
                 jvm_dir, name, "Contents/Home/bin/java"))
-    candidates += ["/usr/bin/java", "java"]
+    candidates += ["/usr/bin/java", "/usr/local/bin/java"]
     for c in candidates:
-        if c and (os.path.sep not in c or os.path.exists(c)):
+        # F24：严格校验 isfile+X_OK（原裸 "java" 不校验存在性→几乎永不 None，exit2 降级分支不可达）
+        if c and os.path.isfile(c) and os.access(c, os.X_OK):
             return c
     return None
 

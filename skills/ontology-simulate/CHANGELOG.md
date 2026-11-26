@@ -2,6 +2,10 @@
 
 > semver（MAJOR.MINOR.PATCH）：MAJOR=执行契约不兼容变更（T 阶段/闸门/A-B 协议）；MINOR=新增能力或条款；PATCH=措辞与修正。当前版本登记于 SKILL.md frontmatter `metadata.version`。子协议版本（应答契约 / 题库 schema）独立登记，不随 skill 版本联动。
 
+## 1.3.2 (2026-11-26)
+- materialize 异常三分：引擎运行失败与本体不一致分离（engine_error 标记），不再把引擎崩溃误报不一致。
+- 子协议版本不变。
+
 ## 1.3.1 (2026-11-26)
 - 零臆造闸门 domain_ok 方向修正（对实例类上溯）；drop_rule 精确 localname 匹配；CAMEL 幻觉判据排除 R 记号；E08 按 range 精确类型分派；derived 数据属性闸（extract_signature 收 DatavaluedPropertyAtom + check_instance facts E10）。
 - text_of conclusion:null 守卫；COMMON_WORDS 移除 fixture 类名；退出码契约修正（sys.exit(str)→显式码）。

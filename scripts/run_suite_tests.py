@@ -267,6 +267,7 @@ class SuiteTests:
         want_rules = {"ruleR1", "ruleR3", "ruleR7"}
         ok = (r.get("consistency") == "consistent"
               and len(r.get("inferred", [])) == len(f.get("inferred", [])) == 3
+              and sorted(map(str, r.get("inferred", []))) == sorted(map(str, f.get("inferred", [])))  # F42：内容级比对（非仅条数）
               and set(r.get("attribution_summary", {})) == want_rules
               and set(f.get("attribution_summary", {})) == want_rules)
         after = {p: sha256(p) for p in (self.ttl, self.cases)}
@@ -322,9 +323,11 @@ class SuiteTests:
                                "label": "票据（T11 验收）", "lang": "zh"}],
                              "t11a", ["--golden", self.cases])
         da = d  # 锁定 T11a draft 路径（d 会被后续子例覆盖，T11f 双跑须比同一操作）
+        # F44：draft 内容断言（新 label 实际写入 draft，非仅文件存在）
+        _draft_txt = open(d, encoding="utf-8").read() if os.path.exists(d) else ""
         a_ok = (rc == 0 and r and r["version"]["bump_applied"] == "patch"
                 and r["regression"]["verdict"] == "skipped(annotation-only)"
-                and os.path.exists(d))
+                and os.path.exists(d) and "票据（T11 验收）" in _draft_txt)
         details.append("a=PATCH/annotation-skip" if a_ok else "a FAIL")
         if not a_ok:
             fails.append("a")
@@ -761,7 +764,8 @@ class SuiteTests:
         pf = mkpatch([{"op": "modify_label", "target": bill, "label": "票据（T13 确定性）"}], "t13e_a")
         rc1, r1, da = run_engine(pf, "t13e_a")
         rc2, r2, db = run_engine(pf, "t13e_b")
-        e_ok = os.path.exists(da) and os.path.exists(db) and open(da, "rb").read() == open(db, "rb").read()
+        e_ok = (rc1 == 0 and rc2 == 0 and os.path.exists(da) and os.path.exists(db)
+                and open(da, "rb").read() == open(db, "rb").read())  # F17：补双跑 rc 校验防假 PASS
         details.append("e=双跑字节一致" if e_ok else "e FAIL")
         if not e_ok:
             fails.append("e")
@@ -779,7 +783,7 @@ class SuiteTests:
             "sig=ES.build_signature(r'%s'); frozen=json.load(open(r'%s',encoding='utf-8'));"
             "assert sig==frozen,'T4 drift'; print('merge+supply isolation ok')"
         ) % (review_dir, sim_dir, self.ttl, scheme, self.run, self.ttl, self.sig)
-        pf = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+        pf = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=self.env)  # F46：防 __pycache__ 污染套件
         f_ok = pf.returncode == 0
         details.append("f=merge隔离T4零漂移" if f_ok else "f FAIL:" + (pf.stderr or pf.stdout)[-100:])
         if not f_ok:
@@ -906,8 +910,8 @@ class SuiteTests:
 
         # e 双跑全量字节等（无豁免条款，MD+manifest+attachments 含 PDF→PNG 渲染）
         out_e1 = os.path.join(self.tmp, "t14_e1"); out_e2 = os.path.join(self.tmp, "t14_e2")
-        parse(srcs, out_e1); parse(srcs, out_e2)
-        e_ok = True
+        pe1 = parse(srcs, out_e1); pe2 = parse(srcs, out_e2)
+        e_ok = (pe1.returncode == 0 and pe2.returncode == 0)  # F17：双跑 parse rc 校验防假 PASS
         for did in os.listdir(out_e1):
             d1 = os.path.join(out_e1, did); d2 = os.path.join(out_e2, did)
             for root_, _, files in os.walk(d1):
@@ -1188,10 +1192,13 @@ class SuiteTests:
             "concepts = {c['id'] for c in (t.get('skos_concepts') or [])}; "
             "classes = {c['id'] for c in t['classes']}; "
             "props = {p['id'] for p in t['object_properties'] + t['data_properties']}; "
+            "resp = {'conclusion': {'label': 'x', 'explanation': '依据 FakeGhostClass'}, 'evidence': [{'type': 'rule', 'ref': 'FakeGhostClass', 'note': ''}]}; "
+            "row = ab_score.score_one({'id': 'Q', 'layer': 'L3', 'gold': {'label': 'x'}}, resp, w, r); "
             "print(json.dumps({"
             "'enum_n': len(enums), 'concept_n': len(concepts), "
             "'miss_enum': sorted(enums - w), 'miss_concept': sorted(concepts - w), "
-            "'miss_class': sorted(classes - w), 'miss_prop': sorted(props - w)}))"
+            "'miss_class': sorted(classes - w), 'miss_prop': sorted(props - w), "
+            "'halluc_detect': 'FakeGhostClass' in row['hallucinations']}))"
         ) % (sim_dir, rev_dir, self.ttl, self.ttl)
         p = self.py("-c", code)
         if p.returncode != 0:
@@ -1205,7 +1212,8 @@ class SuiteTests:
             return
         ok = (d["enum_n"] > 0 and d["concept_n"] > 0
               and not d["miss_enum"] and not d["miss_concept"]
-              and not d["miss_class"] and not d["miss_prop"])
+              and not d["miss_class"] and not d["miss_prop"]
+              and d["halluc_detect"])  # F29：score_one 幻觉判别行为断言
         if ok:
             detail = "受控值%d/Concept%d 全覆盖四面（类/属性/规则/Concept）" % (
                 d["enum_n"], d["concept_n"])
@@ -1302,10 +1310,14 @@ class SuiteTests:
             return
         added_ids = {e["id"] for e in mod_d["detail"]["added_subjects"]}
         changed_ids = {e["id"] for e in mod_d["detail"]["changed_subjects"]}
+        # F29：错误路径——缺文件 exit2（非仅 happy path）
+        p_err = self.py(ds, self.ttl, os.path.join(self.tmp, "t18_不存在.ttl"),
+                        "--json-output", os.path.join(self.tmp, "t18_err.json"))
+        err_ok = (p_err.returncode == 2)
         ok = (p_same.returncode == 0 and p_mod.returncode == 0
               and same["added_subjects"] == 0 and same["removed_subjects"] == 0
               and same["changed_subjects"] == 0
-              and "NewClass" in added_ids and target_local in changed_ids)
+              and "NewClass" in added_ids and target_local in changed_ids and err_ok)
         detail = "相同0增删｜修改版NewClass新增+%s变更｜bnode噪声单列%d" % (
             target_local, mod_d["counts"]["bnode_subjects_changed"])
         if not ok:
@@ -1394,6 +1406,31 @@ class SuiteTests:
         self.record("T21", "承重闸门正确性回归（F01/F02/F07）",
                     "PASS" if ok else "FAIL", detail)
 
+    # ---- T22 覆盖缺口 smoke（F30：report_topology/ontology_cli/ingest_opinions）----
+    def t22_coverage(self):
+        fails = []
+        rt = self.script("ontology-model", "report_topology.py")
+        pr = self.py(rt, self.ttl)
+        if pr.returncode != 0:
+            fails.append("topology(rc=%d)" % pr.returncode)
+        cli = os.path.join(self.root, "scripts", "ontology_cli.py")
+        pc = self.py(cli, "suite", "doctor")
+        if pc.returncode != 0:
+            fails.append("cli-doctor(rc=%d)" % pc.returncode)
+        io = self.script("ontology-review", "ingest_opinions.py")
+        opj = os.path.join(self.tmp, "t22_opinions.json")
+        with open(opj, "w", encoding="utf-8") as fh:
+            json.dump({"baseline": {"ttl": {"sha": "0" * 64}},
+                       "opinions": [{"severity": "建议", "kind": "class",
+                                     "label": "Bill", "id": "op1", "opinion": "覆盖测试意见"}]}, fh)
+        po = self.py(io, opj, "--output", os.path.join(self.tmp, "t22_op.md"))
+        if po.returncode != 0:
+            fails.append("ingest_opinions(rc=%d)" % po.returncode)
+        ok = not fails
+        self.record("T22", "覆盖缺口 smoke（F30 topology/cli/opinions）",
+                    "PASS" if ok else "FAIL",
+                    "topology/cli-doctor/ingest_opinions exit0" if ok else "fails=%s" % fails)
+
     def run_all(self):
         self.check_fixtures()
         # F08：逐测隔离——单测崩溃登记 FAIL 不中断全批（原顺序裸调一崩全崩）
@@ -1404,7 +1441,7 @@ class SuiteTests:
             self.t10_brand, self.t11_patch, self.t12_shacl, self.t13_d2d4,
             self.t14_ingest, self.t15_sparql, self.t16_ab_vocab,
             self.t17_swrl_lint, self.t18_diff, self.t19_precheck,
-            self.t20_builtin, self.t21_correctness,
+            self.t20_builtin, self.t21_correctness, self.t22_coverage,
         ]
         for t in tests:
             try:

@@ -2,6 +2,14 @@
 
 > semver（MAJOR.MINOR.PATCH）：MAJOR=执行契约不兼容变更（R 阶段/闸门/回流契约）；MINOR=新增能力或条款；PATCH=措辞与修正。当前版本登记于 SKILL.md frontmatter `metadata.version`。子协议版本（review.json / 意见 JSON / 页 PAGE_SCHEMA / patch schema）独立登记，不随 skill 版本联动。
 
+## 1.3.5 (2026-11-26)
+- E13 批注锚点测试补格式有效性+负例判别（消除自证恒真）；E14 D4 导出契约动态选靶（去 fixture 硬编码，carrier-neutral）。
+- 子协议版本不变。
+
+## 1.3.4 (2026-11-26)
+- E12 bnode 正则补 N+32hex/cb 格式；plain_swrl 角色消歧 >5 同角色降级数字后缀防越界；base_ns 回退去 example 魔数（通用载体 base 推断）。
+- 子协议版本不变。
+
 ## 1.3.3 (2026-11-26)
 - merge 函数拆分（抽 _collect_derived_mentions/_axiom_md_overlay 纯子块，210→151 行）+ 入参突变契约 docstring 明示。review.json 输出字节不变。
 - 子协议版本不变。

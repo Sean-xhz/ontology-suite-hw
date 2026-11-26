@@ -64,6 +64,7 @@ IRI_RE = re.compile(r"^https?://\S+$")
 
 # Turtle @prefix 声明（文本层扫描用——rdflib namespaces() 不回显核心前缀的文件误拼绑定）
 PREFIX_DECL_RE = re.compile(r"@prefix\s+([A-Za-z0-9_.-]*)\s*:\s*<([^>]*)>", re.IGNORECASE)
+SPARQL_PREFIX_RE = re.compile(r"(?m)^\s*PREFIX\s+([A-Za-z0-9_.-]*)\s*:\s*<([^>]*)>", re.IGNORECASE)  # F14：SPARQL 式 PREFIX 双写法家族
 
 # 标准词表前缀的规范 IRI（L1-PREFIX 检查基准）——前缀名相同但 IRI 误拼
 # 会使该前缀下三元组静默脱离标准词表（文件仍可解析，属静默失败类缺陷）
@@ -142,7 +143,7 @@ class Validator(object):
                      "无法读取源文本做前缀扫描: %s" % exc, self.path)
             return
         seen = set()
-        for m in PREFIX_DECL_RE.finditer(text):
+        for m in list(PREFIX_DECL_RE.finditer(text)) + list(SPARQL_PREFIX_RE.finditer(text)):  # F14：@prefix + SPARQL PREFIX 双写法
             prefix, iri = m.group(1), m.group(2)
             canonical = CANONICAL_PREFIXES.get(prefix)
             if canonical is None or iri == canonical or (prefix, iri) in seen:
@@ -447,6 +448,27 @@ class Validator(object):
                 args.append(("var", var_map[a]))
         return (kind, pred, tuple(args))
 
+    def _atom_struct_key(self, atom):
+        """F12：原子结构排序键（kind/pred/参数形状占位，变量不含身份）——
+        先排序再 alpha 编号，使同构 body 签名与原子列表顺序无关。"""
+        g = self.graph
+        cls_pred = g.value(atom, SWRL.classPredicate)
+        prop_pred = g.value(atom, SWRL.propertyPredicate)
+        kind = "cls" if cls_pred is not None else "prop"
+        pred = str(cls_pred if cls_pred is not None else prop_pred)
+        shapes = []
+        for ap in (SWRL.argument1, SWRL.argument2):
+            a = g.value(atom, ap)
+            if a is None:
+                shapes.append(("none",))
+            elif isinstance(a, Literal):
+                shapes.append(("lit", str(a)))
+            elif isinstance(a, URIRef) and g.value(a, RDF.type) != SWRL.Variable:
+                shapes.append(("ind", str(a)))
+            else:
+                shapes.append(("var",))
+        return (kind, pred, tuple(shapes))
+
     def check_l2_swrl_form(self):
         g = self.graph
         imps = sorted(g.subjects(RDF.type, SWRL.Imp), key=str)
@@ -472,13 +494,17 @@ class Validator(object):
             if body_node is not None and body_node != RDF.nil:
                 try:
                     body_items = list(Collection(g, body_node))
-                except Exception:
+                except Exception as exc:
                     body_items = []
+                    self.add("L2-SWRL-FORM", "warning",
+                             "SWRL 规则 %s body 解析失败（%s）——同构检查跳过" % (rule_tag, exc), rule_loc)  # F23
                 if body_items:
                     var_map = {}
                     try:
+                        # F12：先按结构排序原子再 alpha 编号——签名与 body 顺序无关（重排同构可检）
+                        ordered = sorted(body_items, key=self._atom_struct_key)
                         sig = tuple(sorted(
-                            self._atom_signature(a, var_map) for a in body_items))
+                            self._atom_signature(a, var_map) for a in ordered))
                     except Exception:
                         sig = None
                     if sig is not None:

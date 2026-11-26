@@ -748,7 +748,8 @@ def build_md_provisional(sections, units):
     return "\n".join(lines).rstrip("\n") + "\n"
 
 
-def build_pack(doc_id, basename, src_sha, src_size, res, authority, sensitivity):
+def build_pack(doc_id, basename, src_sha, src_size, res, authority, sensitivity,
+               scale=DEFAULT_RENDER_SCALE):
     units = res["units"]
     sections, all_images, seeds, full_parts = [], [], [], []
     for i, u in enumerate(units):
@@ -850,7 +851,7 @@ def build_pack(doc_id, basename, src_sha, src_size, res, authority, sensitivity)
                    "bytes": src_size, "doc_date": res["doc_date"],
                    "doc_date_source": res["doc_date_source"], "authority": authority},
         "parser": {"name": "parse_documents.py", "script_version": SCRIPT_VERSION,
-                   "library": res["library"], "render_scale": DEFAULT_RENDER_SCALE,
+                   "library": res["library"], "render_scale": scale,  # F35：记实际 args.render_scale（防元数据漂移）
                    "libreoffice_render": bool(find_libreoffice()) and OFFICE_RENDER_ENABLED},
         "coverage": {"units_total": res["units_total"],
                      "units_prepared": sum(1 for s in sections if s["extraction"] == "prepared"),
@@ -937,7 +938,8 @@ def main():
             sys.exit(2)
         res["source_type"] = stype
         manifest, md, images = build_pack(doc_id, basename, before, src_size, res,
-                                          args.authority, args.sensitivity)
+                                          args.authority, args.sensitivity,
+                                          scale=args.render_scale)
         os.makedirs(pack_dir, exist_ok=True)
         att_dir = os.path.join(pack_dir, "attachments")
         if images:

@@ -149,11 +149,18 @@ def materialize(base_nt, case_nt, java, tag):
     snap_assert = world_graph_snapshot(world)
     t_load = time.time() - t0
     inconsistent = None
+    engine_error = None
     t1 = time.time()
     try:
         sync_pellet(world, java)
-    except Exception as exc:  # OwlReadyInconsistentOntologyError 等
-        inconsistent = str(exc)[:500]
+    except owlready2.base.OwlReadyInconsistentOntologyError as exc:
+        msg = str(exc)
+        if (not msg.strip()) or ("Ontology is inconsistent" in msg):
+            inconsistent = msg[:500] or "本体+实例不一致（推理机检出）"
+        else:
+            engine_error = "Pellet 运行失败: %s" % msg[:300]  # F15：引擎失败≠本体不一致
+    except Exception as exc:
+        engine_error = "引擎运行失败（非本体不一致）: %s: %s" % (exc.__class__.__name__, str(exc)[:300])
     t_sync = time.time() - t1
     snap_after = world_graph_snapshot(world)
     os.unlink(tmp)
@@ -167,6 +174,7 @@ def materialize(base_nt, case_nt, java, tag):
         "retracted": len(retract),
         "bnode_subject": sum(1 for l in diff if l.startswith("_:")),
         "inconsistent": inconsistent,
+        "engine_error": engine_error,  # F15：引擎失败标记（与 inconsistent 分离）
         "t_load": round(t_load, 1),
         "t_sync": round(t_sync, 1),
         "_diff_set": diff,
@@ -405,8 +413,10 @@ def main():
     cg.parse(data=_prefix_header(base_text) + "\n" + case_ttl, format="turtle")
     case_nt = cg.serialize(format="nt")
     full = materialize(base_nt, case_nt, java, "full")
+    if full.get("engine_error"):  # F15：引擎失败≠本体不一致，分离报告
+        print("⚠ 引擎运行失败（非本体不一致）：%s" % full["engine_error"])
     if full["inconsistent"]:
-        print("⚠ 本体+实例不一致（矛盾画像被推理器检出）：%s" % full["inconsistent"])
+        print("⚠ 本体+实例不一致（矛盾画像被推理机检出）：%s" % full["inconsistent"])
 
     # ---- 归因（逐规则启停；line→贡献规则映射 + 汇总）
     attr_summary, line_attr = {}, {}

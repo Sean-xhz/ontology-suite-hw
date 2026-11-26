@@ -46,6 +46,9 @@ DISPATCH = {
     ("ingest", "parse"): (
         "skills/ontology-ingest/scripts/parse_documents.py",
         "I1 机械层→准备态萃取原料包（渲染+inventory+substrate，无 LLM；I2 整页转录由 vision agent 外接），exit 0/1/2"),
+    ("ingest", "assemble"): (
+        "skills/ontology-ingest/scripts/assemble_pack.py",
+        "I3 机械组装（每源件单一合并 md，按序/不丢弃/图嵌守恒 + 自校验门禁），exit 0/1/2"),
     ("model", "validate"): (
         "skills/ontology-model/scripts/validate_ontology.py",
         "L1+L2 机械校验（语法结构 + 语义启发式），exit 0/1/2"),
@@ -70,6 +73,9 @@ DISPATCH = {
     ("model", "queries"): (
         "skills/ontology-model/scripts/derive_sparql.py",
         "D3c TTL-direct 派生 SPARQL Read 查询模板库（7 类 SELECT，纯 rdflib 内置 SPARQL），exit 0/1/2"),
+    ("model", "diff"): (
+        "skills/ontology-model/scripts/diff_ontology.py",
+        "IT-07 两版本 TTL 三元组级机械 diff（具名构件 added/removed/changed + md 对照表），exit 0/2"),
     ("review", "extract"): (
         "skills/ontology-review/scripts/review_extract.py",
         "建模方案表 + TTL 双源提取 → review.json（TTL 权威）"),
@@ -81,7 +87,7 @@ DISPATCH = {
         "专家批注 JSON → 审阅意见单（G1/S2 消费格式 + 入口(c) 同步位）"),
     ("review", "selftest"): (
         "skills/ontology-review/scripts/self_test.py",
-        "审阅层自测电池 E1-E10（--runs/ONTOLOGY_SELFTEST_RUNS 显式传入）"),
+        "审阅层自测电池 E1-E14（--runs/ONTOLOGY_SELFTEST_RUNS 显式传入）"),
     ("simulate", "signature"): (
         "skills/ontology-simulate/scripts/extract_signature.py",
         "TTL → 编译约束签名 signature.json（类/属性/受控值/规则面）"),
@@ -96,7 +102,7 @@ DISPATCH = {
         "A/B 三臂机械判据评分 + 专家盲评聚合"),
     ("suite", "test"): (
         "scripts/run_suite_tests.py",
-        "统一验收电池 T0-T15（虚构示例 fixture，零副作用），exit 0/1/2"),
+        "统一验收电池 T0-T21（虚构示例 fixture，零副作用），exit 0/1/2"),
 }
 
 GROUPS = ("ingest", "model", "review", "simulate", "suite")

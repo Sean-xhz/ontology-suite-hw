@@ -294,7 +294,7 @@ def run_supply_checks(merged, run_dir):
     nodes, edges = ag["nodes"], ag["edges"]
     nids = {n["id"] for n in nodes}
     ok_ep = all(e["source"] in nids and e["target"] in nids for e in edges)
-    bnode_pat = re.compile(r"(_:[A-Za-z0-9]|n[0-9a-f]{20,}|[0-9a-f]{8}-[0-9a-f]{4}-)")
+    bnode_pat = re.compile(r"(_:[A-Za-z0-9]|n[0-9a-f]{20,}|N[0-9a-f]{32}|cb[0-9a-f]{16,}|[0-9a-f]{8}-[0-9a-f]{4}-)")  # F20：补 N+32hex/cb 实际 canonical 格式
     ok_nobnode = not any(bnode_pat.search(n["id"]) for n in nodes)
     ok_db12 = (json.dumps(ag, sort_keys=True, ensure_ascii=False)
                == json.dumps(ttl2["supply"]["axiom_graph"], sort_keys=True, ensure_ascii=False))
@@ -375,11 +375,16 @@ def run_supply_checks(merged, run_dir):
     ok_legacy = (all(e["ttl"]["id"] for e in merged["classes"])
                  and all(r["md_key"] for r in merged["rules"]))
     ok_sv = merged.get("schema_version") == RX.REVIEW_JSON_SCHEMA
-    check("E13", "[%s] 批注锚点注册表完备+legacy 回退+schema_version" % tag,
-          ok_nonempty and ok_cls_anchor and ok_atom_anchor and ok_legacy and ok_sv,
-          "五图非空 %s / 类锚 %s / atom 锚 %s / legacy %s / schema %s"
-          % (ok_nonempty, ok_cls_anchor, ok_atom_anchor, ok_legacy, ok_sv)
-          if not (ok_nonempty and ok_cls_anchor and ok_atom_anchor and ok_legacy and ok_sv)
+    # F21：补判别力断言（格式有效性 + 负例判别，消除自证恒真）
+    ok_fmt = all(a and (":" in a or a.startswith("e-op-")) for k in reg for a in reg[k])
+    ok_neg = ("c:__nonexistent__" not in reg["classes"])
+    ok13 = (ok_nonempty and ok_cls_anchor and ok_atom_anchor and ok_legacy
+            and ok_sv and ok_fmt and ok_neg)
+    check("E13", "[%s] 批注锚点注册表完备+legacy+schema+格式判别" % tag,
+          ok13,
+          "五图非空 %s / 类锚 %s / atom 锚 %s / legacy %s / schema %s / 格式 %s / 判别 %s"
+          % (ok_nonempty, ok_cls_anchor, ok_atom_anchor, ok_legacy, ok_sv, ok_fmt, ok_neg)
+          if not ok13
           else "五图注册表 %s / schema_version=%s"
           % ({k: len(v) for k, v in reg.items()}, merged.get("schema_version")))
 
@@ -390,35 +395,52 @@ def run_supply_checks(merged, run_dir):
     allowed_iris = (set(iris["classes"].values()) | set(iris["object_properties"].values())
                     | set(iris["data_properties"].values()))
     patches = []
-    # 1 label（PATCH annotation-only）
-    patches.append(("label", [{"op": "modify_label", "target": iris["classes"]["Bill"],
-                               "label": "票据（D4 测试）"}]))
-    # 2 comment 已存在（replace_literal old 全等）
-    old_c = lit["class:Bill"]["comment"]
+    # F22：动态选靶（去票据 fixture 硬编码，carrier-neutral 备 N12 第二示例）
+    cls_ids = list(iris["classes"])
+    # 1 label：首个类
+    c_label = cls_ids[0]
+    patches.append(("label", [{"op": "modify_label", "target": iris["classes"][c_label],
+                               "label": "（D4 测试）"}]))
+    # 2 comment：首个有 comment 的类
+    c_comment = next((k.split(":", 1)[1] for k in lit
+                      if k.startswith("class:") and lit[k].get("comment")), c_label)
+    old_c = lit["class:" + c_comment]["comment"]
     new_c = dict(old_c)
     new_c["value"] = old_c["value"] + "（D4 测试）"
-    patches.append(("comment", [{"op": "replace_literal", "s": iris["classes"]["Bill"],
+    patches.append(("comment", [{"op": "replace_literal", "s": iris["classes"][c_comment],
                                  "p": "rdfs:comment", "old": old_c, "new": new_c}]))
-    # 3 enum 已划款→已付款（G8 editable，s 省略）
-    ed = supply["enum_editable"]["applicationStatus"]
-    tval = next(e["value"] for e in ed if e["editable"] and e["value"] == "已划款")
-    old_e = next(v for v in supply["enum_literals"]["applicationStatus"] if v["value"] == tval)
+    # 3 enum：首个有 editable 值的属性
+    e_prop = next(p for p in supply["enum_editable"]
+                  if any(e["editable"] for e in supply["enum_editable"][p]))
+    ed = supply["enum_editable"][e_prop]
+    tval = next(e["value"] for e in ed if e["editable"])
+    old_e = next(v for v in supply["enum_literals"][e_prop] if v["value"] == tval)
     new_e = dict(old_e)
-    new_e["value"] = "已付款"
+    new_e["value"] = tval + "（D4 测试）"
     patches.append(("enum", [{"op": "replace_literal", "p": "rdf:first",
                               "old": old_e, "new": new_e}]))
-    # 4 subclass reparent（Discountable 恰 1 具名父 Bill→Holder）
+    # 4 subclass：首个恰 1 具名父的类→另一类
+    pg = supply.get("class_parents", {})
+    c_sub = next(c for c in cls_ids if len(pg.get(c, {}).get("named", [])) == 1
+                 and pg[c]["named"][0] in iris["classes"])
+    old_par = iris["classes"][pg[c_sub]["named"][0]]
+    new_par = next(iris["classes"][c] for c in cls_ids
+                   if c != c_sub and iris["classes"][c] != old_par)
     patches.append(("subclass", [
-        {"op": "remove_triple", "s": iris["classes"]["Discountable"],
-         "p": "rdfs:subClassOf", "o": iris["classes"]["Bill"]},
-        {"op": "add_triple", "s": iris["classes"]["Discountable"],
-         "p": "rdfs:subClassOf", "o": iris["classes"]["Holder"]}]))
-    # 5 range（hasAcceptor Acceptor→Holder）
+        {"op": "remove_triple", "s": iris["classes"][c_sub],
+         "p": "rdfs:subClassOf", "o": old_par},
+        {"op": "add_triple", "s": iris["classes"][c_sub],
+         "p": "rdfs:subClassOf", "o": new_par}]))
+    # 5 range：首个有具名 range 的对象属性→另一类
+    op_range = next(p for p in merged["object_properties"]
+                    if p["ttl"].get("range") and p["ttl"]["range"] in iris["classes"])
+    old_rng = iris["classes"][op_range["ttl"]["range"]]
+    new_rng = next(iris["classes"][c] for c in cls_ids if iris["classes"][c] != old_rng)
     patches.append(("range", [
-        {"op": "remove_triple", "s": iris["object_properties"]["hasAcceptor"],
-         "p": "rdfs:range", "o": iris["classes"]["Acceptor"]},
-        {"op": "add_triple", "s": iris["object_properties"]["hasAcceptor"],
-         "p": "rdfs:range", "o": iris["classes"]["Holder"]}]))
+        {"op": "remove_triple", "s": iris["object_properties"][op_range["ttl"]["id"]],
+         "p": "rdfs:range", "o": old_rng},
+        {"op": "add_triple", "s": iris["object_properties"][op_range["ttl"]["id"]],
+         "p": "rdfs:range", "o": new_rng}]))
     ok_schema = ok_chan = ok_id = ok_sha = ok_iri = ok_white = True
     for kind, ops in patches:
         pid = d4_patch_id(sha_full, ops)
@@ -446,8 +468,8 @@ def run_supply_checks(merged, run_dir):
                     if v not in allowed_iris:
                         ok_white = False
     ok_sha_file = sha_full == RX.file_sha_full(ttl_path)
-    ok_lit = (old_c == lit["class:Bill"]["comment"]
-              and old_e in supply["enum_literals"]["applicationStatus"])
+    ok_lit = (old_c == lit["class:" + c_comment]["comment"]
+              and old_e in supply["enum_literals"][e_prop])
     ok_g8 = next(e["editable"] for e in ed if e["value"] == tval)
     # 合成 G8 重名注入→禁用（两属性共享枚举值）
     g8_ttl = (

@@ -157,7 +157,7 @@ def parse_ttl(ttl_path):
     if not base_ns:
         # @base 缺省时用首个具名类 namespace 猜测
         for c in g.subjects(RDF.type, OWL.Class):
-            if isinstance(c, URIRef) and "example" in str(c):
+            if isinstance(c, URIRef):  # F38：去 example 魔数（通用业务载体 base 推断，非仅虚构示例）
                 base_ns = str(c).rsplit(local(c), 1)[0]
                 break
 
@@ -1086,7 +1086,7 @@ def plain_swrl(t, cls_label, prop_label, prop_range):
     def assign(v, base):
         n = base_count.get(base, 0) + 1
         base_count[base] = n
-        role[v] = base if n == 1 else base + "甲乙丙丁戊"[n - 2]
+        role[v] = base if n == 1 else (base + "甲乙丙丁戊"[n - 2] if n <= 6 else base + str(n - 1))  # F27：>5 同角色降级数字后缀防越界
 
     # 角色定名只看 body（head 的 ClassAtom 是结论归类，不得篡夺主语角色——
     # 曾现 head 结论类(?1) 把主体角色从「主体类」覆写成「结论类」）

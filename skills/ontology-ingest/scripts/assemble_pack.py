@@ -41,7 +41,17 @@ ANCHOR_RE = re.compile(
 def compact_headings(md):
     """单元内标题层级压实：唯一层级集合 → 从 H2 起连续映射（保内部相对结构）；代码 fence 内不动。"""
     lines = md.splitlines()
-    levels = sorted({len(HEAD_RE.match(l).group(1)) for l in lines if HEAD_RE.match(l)})
+    # F13：levels 计算加 fence 感知（代码块内 # 注释行不计入标题层级，防合法包误拒/层级错位）
+    levels = set()
+    _in_fence = False
+    for l in lines:
+        if l.lstrip().startswith("```"):
+            _in_fence = not _in_fence
+            continue
+        m = HEAD_RE.match(l)
+        if m and not _in_fence:
+            levels.add(len(m.group(1)))
+    levels = sorted(levels)
     mapping = {old: min(2 + i, 6) for i, old in enumerate(levels)}
     out = []
     in_fence = False
@@ -112,7 +122,15 @@ def assemble_one(pack_dir):
     def chk(name, cond):
         checks.append((name, bool(cond)))
 
-    chk("唯一 H1 文档标题", sum(1 for l in merged.splitlines() if re.match(r"^# ", l)) == 1)
+    # F13：唯一 H1 计数加 fence 感知（代码块内 # 注释行不计）
+    _h1, _fence = 0, False
+    for l in merged.splitlines():
+        if l.lstrip().startswith("```"):
+            _fence = not _fence
+            continue
+        if not _fence and re.match(r"^# ", l):
+            _h1 += 1
+    chk("唯一 H1 文档标题", _h1 == 1)
     chk("清洁 md 无机器锚", not ANCHOR_RE.search(merged))
     chk("图嵌计数守恒（裸文件名转换不丢图）", embed_before == embed_after)
     chk("图嵌全裸文件名（无 ![[attachments/ 残留）", "![[attachments/" not in merged)

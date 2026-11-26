@@ -2,6 +2,10 @@
 
 > semver（MAJOR.MINOR.PATCH）：MAJOR=执行契约不兼容变更（I 阶段/闸门/喂入契约）；MINOR=新增能力或条款；PATCH=措辞与修正。当前版本登记于 SKILL.md frontmatter `metadata.version`。子协议版本（pack schema / page-transcribe schema）独立登记，不随 skill 版本联动。
 
+## 2.2.3 (2026-11-26)
+- assemble 标题压实/唯一 H1 检查加代码 fence 感知（防含 # 注释行合法包误拒）；manifest render_scale 记实际 args 值（防元数据漂移）。
+- pack schema 不变。
+
 ## 2.2.2 (2026-11-26)
 - --doc-id 路径净化（统一过 sanitize + strip 防 .. + 包目录 realpath 包含守卫，防目录逃逸）。
 - pack schema 不变。
