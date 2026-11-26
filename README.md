@@ -23,7 +23,7 @@
 bash scripts/bootstrap.sh --run-tests
 
 # 2. 或单独跑验收电池（examples/ 虚构载体为 fixture，零副作用）
-python3 scripts/run_suite_tests.py             # T0-T15，exit 0 = 全过
+python3 scripts/run_suite_tests.py             # T0-T22，exit 0 = 全过
 python3 scripts/run_suite_tests.py --skip-java # 无 Java 环境降级档
 
 # 3. 统一 CLI 门面（机械 backbone；LLM 编排外接）
@@ -51,11 +51,11 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 
 | group | action | 底层能力 |
 |---|---|---|
-| **ingest** | `parse` | I1 异构文档机械解析→萃取原料包（纯 pip，识图由 vision agent 外接） |
-| **model** | `validate` / `consistency` / `topology` / `golden` / `patch` / `shapes` / `shacl` / `queries` | L1+L2 校验 / L3 一致性 / S5 文本拓扑 / S6 黄金用例 / R2 增量 patch / R4 TTL→SHACL 派生 / R4 实例数据完整性 / D3c TTL→SPARQL Read 查询模板库 |
+| **ingest** | `parse` / `assemble` | I1 异构文档机械解析→准备态萃取原料包（纯 pip，识图由 vision agent 外接）/ I3 机械组装（每源件单一合并 md，按序/不丢弃/图嵌守恒 + 自校验门禁） |
+| **model** | `validate` / `consistency` / `topology` / `golden` / `patch` / `shapes` / `shacl` / `queries` / `diff` | L1+L2 校验 / L3 一致性 / S5 文本拓扑 / S6 黄金用例 / R2 增量 patch / R4 TTL→SHACL 派生 / R4 实例数据完整性 / D3c TTL→SPARQL Read 查询模板库 / 两版本 TTL 三元组级机械 diff（具名构件 + md 对照表） |
 | **review** | `extract` / `page` / `ingest` / `selftest` | 双源提取 + supply / 单文件审阅页 / 意见单回流 / E1-E14 自测 |
 | **simulate** | `signature` / `check` / `reason` / `ab-score` | 编译签名 / 实例零臆造校验 / what-if 物化 / A/B 判据评分 |
-| **suite** | `test` / `doctor` | 统一验收电池 T0-T15 / 只读环境自检 |
+| **suite** | `test` / `doctor` | 统一验收电池 T0-T22 / 只读环境自检 |
 
 **薄分发纪律**：每个子命令把剩余参数原样转发底层脚本（subprocess），退出码透传，脚本行为零改变——各脚本仍可独立运行，CLI 只是便利门面。脚本路径相对套件根（`__file__` 自动定位，与 cwd 无关）；跨 skill import 由各脚本自身的相对 `sys.path` 垫片承接。未知 group/action 或脚本缺失 = exit 2。
 
@@ -89,7 +89,7 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 
 ## 验收电池
 
-`python3 scripts/run_suite_tests.py`（T0-T15 编排，examples 虚构载体为 fixture，一切输出落临时目录零副作用，`--skip-java` 降级档；exit 0/1/2）。CI 消费同一入口。
+`python3 scripts/run_suite_tests.py`（T0-T22 编排，examples 虚构载体为 fixture，一切输出落临时目录零副作用，`--skip-java` 降级档；exit 0/1/2）。CI 消费同一入口。
 
 | # | 项 | 覆盖 |
 |---|---|---|
@@ -108,6 +108,13 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 | T13 | D2/D4 审阅页端到端 | supply→产页 token、五类 patch→R2 引擎、sha12/裸文本反例、回归翻转 G1、内容哈希 patch_id 双跑、merge+supply 隔离 |
 | T14 | `parse_documents.py`（ingest I1） | 四文本格式 schema + substrate/rendered、图片直供、契约错、扫描页整页渲染、双跑字节等、零回写、边界矩阵、清洁 md、inventory ground truth、接缝 affordance 准备态 |
 | T15 | `derive_sparql.py`（D3c） | 派生双跑字节等 + 计数锚、prepareQuery 语法 valid、graph.query 执行正例、derived 分流、参数化零泄漏 + IRI 守卫、契约错、零回写（纯 rdflib 内置 SPARQL 1.1，无 Java） |
+| T16 | `ab_score.py` 词汇表四面 + 受控值 | build_vocab 四面（类/对象属性/数据属性/SKOS Concept）补全 + `oneOf_enum` 受控值键对齐（A/B 机械判据词汇表非空） |
+| T17 | SWRL 静态 lint（L2-SWRL-LINT） | 恒假自比较（死规则 error）/ 恒真自比较（冗余 warning）/ DL-safe（head 变量须 body 绑定 error） |
+| T18 | `diff_ontology.py` 版本机械 diff | 相同版 0 增删 + 修改版具名构件检出（三元组级 added/removed/changed，匿名 bnode 噪声单列计数） |
+| T19 | CQ 结构预检（`--precheck`） | 用例断言词汇∈本体词汇表（缺失硬失败）+ 类间 BFS 可达（depth≤3 advisory），分流结构不可达用例 |
+| T20 | builtin × 引擎支持矩阵 | L2-SWRL-BUILTIN 使用清单（info 级）+ 矩阵文档存在性 |
+| T21 | 承重闸门正确性回归 | domain_ok 方向 / drop_rule 精确 localname / CAMEL R 记号排除（先红后修守住审计修复） |
+| T22 | 覆盖缺口 smoke | report_topology / ontology_cli / ingest_opinions 机械路径覆盖 |
 
 ## 许可与致谢
 
@@ -124,7 +131,6 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 
 ## 已知问题与待迭代
 
-- **ab_score enum_values 键名不一致（登记不修）**：`ontology-simulate/scripts/ab_score.py` 读 `enum_values` 键，而 `extract_signature` 提取键为 `oneOf_enum`→A/B 机械判据的受控值词汇表恒空。正确修法=改 ab_score 一行（simulate 独立 PATCH）；**切勿改 `oneOf_enum` 迁就它**——会破冻结签名（T4）+ check_instance E07 消费。
 - **D4 handle 节点拖拽重连（post-MVP）**：cytoscape 3.30 核心无边端点重连 API，当前采用无障碍回退双下拉路径（点属性边→侧面板 domain/range 双下拉，同语义同 ops）；handle 方块拖拽重连留后续迭代。
 - **D4 编辑级别边界**：当前仅 L1-L2 TBox（label/comment/oneOf 受控值/subClassOf 归属/domain/range）；ABox 实例值编辑 + L3 规则编辑 defer 后续。
 - **D4 离线闭环交互断档（待排期）**：当前路径下产 `patch-report.json` 须跳出审阅页跑一条 R2 CLI 命令——真实场景专家只有页面、无命令运行环境。后续改为浏览器内执行 CLI（pyodide/WASM 内嵌纯 rdflib R2 核心，页内产 draft+report，专家全程不离页；L3/golden 回归需 Java 仍外接或降级），与单文件零依赖铁律的张力届时权衡。回读区已加文件类型守卫：误选导出补丁 `d4-patch.json` 不再静默 `?`，改为「这是补丁不是报告」提示 + 操作预览 + 产报告 CLI 指引。

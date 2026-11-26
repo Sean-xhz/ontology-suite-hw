@@ -156,7 +156,7 @@ python3 scripts/derive_sparql.py <ontology.ttl> [--output-json PATH] [--output-m
 | 知识库集成环境 | `<知识库根>/runs/`（或 `ONTOLOGY_RUNS_ROOT` 指定） | 版本控制忽略区 |
 | 独立部署/套件 | 建议 `./runs/`（或 `ONTOLOGY_RUNS_ROOT` 指定） | 任何不进版本控制、不进入对外分发通道的目录 |
 
-**回归与验收**：套件级统一验收（T0-T15）以 `examples/` 虚构示例载体为 fixture，入口=`scripts/run_suite_tests.py`（`--skip-java` 可跑纯 Python 档）；ontology-review `scripts/self_test.py --runs <fixture run>` 为 review 机械回归子层（fixture 显式传入或经环境变量 `ONTOLOGY_SELFTEST_RUNS`）。
+**回归与验收**：套件级统一验收（T0-T22）以 `examples/` 虚构示例载体为 fixture，入口=`scripts/run_suite_tests.py`（`--skip-java` 可跑纯 Python 档）；ontology-review `scripts/self_test.py --runs <fixture run>` 为 review 机械回归子层（fixture 显式传入或经环境变量 `ONTOLOGY_SELFTEST_RUNS`）。
 
 ## 八、目录结构（skill 根）
 

@@ -102,7 +102,7 @@ DISPATCH = {
         "A/B 三臂机械判据评分 + 专家盲评聚合"),
     ("suite", "test"): (
         "scripts/run_suite_tests.py",
-        "统一验收电池 T0-T21（虚构示例 fixture，零副作用），exit 0/1/2"),
+        "统一验收电池 T0-T22（虚构示例 fixture，零副作用），exit 0/1/2"),
 }
 
 GROUPS = ("ingest", "model", "review", "simulate", "suite")

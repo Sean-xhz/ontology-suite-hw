@@ -23,7 +23,7 @@ Companion agents (`agents/`): ontology-vision-extractor (ingest I2 whole-page tr
 bash scripts/bootstrap.sh --run-tests
 
 # 2. Or run the acceptance battery alone (examples/ fictional carrier as fixture, zero side-effects)
-python3 scripts/run_suite_tests.py             # T0-T15, exit 0 = all pass
+python3 scripts/run_suite_tests.py             # T0-T22, exit 0 = all pass
 python3 scripts/run_suite_tests.py --skip-java # no-Java environment (degraded tier)
 
 # 3. Unified CLI facade (mechanical backbone; LLM orchestration stays external)
@@ -51,11 +51,11 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 
 | group | action | Underlying capability |
 |---|---|---|
-| **ingest** | `parse` | I1 heterogeneous-document mechanical parsing → extraction feed pack (pure pip; vision transcription external via vision agent) |
-| **model** | `validate` / `consistency` / `topology` / `golden` / `patch` / `shapes` / `shacl` / `queries` | L1+L2 validation / L3 consistency / S5 text topology / S6 golden cases / R2 incremental patch / R4 TTL→SHACL derivation / R4 instance data-integrity / D3c TTL→SPARQL Read query-template library |
+| **ingest** | `parse` / `assemble` | I1 heterogeneous-document mechanical parsing → prepared-state extraction feed pack (pure pip; vision transcription external via vision agent) / I3 mechanical assembly (single merged md per source, in-order/no-drop/image-embed conservation + self-check gate) |
+| **model** | `validate` / `consistency` / `topology` / `golden` / `patch` / `shapes` / `shacl` / `queries` / `diff` | L1+L2 validation / L3 consistency / S5 text topology / S6 golden cases / R2 incremental patch / R4 TTL→SHACL derivation / R4 instance data-integrity / D3c TTL→SPARQL Read query-template library / two-version TTL triple-level mechanical diff (named constructs + md comparison table) |
 | **review** | `extract` / `page` / `ingest` / `selftest` | dual-source extraction + supply / single-file review page / opinion-sheet feedback / E1-E14 self-test |
 | **simulate** | `signature` / `check` / `reason` / `ab-score` | compilation signature / instance zero-fabrication check / what-if materialization / A/B mechanical scoring |
-| **suite** | `test` / `doctor` | unified acceptance battery T0-T15 / read-only environment self-check |
+| **suite** | `test` / `doctor` | unified acceptance battery T0-T22 / read-only environment self-check |
 
 **Thin-dispatch discipline**: each subcommand forwards remaining args verbatim to the underlying script (subprocess) and passes exit codes through — zero behavior change, scripts still run standalone, the CLI is just a convenience facade. Script paths are relative to the suite root (`__file__` auto-locates, cwd-independent); cross-skill imports are handled by each script's own relative `sys.path` shim. Unknown group/action or missing script = exit 2.
 
@@ -89,7 +89,7 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 
 ## Acceptance battery
 
-`python3 scripts/run_suite_tests.py` (T0-T15 orchestration, examples fictional carrier as fixture, all outputs land in a temporary directory zero side-effects, `--skip-java` degraded tier; exit 0/1/2). CI consumes the same entry.
+`python3 scripts/run_suite_tests.py` (T0-T22 orchestration, examples fictional carrier as fixture, all outputs land in a temporary directory zero side-effects, `--skip-java` degraded tier; exit 0/1/2). CI consumes the same entry.
 
 | # | Item | Coverage |
 |---|---|---|
@@ -108,6 +108,13 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 | T13 | D2/D4 review-page end-to-end | supply→page tokens, five patch classes→R2 engine, sha12/bare-literal negatives, regression-flip G1, content-hash patch_id double-run, merge+supply isolation |
 | T14 | `parse_documents.py` (ingest I1) | four text formats schema + substrate/rendered, image direct-supply, contract errors, scanned-page whole-page render, double-run byte-equality, zero-writeback, boundary matrix, clean md, inventory ground truth, seam affordance prepared state |
 | T15 | `derive_sparql.py` (D3c) | derivation double-run byte-equality + count anchor, prepareQuery syntax valid, graph.query execution positives, derived routing, parameterization zero leakage + IRI guard, contract errors, zero-writeback (pure rdflib built-in SPARQL 1.1, no Java) |
+| T16 | `ab_score.py` vocabulary four faces + controlled values | build_vocab four faces (class/object-property/data-property/SKOS Concept) completed + `oneOf_enum` controlled-value key aligned (A/B mechanical-scoring vocabulary non-empty) |
+| T17 | SWRL static lint (L2-SWRL-LINT) | always-false self-comparison (dead rule, error) / always-true self-comparison (redundant, warning) / DL-safe (head vars must be body-bound, error) |
+| T18 | `diff_ontology.py` version mechanical diff | identical version 0 add/remove + modified-version named-construct detection (triple-level added/removed/changed, anonymous bnode noise counted separately) |
+| T19 | CQ structural precheck (`--precheck`) | case-assertion vocabulary ∈ ontology vocabulary (missing = hard fail) + inter-class BFS reachability (depth≤3 advisory), routes structurally unreachable cases |
+| T20 | builtin × engine support matrix | L2-SWRL-BUILTIN usage list (info level) + matrix doc existence |
+| T21 | load-bearing gate correctness regression | domain_ok direction / drop_rule exact localname / CAMEL R-token exclusion (red-then-fix guards audit fixes) |
+| T22 | coverage-gap smoke | report_topology / ontology_cli / ingest_opinions mechanical-path coverage |
 
 ## License & acknowledgments
 
@@ -124,7 +131,6 @@ python3 scripts/ontology_cli.py <group> <action> [args...]
 
 ## Known issues & follow-ups
 
-- **ab_score enum_values key mismatch (registered, not fixed)**: `ontology-simulate/scripts/ab_score.py` reads the `enum_values` key while `extract_signature` emits `oneOf_enum` → the A/B mechanical-scoring controlled-value vocabulary is always empty. Correct fix = change one line in ab_score (a separate simulate PATCH); **do not change `oneOf_enum` to accommodate it** — that would break the frozen signature (T4) + check_instance E07 consumption.
 - **D4 handle-node drag-reconnect (post-MVP)**: cytoscape 3.30 core has no edge-endpoint reconnect API; the current path is an accessible fallback dual-dropdown (click a property edge → side-panel domain/range dual-dropdowns, same semantics same ops); handle-block drag-reconnect is left to a later iteration.
 - **D4 edit-level boundary**: currently L1-L2 TBox only (label/comment/oneOf controlled values/subClassOf re-parenting/domain/range); ABox instance-value editing + L3 rule editing deferred.
 - **D4 offline-loop interaction gap (to be scheduled)**: under the current path, producing `patch-report.json` requires leaving the review page to run an R2 CLI command — in a real scenario the expert has only the page, no command-running environment. A later iteration moves CLI execution **inside the browser** (pyodide/WASM embedding the pure-rdflib R2 core, producing draft+report in-page so the expert never leaves; L3/golden regression still needs Java, external or degraded), weighing the tension with the single-file zero-dependency iron rule at that time. The reader already has a file-type guard: mistakenly selecting an exported `d4-patch.json` no longer renders silent `?` — it shows a "this is a patch, not a report" notice + operation preview + the CLI command to produce a report.
